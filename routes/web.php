@@ -1,54 +1,81 @@
 <?php
 
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\VoteController;
-use App\Http\Controllers\Admin\LocalGovernmentController;
-use App\Http\Controllers\Admin\WardController;
-use App\Http\Controllers\Admin\VotingUnitController;
-use App\Http\Middleware\CheckRole;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Admin\QuestionController;
+use App\Http\Controllers\Teacher\TeacherController;
+use App\Http\Controllers\Student\StudentController;
 
-// Public routes
-Route::get('/', function () {
-    return view('landing');
-})->name('landing');
+// Auth Routes
+Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
+Route::post('login', [LoginController::class, 'login']);
+Route::post('logout', [LoginController::class, 'logout'])->name('logout');
 
-// Auth routes
-Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
-Route::post('/login', [AuthController::class, 'login']);
-Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
-
-// Protected routes - Using middleware with full class name
-Route::middleware(['auth'])->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+// Admin Routes
+Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
     
-    // Vote routes - using full class name
-    Route::get('/vote/create', [VoteController::class, 'create'])
-        ->name('vote.create')
-        ->middleware(CheckRole::class . ':admin,officer');
+    // Teacher Management
+    Route::get('/teachers', [AdminController::class, 'teachers'])->name('teachers');
+    Route::get('/teachers/create', [AdminController::class, 'createTeacher'])->name('teachers.create');
+    Route::post('/teachers', [AdminController::class, 'storeTeacher'])->name('teachers.store');
+    Route::get('/teachers/{id}/edit', [AdminController::class, 'editTeacher'])->name('teachers.edit');
+    Route::put('/teachers/{id}', [AdminController::class, 'updateTeacher'])->name('teachers.update');
+    Route::delete('/teachers/{id}', [AdminController::class, 'deleteTeacher'])->name('teachers.delete');
     
-    Route::post('/vote', [VoteController::class, 'store'])
-        ->name('vote.store')
-        ->middleware(CheckRole::class . ':admin,officer');
+    // Student Management
+    Route::get('/students', [AdminController::class, 'students'])->name('students');
+    Route::get('/students/create', [AdminController::class, 'createStudent'])->name('students.create');
+    Route::post('/students', [AdminController::class, 'storeStudent'])->name('students.store');
+    Route::get('/students/{id}/edit', [AdminController::class, 'editStudent'])->name('students.edit');
+    Route::put('/students/{id}', [AdminController::class, 'updateStudent'])->name('students.update');
+    Route::delete('/students/{id}', [AdminController::class, 'deleteStudent'])->name('students.delete');
     
-    // AJAX routes for dynamic dropdowns
-    Route::get('/wards/{lgId}', [VoteController::class, 'getWards'])->name('ajax.wards');
-    Route::get('/voting-units/{wardId}', [VoteController::class, 'getVotingUnits'])->name('ajax.units');
+    // Class Management
+    Route::get('/classes', [AdminController::class, 'classes'])->name('classes');
+    Route::get('/classes/create', [AdminController::class, 'createClass'])->name('classes.create');
+    Route::post('/classes', [AdminController::class, 'storeClass'])->name('classes.store');
+    Route::get('/classes/{id}/edit', [AdminController::class, 'editClass'])->name('classes.edit');
+    Route::put('/classes/{id}', [AdminController::class, 'updateClass'])->name('classes.update');
+    Route::delete('/classes/{id}', [AdminController::class, 'deleteClass'])->name('classes.delete');
+    Route::get('/classes/{id}/admit', [AdminController::class, 'admitStudents'])->name('classes.admit');
+    Route::post('/classes/{id}/admit', [AdminController::class, 'processAdmission'])->name('classes.admit.process');
+    
+    // Question Management
+    Route::get('/questions', [QuestionController::class, 'index'])->name('questions');
+    Route::get('/questions/create', [QuestionController::class, 'create'])->name('questions.create');
+    Route::post('/questions', [QuestionController::class, 'store'])->name('questions.store');
+    Route::get('/questions/{id}/edit', [QuestionController::class, 'edit'])->name('questions.edit');
+    Route::put('/questions/{id}', [QuestionController::class, 'update'])->name('questions.update');
+    Route::delete('/questions/{id}', [QuestionController::class, 'delete'])->name('questions.delete');
+    Route::get('/questions/import', [QuestionController::class, 'import'])->name('questions.import');
+    Route::post('/questions/import', [QuestionController::class, 'importExcel'])->name('questions.import.process');
 });
 
-// Admin only routes - using full class name
-Route::middleware(['auth', CheckRole::class . ':admin'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/', function () {
-        return view('admin.dashboard');
-    })->name('dashboard');
-    
-    Route::resource('local-governments', LocalGovernmentController::class);
-    Route::resource('wards', WardController::class);
-    Route::resource('voting-units', VotingUnitController::class);
-    
-    Route::get('/api/wards/{lgId}', [WardController::class, 'getByLocalGovernment']);
-    Route::get('/api/voting-units/{wardId}', [VotingUnitController::class, 'getByWard']);
+// Teacher Routes
+Route::middleware(['auth', 'role:teacher'])->prefix('teacher')->name('teacher.')->group(function () {
+    Route::get('/dashboard', [TeacherController::class, 'dashboard'])->name('dashboard');
+    Route::get('/subjects', [TeacherController::class, 'subjects'])->name('subjects');
+    Route::post('/upload-score', [TeacherController::class, 'uploadScores'])->name('upload-score');
+    Route::get('/report-card/{student}', [TeacherController::class, 'generateReportCard'])->name('report-card');
+});
+
+// Student Routes
+Route::middleware(['auth', 'role:student'])->prefix('student')->name('student.')->group(function () {
+    Route::get('/dashboard', [StudentController::class, 'dashboard'])->name('dashboard');
+    Route::get('/exams', [StudentController::class, 'exams'])->name('exams');
+    Route::get('/exam/take/{exam}', [StudentController::class, 'takeExam'])->name('exam.take');
+    Route::get('/exam/continue/{attempt}', [StudentController::class, 'continueExam'])->name('exam.continue');
+    Route::post('/exam/submit/{attempt}', [StudentController::class, 'submitExam'])->name('exam.submit');
+    Route::get('/exam/result/{attempt}', [StudentController::class, 'examResult'])->name('exam.result');
+    Route::post('/exam/save-answer/{attempt}', [StudentController::class, 'saveAnswer'])->name('exam.save-answer');
+    Route::get('/results', [StudentController::class, 'results'])->name('results');
+    Route::get('/report-cards', [StudentController::class, 'reportCards'])->name('report-cards');
+    Route::get('/report-card/{id}', [StudentController::class, 'viewReportCard'])->name('report-card.view');
+});
+
+// Home Route
+Route::get('/', function () {
+    return redirect()->route('login');
 });
