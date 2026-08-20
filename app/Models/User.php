@@ -3,58 +3,57 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 
-class Student extends Model
+class User extends Authenticatable
 {
-    use HasFactory;
+    use HasFactory, Notifiable;
 
     protected $fillable = [
-        'user_id',
-        'class_id',
-        'admission_number',
-        'date_of_birth',
-        'guardian_name',
-        'guardian_phone',
-        'status',
+        'name',
+        'email',
+        'password',
+        'role',
+        'phone',
+        'address',
     ];
 
-    protected $casts = [
-        'date_of_birth' => 'date',
+    protected $hidden = [
+        'password',
+        'remember_token',
     ];
 
-    public function user()
+    protected function casts(): array
     {
-        return $this->belongsTo(User::class);
+        return [
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+        ];
     }
 
-    public function class()
+    public function student()
     {
-        return $this->belongsTo(ClassModel::class, 'class_id');
+        return $this->hasOne(Student::class);
     }
 
-    public function examAttempts()
+    public function teacherSubjects()
     {
-        return $this->hasMany(ExamAttempt::class);
+        return $this->hasMany(Subject::class, 'teacher_id');
     }
 
-    public function results()
+    public function isAdmin()
     {
-        return $this->hasMany(Result::class);
+        return $this->role === 'admin';
     }
 
-    public function reportCards()
+    public function isTeacher()
     {
-        return $this->hasMany(ReportCard::class);
+        return $this->role === 'teacher';
     }
 
-    public function getFullNameAttribute()
+    public function isStudent()
     {
-        return $this->user->name;
-    }
-
-    public function getEmailAttribute()
-    {
-        return $this->user->email;
+        return $this->role === 'student';
     }
 }

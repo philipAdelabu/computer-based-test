@@ -11,7 +11,7 @@ class Student extends Model
 
     protected $fillable = [
         'user_id',
-        'class_id',
+        'class_id', // Make sure this matches your migration
         'admission_number',
         'date_of_birth',
         'guardian_name',
@@ -30,22 +30,22 @@ class Student extends Model
 
     public function class()
     {
-        return $this->belongsTo(ClassModel::class, 'class_id');
+        return $this->belongsTo(ClassModel::class, 'class_id'); // Specify foreign key
     }
 
     public function examAttempts()
     {
-        return $this->hasMany(ExamAttempt::class);
+        return $this->hasMany(ExamAttempt::class, 'student_id');
     }
 
     public function results()
     {
-        return $this->hasMany(Result::class);
+        return $this->hasMany(Result::class, 'student_id');
     }
 
     public function reportCards()
     {
-        return $this->hasMany(ReportCard::class);
+        return $this->hasMany(ReportCard::class, 'student_id');
     }
 
     public function getFullNameAttribute()

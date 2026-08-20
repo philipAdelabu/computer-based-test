@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('class_id')->constrained()->onDelete('cascade');
             $table->foreignId('teacher_id')->constrained('users')->onDelete('cascade');
             $table->text('description')->nullable();
+            $table->enum('status', ['active', 'inactive'])->default('active');
             $table->timestamps();
         });
     }

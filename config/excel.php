@@ -139,11 +139,12 @@ return [
         |
         */
         'csv' => [
-            'delimiter'        => null,
-            'enclosure'        => '"',
+            'delimiter' => ',',
+            'enclosure' => '"',
             'escape_character' => '\\',
-            'contiguous'       => false,
-            'input_encoding'   => Csv::GUESS_ENCODING,
+            'contiguous' => false,
+            'input_encoding' => 'UTF-8',
+
         ],
 
         /*
@@ -193,21 +194,22 @@ return [
     |
     */
     'extension_detector' => [
-        'xlsx'     => Excel::XLSX,
-        'xlsm'     => Excel::XLSX,
-        'xltx'     => Excel::XLSX,
-        'xltm'     => Excel::XLSX,
-        'xls'      => Excel::XLS,
-        'xlt'      => Excel::XLS,
-        'ods'      => Excel::ODS,
-        'ots'      => Excel::ODS,
-        'slk'      => Excel::SLK,
-        'xml'      => Excel::XML,
+       'xlsx' => Excel::XLSX,
+        'xlsm' => Excel::XLSX,
+        'xltx' => Excel::XLSX,
+        'xltm' => Excel::XLSX,
+        'xls' => Excel::XLS,
+        'xlt' => Excel::XLS,
+        'ods' => Excel::ODS,
+        'ots' => Excel::ODS,
+        'slk' => Excel::SLK,
+        'xml' => Excel::XML,
         'gnumeric' => Excel::GNUMERIC,
-        'htm'      => Excel::HTML,
-        'html'     => Excel::HTML,
-        'csv'      => Excel::CSV,
-        'tsv'      => Excel::TSV,
+        'htm' => Excel::HTML,
+        'html' => Excel::HTML,
+        'csv' => Excel::CSV,
+        'tsv' => Excel::TSV,
+        'pdf' => Excel::DOMPDF,
 
         /*
         |--------------------------------------------------------------------------

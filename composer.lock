@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "cb3342e77c803d3a3891923c8cb5f08d",
+    "content-hash": "83006298958bde2cbd026862b97b1c4a",
     "packages": [
         {
             "name": "brick/math",
@@ -1690,6 +1690,69 @@
             "time": "2026-03-17T14:54:13+00:00"
         },
         {
+            "name": "laravel/ui",
+            "version": "v4.6.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/laravel/ui.git",
+                "reference": "ff27db15416c1ed8ad9848f5692e47595dd5de27"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/laravel/ui/zipball/ff27db15416c1ed8ad9848f5692e47595dd5de27",
+                "reference": "ff27db15416c1ed8ad9848f5692e47595dd5de27",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/console": "^9.21|^10.0|^11.0|^12.0|^13.0",
+                "illuminate/filesystem": "^9.21|^10.0|^11.0|^12.0|^13.0",
+                "illuminate/support": "^9.21|^10.0|^11.0|^12.0|^13.0",
+                "illuminate/validation": "^9.21|^10.0|^11.0|^12.0|^13.0",
+                "php": "^8.0",
+                "symfony/console": "^6.0|^7.0|^8.0"
+            },
+            "require-dev": {
+                "orchestra/testbench": "^7.35|^8.15|^9.0|^10.0|^11.0",
+                "phpunit/phpunit": "^9.3|^10.4|^11.5|^12.5|^13.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Laravel\\Ui\\UiServiceProvider"
+                    ]
+                },
+                "branch-alias": {
+                    "dev-master": "4.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Laravel\\Ui\\": "src/",
+                    "Illuminate\\Foundation\\Auth\\": "auth-backend/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Taylor Otwell",
+                    "email": "taylor@laravel.com"
+                }
+            ],
+            "description": "Laravel UI utilities and presets.",
+            "keywords": [
+                "laravel",
+                "ui"
+            ],
+            "support": {
+                "source": "https://github.com/laravel/ui/tree/v4.6.3"
+            },
+            "time": "2026-03-17T13:41:52+00:00"
+        },
+        {
             "name": "league/commonmark",
             "version": "2.10.0",
             "source": {
@@ -2250,16 +2313,16 @@
         },
         {
             "name": "maatwebsite/excel",
-            "version": "4.0.0",
+            "version": "4.0.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/SpartnerNL/Laravel-Excel.git",
-                "reference": "367e92a78008291684b791b3712d46e6fca77343"
+                "reference": "5d1c617c9fea810d0c547d69d4dfddd3f0a9fea8"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/SpartnerNL/Laravel-Excel/zipball/367e92a78008291684b791b3712d46e6fca77343",
-                "reference": "367e92a78008291684b791b3712d46e6fca77343",
+                "url": "https://api.github.com/repos/SpartnerNL/Laravel-Excel/zipball/5d1c617c9fea810d0c547d69d4dfddd3f0a9fea8",
+                "reference": "5d1c617c9fea810d0c547d69d4dfddd3f0a9fea8",
                 "shasum": ""
             },
             "require": {
@@ -2323,7 +2386,7 @@
             ],
             "support": {
                 "issues": "https://github.com/SpartnerNL/Laravel-Excel/issues",
-                "source": "https://github.com/SpartnerNL/Laravel-Excel/tree/4.0.0"
+                "source": "https://github.com/SpartnerNL/Laravel-Excel/tree/4.0.1"
             },
             "funding": [
                 {
@@ -2335,7 +2398,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-08-13T10:52:49+00:00"
+            "time": "2026-08-18T12:32:09+00:00"
         },
         {
             "name": "maennchen/zipstream-php",

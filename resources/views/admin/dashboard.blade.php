@@ -1,50 +1,116 @@
+<!-- resources/views/admin/dashboard.blade.php -->
 @extends('layouts.app')
 
 @section('title', 'Admin Dashboard')
 
+@section('sidebar')
+    @include('admin.partials.sidebar')
+@endsection
+
+@section('page-title', 'Dashboard')
+
 @section('content')
-<div class="container mx-auto px-4 py-8">
-    <div class="max-w-7xl mx-auto">
-        <h1 class="text-3xl font-bold text-gray-800 mb-8">Admin Dashboard</h1>
-        
-        <div class="grid md:grid-cols-3 gap-6">
-            <div class="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition duration-300">
-                <div class="text-4xl mb-4">🏛️</div>
-                <h3 class="text-xl font-semibold text-gray-800 mb-2">Local Governments</h3>
-                <p class="text-gray-600 text-sm mb-4">Manage local government areas</p>
-                <a href="{{ route('admin.local-governments.index') }}" 
-                   class="inline-block bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300">
-                    Manage →
-                </a>
-            </div>
-            
-            <div class="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition duration-300">
-                <div class="text-4xl mb-4">🗺️</div>
-                <h3 class="text-xl font-semibold text-gray-800 mb-2">Wards</h3>
-                <p class="text-gray-600 text-sm mb-4">Manage wards within LGs</p>
-                <a href="{{ route('admin.wards.index') }}" 
-                   class="inline-block bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300">
-                    Manage →
-                </a>
-            </div>
-            
-            <div class="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition duration-300">
-                <div class="text-4xl mb-4">📮</div>
-                <h3 class="text-xl font-semibold text-gray-800 mb-2">Voting Units</h3>
-                <p class="text-gray-600 text-sm mb-4">Manage voting units within wards</p>
-                <a href="{{ route('admin.voting-units.index') }}" 
-                   class="inline-block bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300">
-                    Manage →
-                </a>
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">Total Students</h6>
+                        <h3 class="mb-0">{{ $totalStudents }}</h3>
+                    </div>
+                    <div class="stat-icon text-primary">
+                        <i class="bi bi-people"></i>
+                    </div>
+                </div>
             </div>
         </div>
-
-        <div class="mt-8">
-            <a href="{{ route('dashboard') }}" 
-               class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-lg transition duration-300 inline-block">
-                View Voting Dashboard →
-            </a>
+        <div class="col-md-3">
+            <div class="stat-card" style="border-left-color: var(--secondary-color);">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">Total Subjects</h6>
+                        <h3 class="mb-0">{{ $totalSubjects ?? 0 }}</h3>
+                    </div>
+                    <div class="stat-icon text-success">
+                        <i class="bi bi-book"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card" style="border-left-color: var(--secondary-color);">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">Total Teachers</h6>
+                        <h3 class="mb-0">{{ $totalTeachers }}</h3>
+                    </div>
+                    <div class="stat-icon text-success">
+                        <i class="bi bi-person-badge"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card" style="border-left-color: var(--warning-color);">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">Total Classes</h6>
+                        <h3 class="mb-0">{{ $totalClasses }}</h3>
+                    </div>
+                    <div class="stat-icon text-warning">
+                        <i class="bi bi-building"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card" style="border-left-color: var(--info-color);">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">Total Exams</h6>
+                        <h3 class="mb-0">{{ $totalExams }}</h3>
+                    </div>
+                    <div class="stat-icon text-info">
+                        <i class="bi bi-file-text"></i>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-</div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Quick Actions</h5>
+                    <div class="row g-3 mt-2">
+                        <div class="col-md-3">
+                            <a href="{{ route('admin.students.create') }}" class="btn btn-outline-primary w-100 py-3">
+                                <i class="bi bi-person-plus fs-4 d-block"></i>
+                                Add Student
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ route('admin.teachers.create') }}" class="btn btn-outline-success w-100 py-3">
+                                <i class="bi bi-person-badge-plus fs-4 d-block"></i>
+                                Add Teacher
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ route('admin.classes.create') }}" class="btn btn-outline-warning w-100 py-3">
+                                <i class="bi bi-building-add fs-4 d-block"></i>
+                                Add Class
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ route('admin.questions.import') }}" class="btn btn-outline-info w-100 py-3">
+                                <i class="bi bi-upload fs-4 d-block"></i>
+                                Import Questions
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection

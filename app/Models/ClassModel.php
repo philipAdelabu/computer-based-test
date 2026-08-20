@@ -19,11 +19,11 @@ class ClassModel extends Model
 
     public function subjects()
     {
-        return $this->hasMany(Subject::class);
+        return $this->hasMany(Subject::class, 'class_id'); // Specify foreign key
     }
 
     public function students()
     {
-        return $this->hasMany(Student::class);
+        return $this->hasMany(Student::class, 'class_id'); // Specify foreign key
     }
 }
