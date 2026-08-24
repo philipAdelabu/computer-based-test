@@ -12,6 +12,14 @@
 @section('content')
 <div class="row">
     <div class="col-lg-10 mx-auto">
+        <!-- Add this to your exam create and edit views -->
+            <div class="alert alert-info">
+                <i class="bi bi-clock"></i>
+                <strong>Timezone:</strong> All times are displayed in 
+                <strong>{{ config('app.timezone') }}</strong> timezone.
+                <br>
+                <small>Current server time: {{ Carbon\Carbon::now()->timezone(config('app.timezone'))->format('F d, Y h:i A') }}</small>
+            </div>
         <div class="card">
             <div class="card-body">
                 <form action="{{ route('teacher.exams.store') }}" method="POST" id="examForm">
