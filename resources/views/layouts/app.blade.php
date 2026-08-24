@@ -214,6 +214,7 @@
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark">
+     
         <div class="container-fluid">
             <a class="navbar-brand" href="{{ route('admin.dashboard') }}">
                 <i class="bi bi-laptop"></i> CBT System
@@ -242,6 +243,7 @@
     </nav>
 
     <div class="container-fluid">
+        
         <div class="row">
             @if(!request()->routeIs('student.exam.continue'))
                 <nav class="col-md-3 col-lg-2 d-md-block sidebar p-0">

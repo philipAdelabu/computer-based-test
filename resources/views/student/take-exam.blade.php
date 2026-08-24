@@ -148,61 +148,52 @@
 </div>
 @endsection
 
+<!-- resources/views/student/take-exam.blade.php -->
 @push('scripts')
 <script>
 $(document).ready(function() {
-    // Auto-save answers
-    $('input[name="answer"]').on('change', function() {
-        const questionId = {{ $currentQuestion->id }};
-        const answer = $(this).val();
-        
-        $.ajax({
-            url: '{{ route("student.exam.save-answer", $attempt->id) }}',
-            method: 'POST',
-            data: {
-                _token: '{{ csrf_token() }}',
-                question_id: questionId,
-                answer: answer
-            },
-            success: function(response) {
-                // Update palette
-                location.reload();
-            }
-        });
-    });
+    // Get the exam end time from the server in ISO format
+    const endTime = new Date('{{ $attempt->exam->end_date_iso }}');
+    const startTime = new Date('{{ $attempt->started_at->timezone(config("app.timezone"))->toISOString() }}');
+    const durationMinutes = {{ $attempt->exam->duration_minutes }};
     
-    // Timer countdown
-    let timeRemaining = {{ $timeRemaining }};
-    const timerElement = document.getElementById('timer');
+    // Calculate the actual end time based on start time + duration
+    const examEndTime = new Date(startTime.getTime() + (durationMinutes * 60 * 1000));
+    
+    // Use the earlier of the two end times
+    const endDateTime = endTime < examEndTime ? endTime : examEndTime;
     
     function updateTimer() {
-        if (timeRemaining <= 0) {
-            // Auto-submit
-            document.getElementById('submitModal').querySelector('form').submit();
+        const now = new Date();
+        const diff = (endDateTime - now) / 1000; // difference in seconds
+        
+        if (diff <= 0) {
+            // Auto-submit when time runs out
+            document.getElementById('examForm').submit();
             return;
         }
         
-        timeRemaining--;
-        const hours = Math.floor(timeRemaining / 3600);
-        const minutes = Math.floor((timeRemaining % 3600) / 60);
-        const seconds = timeRemaining % 60;
+        const hours = Math.floor(diff / 3600);
+        const minutes = Math.floor((diff % 3600) / 60);
+        const seconds = Math.floor(diff % 60);
         
-        timerElement.textContent = 
-            `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        let timeString = '';
+        if (hours > 0) {
+            timeString = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        } else {
+            timeString = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
         
-        if (timeRemaining < 60) {
-            timerElement.classList.add('warning');
+        document.getElementById('timer').textContent = timeString;
+        
+        if (diff < 60) {
+            document.getElementById('timer').classList.add('warning');
         }
     }
     
+    // Update timer every second
     setInterval(updateTimer, 1000);
-    
-    // Option hover effect
-    $('.option-item').on('mouseenter', function() {
-        $(this).css('background-color', '#f8f9fa');
-    }).on('mouseleave', function() {
-        $(this).css('background-color', '');
-    });
+    updateTimer();
 });
 </script>
 @endpush

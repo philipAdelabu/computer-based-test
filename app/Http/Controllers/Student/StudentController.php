@@ -43,63 +43,78 @@ class StudentController extends Controller
         ));
     }
 
-    public function exams()
-    {
-        $student = Auth::user()->student;
-        
-        $availableExams = Exam::where('status', 'active')
-                             ->where('start_date', '<=', now())
-                             ->where('end_date', '>=', now())
-                             ->whereHas('subject', function($query) use ($student) {
-                                 $query->where('class_id', $student->class_id);
-                             })
-                             ->with(['subject', 'attempts' => function($query) use ($student) {
-                                 $query->where('student_id', $student->id);
-                             }])
-                             ->get();
-        
-        $completedExams = ExamAttempt::where('student_id', $student->id)
-                                    ->where('status', 'submitted')
-                                    ->with('exam')
-                                    ->latest()
-                                    ->paginate(10);
-        
-        return view('student.exams', compact('availableExams', 'completedExams'));
-    }
+  // app/Http/Controllers/Student/StudentController.php
+// Update the exams method
 
-    public function takeExam($examId)
-    {
-        $student = Auth::user()->student;
-        $exam = Exam::with(['questions' => function($query) {
-            $query->inRandomOrder();
-        }])->findOrFail($examId);
-        
-        // Check if exam is available
-        if (!$exam->isActive()) {
-            return redirect()->route('student.exams')
-                ->with('error', 'This exam is not currently available.');
-        }
-        
-        // Check if student already attempted this exam
-        $existingAttempt = ExamAttempt::where('exam_id', $examId)
-                                     ->where('student_id', $student->id)
-                                     ->where('status', 'in_progress')
-                                     ->first();
-        
-        if ($existingAttempt) {
-            return redirect()->route('student.exam.continue', $existingAttempt->id);
-        }
-        
-        // Create new attempt
-        $attempt = ExamAttempt::create([
-            'exam_id' => $examId,
-            'student_id' => $student->id,
-            'started_at' => now(),
-            'status' => 'in_progress',
-        ]);
-        
-        return redirect()->route('student.exam.continue', $attempt->id);
+public function exams()
+{
+    $student = Auth::user()->student;
+    
+    // Get available exams (published, active, and within date range)
+    $availableExams = Exam::where('is_published', true)
+                         ->where('status', 'active')
+                         ->where('start_date', '<=', now())
+                         ->where('end_date', '>=', now())
+                         ->whereHas('subject', function($query) use ($student) {
+                             $query->where('class_id', $student->class_id);
+                         })
+                         ->with(['subject', 'attempts' => function($query) use ($student) {
+                             $query->where('student_id', $student->id);
+                         }])
+                         ->orderBy('start_date')
+                         ->get();
+    
+    // Get upcoming exams
+    $upcomingExams = Exam::where('is_published', true)
+                        ->where('status', 'upcoming')
+                        ->where('start_date', '>', now())
+                        ->whereHas('subject', function($query) use ($student) {
+                            $query->where('class_id', $student->class_id);
+                        })
+                        ->with(['subject'])
+                        ->orderBy('start_date')
+                        ->get();
+    
+    // Get completed exams
+    $completedExams = ExamAttempt::where('student_id', $student->id)
+                                ->where('status', 'submitted')
+                                ->with(['exam', 'exam.subject'])
+                                ->latest()
+                                ->paginate(10);
+    
+    return view('student.exams', compact('availableExams', 'upcomingExams', 'completedExams'));
+}
+
+public function takeExam($examId)
+{
+    $student = Auth::user()->student;
+    $exam = Exam::with(['questions' => function($query) {
+        $query->inRandomOrder();
+    }])->findOrFail($examId);
+    
+    // Check if student can take the exam
+    $canTake = $exam->canStudentTake($student->id);
+    
+    if (!$canTake['can']) {
+        return redirect()->route('student.exams')
+            ->with('error', $canTake['reason']);
     }
+    
+    // If there's an in-progress attempt, continue it
+    if (isset($canTake['attempt']) && $canTake['attempt']) {
+        return redirect()->route('student.exam.continue', $canTake['attempt']->id);
+    }
+    
+    // Create new attempt
+    $attempt = ExamAttempt::create([
+        'exam_id' => $examId,
+        'student_id' => $student->id,
+        'started_at' => now(),
+        'status' => 'in_progress',
+    ]);
+    
+    return redirect()->route('student.exam.continue', $attempt->id);
+}
 
     public function continueExam($attemptId)
     {

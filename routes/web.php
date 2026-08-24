@@ -4,7 +4,9 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\QuestionController;
+use App\Http\Controllers\Teacher\QuestionController as TeacherQuestionController;
 use App\Http\Controllers\Teacher\TeacherController;
+use App\Http\Controllers\Teacher\ExamController;
 use App\Http\Controllers\Student\StudentController;
 use App\Http\Middleware\CheckRole;
 
@@ -89,10 +91,44 @@ Route::get('/students/by-class/{classId}', [AdminController::class, 'getStudents
 
 // Teacher Routes
 Route::middleware(['auth', CheckRole::class . ':teacher'])->prefix('teacher')->name('teacher.')->group(function () {
+
+    // Dashboard
     Route::get('/dashboard', [TeacherController::class, 'dashboard'])->name('dashboard');
     Route::get('/subjects', [TeacherController::class, 'subjects'])->name('subjects');
     Route::post('/upload-score', [TeacherController::class, 'uploadScores'])->name('upload-score');
     Route::get('/report-card/{student}', [TeacherController::class, 'generateReportCard'])->name('report-card');
+    
+    // Question Management
+    Route::get('/questions', [TeacherQuestionController::class, 'index'])->name('questions');
+    Route::get('/questions/create', [TeacherQuestionController::class, 'create'])->name('questions.create');
+    Route::post('/questions', [TeacherQuestionController::class, 'store'])->name('questions.store');
+    Route::get('/questions/{id}/edit', [TeacherQuestionController::class, 'edit'])->name('questions.edit');
+    Route::put('/questions/{id}', [TeacherQuestionController::class, 'update'])->name('questions.update');
+    Route::delete('/questions/{id}', [TeacherQuestionController::class, 'delete'])->name('questions.delete');
+    Route::delete('/questions/bulk-delete', [TeacherQuestionController::class, 'bulkDelete'])->name('questions.bulk-delete');
+    
+    // Question Import
+    Route::get('/questions/import', [TeacherQuestionController::class, 'import'])->name('questions.import');
+    Route::post('/questions/import-csv', [TeacherQuestionController::class, 'importCSV'])->name('questions.import.csv');
+    Route::get('/questions/download-template', [TeacherQuestionController::class, 'downloadTemplate'])->name('questions.download-template');
+    
+    // AJAX Routes
+    Route::get('/questions/by-subject/{subjectId}', [TeacherQuestionController::class, 'getQuestionsBySubject'])->name('questions.by-subject');
+    
+    // Exam Management
+     // Exam Management
+    Route::get('/exams', [ExamController::class, 'index'])->name('exams');
+    Route::get('/exams/create', [ExamController::class, 'create'])->name('exams.create');
+    Route::post('/exams', [ExamController::class, 'store'])->name('exams.store');
+    Route::get('/exams/{id}', [ExamController::class, 'show'])->name('exams.show');
+    Route::get('/exams/{id}/edit', [ExamController::class, 'edit'])->name('exams.edit');
+    Route::put('/exams/{id}', [ExamController::class, 'update'])->name('exams.update');
+    Route::delete('/exams/{id}', [ExamController::class, 'delete'])->name('exams.delete');
+    Route::post('/exams/{id}/publish', [ExamController::class, 'publish'])->name('exams.publish');
+    Route::post('/exams/{id}/unpublish', [ExamController::class, 'unpublish'])->name('exams.unpublish');
+    // AJAX routes for exams
+    Route::get('/exams/questions/{subjectId}', [ExamController::class, 'getQuestions'])->name('exams.questions');
+    Route::get('/exams/students/{examId}', [ExamController::class, 'getStudents'])->name('exams.students');
 });
 
 // Student Routes

@@ -17,7 +17,7 @@ class QuestionController extends Controller
     public function index()
     {
         $questions = Question::with('subject')->paginate(20);
-        return view('admin.questions.index', compact('questions'));
+       return view('admin.questions.index', compact('questions'));
     }
 
     public function create()
@@ -208,7 +208,7 @@ class QuestionController extends Controller
                 $questions[] = [
                     'subject_id' => $request->subject_id,
                     'question_text' => $data['question'],
-                    'options' => $options,
+                    'options' => json_encode($options),
                     'correct_answer' => $correctAnswer,
                     'score' => isset($data['score']) && is_numeric($data['score']) ? (int)$data['score'] : 1,
                     'difficulty' => isset($data['difficulty']) ? strtolower(trim($data['difficulty'])) : 'medium',
