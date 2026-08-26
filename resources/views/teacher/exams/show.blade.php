@@ -17,7 +17,7 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">{{ $exam->title }}</h5>
                     <div>
-                        <span class="{{ $exam->status_badge }}">
+                        <span class="{!! $exam->status_badge !!}">
                             {{ $exam->status_text }}
                         </span>
                         @if($exam->is_published)
@@ -57,23 +57,71 @@
                                 <td><strong>Created By:</strong></td>
                                 <td>{{ $exam->creator->name }}</td>
                             </tr>
+                            <tr>
+                                <td><strong>Schedule Type:</strong></td>
+                                <td>
+                                    @if($exam->schedule_type == 'no_date')
+                                        <span class="badge bg-info">Always Available</span>
+                                    @elseif($exam->schedule_type == 'single_date')
+                                        <span class="badge bg-primary">Single Date</span>
+                                    @else
+                                        <span class="badge bg-warning">Date Range</span>
+                                    @endif
+                                </td>
+                            </tr>
+                            @if($exam->max_attempts > 0)
+                                <tr>
+                                    <td><strong>Max Attempts:</strong></td>
+                                    <td>{{ $exam->max_attempts }}</td>
+                                </tr>
+                            @else
+                                <tr>
+                                    <td><strong>Max Attempts:</strong></td>
+                                    <td>Unlimited</td>
+                                </tr>
+                            @endif
+                            @if($exam->passing_score)
+                                <tr>
+                                    <td><strong>Passing Score:</strong></td>
+                                    <td>{{ $exam->passing_score }}%</td>
+                                </tr>
+                            @endif
                         </table>
                     </div>
                     <div class="col-md-6">
                         <h6>Schedule</h6>
                         <table class="table table-sm table-borderless">
-                            <tr>
-                                <td><strong>Start Date:</strong></td>
-                                <td>{{ $exam->formatted_start_date }}</td>
-                            </tr>
-                            <tr>
-                                <td><strong>End Date:</strong></td>
-                                <td>{{ $exam->formatted_end_date }}</td>
-                            </tr>
+                            @if($exam->schedule_type == 'no_date')
+                                <tr>
+                                    <td colspan="2">
+                                        <span class="text-success"><i class="bi bi-infinity"></i> Always Available</span>
+                                    </td>
+                                </tr>
+                            @elseif($exam->schedule_type == 'single_date')
+                                <tr>
+                                    <td><strong>Start Date:</strong></td>
+                                    <td>{{ $exam->formatted_start_date }}</td>
+                                </tr>
+                                @if($exam->end_date)
+                                    <tr>
+                                        <td><strong>End Date:</strong></td>
+                                        <td>{{ $exam->formatted_end_date }}</td>
+                                    </tr>
+                                @endif
+                            @elseif($exam->schedule_type == 'date_range')
+                                <tr>
+                                    <td><strong>Available From:</strong></td>
+                                    <td>{{ $exam->available_from ? $exam->available_from->timezone(config('app.timezone'))->format('F d, Y h:i A') : 'Not Set' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Available To:</strong></td>
+                                    <td>{{ $exam->available_to ? $exam->available_to->timezone(config('app.timezone'))->format('F d, Y h:i A') : 'Not Set' }}</td>
+                                </tr>
+                            @endif
                             <tr>
                                 <td><strong>Status:</strong></td>
                                 <td>
-                                    @if($exam->is_active)
+                                    @if($exam->is_available)
                                         <span class="badge bg-success">Available Now</span>
                                     @elseif($exam->is_upcoming)
                                         <span class="badge bg-info">Upcoming</span>
@@ -182,6 +230,12 @@
                         {{ $exam->pass_rate }}%
                     </div>
                 </div>
+                @if($exam->max_attempts > 0)
+                    <div class="mb-3">
+                        <h6>Max Attempts</h6>
+                        <h5>{{ $exam->max_attempts }}</h5>
+                    </div>
+                @endif
             </div>
         </div>
 

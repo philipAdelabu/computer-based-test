@@ -1,4 +1,4 @@
-
+<!-- resources/views/teacher/exams/create.blade.php -->
 @extends('layouts.app')
 
 @section('title', 'Create Exam')
@@ -12,19 +12,12 @@
 @section('content')
 <div class="row">
     <div class="col-lg-10 mx-auto">
-        <!-- Add this to your exam create and edit views -->
-            <div class="alert alert-info">
-                <i class="bi bi-clock"></i>
-                <strong>Timezone:</strong> All times are displayed in 
-                <strong>{{ config('app.timezone') }}</strong> timezone.
-                <br>
-                <small>Current server time: {{ Carbon\Carbon::now()->timezone(config('app.timezone'))->format('F d, Y h:i A') }}</small>
-            </div>
         <div class="card">
             <div class="card-body">
-                <form action="{{ route('teacher.exams.store') }}" method="POST" id="examForm">
+                <form action="{{ route('teacher.exams.store') }}" method="POST" id="examForm" novalidate>
                     @csrf
                     
+                    <!-- Basic Information -->
                     <div class="row mb-3">
                         <div class="col-md-8">
                             <label class="form-label fw-semibold">Exam Title <span class="text-danger">*</span></label>
@@ -59,27 +52,97 @@
                         @enderror
                     </div>
                     
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Start Date & Time <span class="text-danger">*</span></label>
-                            <input type="datetime-local" name="start_date" class="form-control @error('start_date') is-invalid @enderror" 
-                                   value="{{ old('start_date') }}" required>
-                            @error('start_date')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
+                    <!-- Schedule Type Selection -->
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Schedule Type <span class="text-danger">*</span></label>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <div class="form-check p-3 border rounded schedule-option" data-type="no_date">
+                                    <input class="form-check-input" type="radio" name="schedule_type" value="no_date" 
+                                           id="noDate" {{ old('schedule_type', 'single_date') == 'no_date' ? 'checked' : '' }}>
+                                    <label class="form-check-label d-block" for="noDate">
+                                        <h6><i class="bi bi-infinity"></i> No Date</h6>
+                                        <small class="text-muted">Always available to students</small>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check p-3 border rounded schedule-option" data-type="single_date">
+                                    <input class="form-check-input" type="radio" name="schedule_type" value="single_date" 
+                                           id="singleDate" {{ old('schedule_type', 'single_date') == 'single_date' ? 'checked' : '' }}>
+                                    <label class="form-check-label d-block" for="singleDate">
+                                        <h6><i class="bi bi-calendar-event"></i> Single Date</h6>
+                                        <small class="text-muted">Available on a specific date/time</small>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check p-3 border rounded schedule-option" data-type="date_range">
+                                    <input class="form-check-input" type="radio" name="schedule_type" value="date_range" 
+                                           id="dateRange" {{ old('schedule_type') == 'date_range' ? 'checked' : '' }}>
+                                    <label class="form-check-label d-block" for="dateRange">
+                                        <h6><i class="bi bi-calendar-range"></i> Date Range</h6>
+                                        <small class="text-muted">Available for a period</small>
+                                    </label>
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">End Date & Time <span class="text-danger">*</span></label>
-                            <input type="datetime-local" name="end_date" class="form-control @error('end_date') is-invalid @enderror" 
-                                   value="{{ old('end_date') }}" required>
-                            @error('end_date')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
+                        @error('schedule_type')
+                            <div class="text-danger mt-2">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <!-- Single Date Fields -->
+                    <div id="singleDateFields" class="mb-3" style="display: {{ old('schedule_type', 'single_date') == 'single_date' ? 'block' : 'none' }};">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Start Date & Time <span class="text-danger" id="singleDateStartRequired">*</span></label>
+                                <input type="datetime-local" name="start_date" class="form-control @error('start_date') is-invalid @enderror" 
+                                       value="{{ old('start_date') }}" 
+                                       {{ old('schedule_type', 'single_date') == 'single_date' ? 'required' : '' }}>
+                                @error('start_date')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">End Date & Time</label>
+                                <input type="datetime-local" name="end_date" class="form-control @error('end_date') is-invalid @enderror" 
+                                       value="{{ old('end_date') }}">
+                                <small class="text-muted">Leave empty for 24-hour availability</small>
+                                @error('end_date')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
                         </div>
                     </div>
-                    
+
+                    <!-- Date Range Fields -->
+                    <div id="dateRangeFields" class="mb-3" style="display: {{ old('schedule_type') == 'date_range' ? 'block' : 'none' }};">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Available From <span class="text-danger" id="dateRangeFromRequired">*</span></label>
+                                <input type="datetime-local" name="available_from" class="form-control @error('available_from') is-invalid @enderror" 
+                                       value="{{ old('available_from') }}"
+                                       {{ old('schedule_type') == 'date_range' ? 'required' : '' }}>
+                                @error('available_from')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Available To <span class="text-danger" id="dateRangeToRequired">*</span></label>
+                                <input type="datetime-local" name="available_to" class="form-control @error('available_to') is-invalid @enderror" 
+                                       value="{{ old('available_to') }}"
+                                       {{ old('schedule_type') == 'date_range' ? 'required' : '' }}>
+                                @error('available_to')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Exam Settings -->
                     <div class="row mb-3">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label fw-semibold">Duration (Minutes) <span class="text-danger">*</span></label>
                             <input type="number" name="duration_minutes" class="form-control @error('duration_minutes') is-invalid @enderror" 
                                    value="{{ old('duration_minutes', 30) }}" min="5" max="180" required>
@@ -87,19 +150,30 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Publish Status</label>
-                            <div class="form-check form-switch mt-2">
-                                <input class="form-check-input" type="checkbox" name="is_published" value="1" 
-                                       id="publishSwitch" {{ old('is_published') ? 'checked' : '' }}>
-                                <label class="form-check-label" for="publishSwitch">
-                                    <span id="publishLabel">Draft (Not visible to students)</span>
-                                </label>
-                            </div>
-                            <small class="text-muted">Publish to make the exam visible to students</small>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Max Attempts</label>
+                            <select name="max_attempts" class="form-select @error('max_attempts') is-invalid @enderror">
+                                <option value="1" {{ old('max_attempts', 1) == 1 ? 'selected' : '' }}>1 (Default)</option>
+                                <option value="2" {{ old('max_attempts') == 2 ? 'selected' : '' }}>2</option>
+                                <option value="3" {{ old('max_attempts') == 3 ? 'selected' : '' }}>3</option>
+                                <option value="5" {{ old('max_attempts') == 5 ? 'selected' : '' }}>5</option>
+                                <option value="0" {{ old('max_attempts') == 0 ? 'selected' : '' }}>Unlimited</option>
+                            </select>
+                            @error('max_attempts')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Passing Score (%)</label>
+                            <input type="number" name="passing_score" class="form-control @error('passing_score') is-invalid @enderror" 
+                                   value="{{ old('passing_score') }}" placeholder="Optional" min="0" max="100">
+                            <small class="text-muted">Leave empty for no passing requirement</small>
+                            @error('passing_score')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
                     </div>
-                    
+
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Instructions for Students</label>
                         <textarea name="instructions" class="form-control @error('instructions') is-invalid @enderror" 
@@ -108,7 +182,34 @@
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
-                    
+
+                    <!-- Additional Options -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="is_published" value="1" 
+                                       id="publishSwitch" {{ old('is_published') ? 'checked' : '' }}>
+                                <label class="form-check-label" for="publishSwitch">
+                                    <strong>Publish Exam</strong>
+                                    <br>
+                                    <small class="text-muted">Make visible to students</small>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="show_answers_after_completion" value="1" 
+                                       id="showAnswers" {{ old('show_answers_after_completion') ? 'checked' : '' }}>
+                                <label class="form-check-label" for="showAnswers">
+                                    <strong>Show Answers After Completion</strong>
+                                    <br>
+                                    <small class="text-muted">Students can review correct answers</small>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Question Selection -->
                     <div class="mb-4">
                         <label class="form-label fw-semibold">Select Questions <span class="text-danger">*</span></label>
                         <div id="questionsContainer">
@@ -128,7 +229,7 @@
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
                     </div>
-                    
+
                     <div class="text-center mt-4">
                         <button type="submit" class="btn btn-primary btn-lg px-5" id="submitBtn">
                             <i class="bi bi-save"></i> Create Exam
@@ -142,64 +243,128 @@
 </div>
 @endsection
 
-
+@push('styles')
+<style>
+.schedule-option {
+    cursor: pointer;
+    transition: all 0.3s;
+}
+.schedule-option:hover {
+    border-color: #0d6efd;
+    background: #f8f9fa;
+}
+.schedule-option.active {
+    border-color: #0d6efd;
+    background: #e7f3ff;
+}
+</style>
+@endpush
 
 @push('scripts')
 <script>
 $(document).ready(function() {
-    let availableQuestions = [];
+    // Schedule type toggle
+    function toggleScheduleFields() {
+        const selected = $('input[name="schedule_type"]:checked').val();
+        
+        // Hide all date fields
+        $('#singleDateFields').hide();
+        $('#dateRangeFields').hide();
+        
+        // Remove required attributes from all date inputs
+        $('input[name="start_date"]').removeAttr('required');
+        $('input[name="end_date"]').removeAttr('required');
+        $('input[name="available_from"]').removeAttr('required');
+        $('input[name="available_to"]').removeAttr('required');
+        
+        // Hide asterisks
+        $('#singleDateStartRequired').hide();
+        $('#dateRangeFromRequired').hide();
+        $('#dateRangeToRequired').hide();
+        
+        // Show relevant fields and set required
+        if (selected === 'single_date') {
+            $('#singleDateFields').show();
+            $('input[name="start_date"]').attr('required', true);
+            $('#singleDateStartRequired').show();
+        } else if (selected === 'date_range') {
+            $('#dateRangeFields').show();
+            $('input[name="available_from"]').attr('required', true);
+            $('input[name="available_to"]').attr('required', true);
+            $('#dateRangeFromRequired').show();
+            $('#dateRangeToRequired').show();
+        }
+    }
+    
+    // Initialize
+    toggleScheduleFields();
+    
+    // Handle schedule option click
+    $('.schedule-option').on('click', function() {
+        const radio = $(this).find('input[type="radio"]');
+        radio.prop('checked', true);
+        $('.schedule-option').removeClass('active');
+        $(this).addClass('active');
+        toggleScheduleFields();
+    });
+    
+    // Check initial active state
+    $('input[name="schedule_type"]:checked').closest('.schedule-option').addClass('active');
+    
+    // Schedule type change
+    $('input[name="schedule_type"]').on('change', function() {
+        $('.schedule-option').removeClass('active');
+        $(this).closest('.schedule-option').addClass('active');
+        toggleScheduleFields();
+    });
     
     // Load questions when subject is selected
+    let availableQuestions = [];
+    
     $('#subjectSelect').on('change', function() {
         const subjectId = $(this).val();
         if (!subjectId) {
             $('#noQuestionsMessage').html(`
                 <i class="bi bi-info-circle"></i> Select a subject above to load available questions
-            `);
-            $('#noQuestionsMessage').show();
+            `).show();
             $('#questionsList').hide();
             $('#questionStats').hide();
             return;
         }
         
         // Show loading
-        $('#noQuestionsMessage').html('<div class="spinner-border text-primary" role="status"></div> Loading questions...');
-        $('#noQuestionsMessage').show();
+        $('#noQuestionsMessage').html(`
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Loading questions...</p>
+        `).show();
         $('#questionsList').hide();
         $('#questionStats').hide();
         
-        // Build the URL correctly with the subjectId
-       const baseUrl = "{{ url('/') }}";
-        const url = `${baseUrl}/teacher/questions/by-subject/${subjectId}`;
-        console.log('Fetching questions from:', url); // Debug log
-        
-        // Fetch questions
+        // Make AJAX request
+        const baseURL = "{{ url('/') }}";
         $.ajax({
-            url: url,
+            url: `${baseURL}/teacher/questions/by-subject/${subjectId}`,
             method: 'GET',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json'
-            },
-            success: function(questions) {
-                console.log('Questions loaded:', questions); // Debug log
-                availableQuestions = questions;
+            dataType: 'json',
+            success: function(response) {
+                availableQuestions = response;
                 
-                if (!questions || questions.length === 0) {
+                if (!response || response.length === 0) {
                     $('#noQuestionsMessage').html(`
                         <i class="bi bi-info-circle"></i> 
-                        No questions available for this subject. 
-                        <a href="{{ route('admin.questions.create') }}" class="text-decoration-none">Add questions</a>
+                        No questions available for this subject.
+                        <br>
+                        <a href="{{ route('teacher.questions.create') }}" class="text-decoration-none">
+                            <i class="bi bi-plus-circle"></i> Add questions
+                        </a>
                     `);
-                    $('#noQuestionsMessage').show();
-                    $('#questionsList').hide();
-                    $('#questionStats').hide();
                     return;
                 }
                 
-                // Display questions
                 let html = '<div class="border rounded p-3" style="max-height: 400px; overflow-y: auto;">';
-                questions.forEach((question, index) => {
+                response.forEach((question, index) => {
                     html += `
                         <div class="form-check p-2 border-bottom">
                             <input class="form-check-input question-checkbox" type="checkbox" 
@@ -225,71 +390,57 @@ $(document).ready(function() {
                 });
                 html += '</div>';
                 
+                // Add select all buttons
+                html = `
+                    <div class="mb-2">
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="selectAllBtn">
+                            <i class="bi bi-check-all"></i> Select All
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="deselectAllBtn">
+                            <i class="bi bi-x-circle"></i> Deselect All
+                        </button>
+                    </div>
+                    ${html}
+                `;
+                
                 $('#questionsList').html(html);
                 $('#noQuestionsMessage').hide();
                 $('#questionsList').show();
                 $('#questionStats').show();
                 
-                // Add event listeners
-                $('.question-checkbox').on('change', function() {
+                // Event handlers
+                $(document).on('change', '.question-checkbox', updateStats);
+                $(document).on('click', '#selectAllBtn', function() {
+                    $('.question-checkbox').prop('checked', true);
                     updateStats();
                 });
-                
-                // Add select/deselect all buttons if they don't exist
-                if ($('#selectAllBtn').length === 0) {
-                    $('#questionsList').before(`
-                        <div class="mb-2">
-                            <button type="button" class="btn btn-sm btn-outline-primary" id="selectAllBtn">
-                                <i class="bi bi-check-all"></i> Select All
-                            </button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary" id="deselectAllBtn">
-                                <i class="bi bi-x-circle"></i> Deselect All
-                            </button>
-                        </div>
-                    `);
-                    
-                    $('#selectAllBtn').on('click', function() {
-                        $('.question-checkbox').prop('checked', true);
-                        updateStats();
-                    });
-                    
-                    $('#deselectAllBtn').on('click', function() {
-                        $('.question-checkbox').prop('checked', false);
-                        updateStats();
-                    });
-                }
+                $(document).on('click', '#deselectAllBtn', function() {
+                    $('.question-checkbox').prop('checked', false);
+                    updateStats();
+                });
                 
                 updateStats();
             },
             error: function(xhr, status, error) {
-                console.error('Error loading questions:', error);
-                console.error('Status:', status);
-                console.error('Response:', xhr.responseText);
-                
+                console.error('Error:', error);
                 $('#noQuestionsMessage').html(`
                     <i class="bi bi-exclamation-triangle text-danger"></i> 
-                    Error loading questions. Please try again.
+                    Error loading questions. Please refresh and try again.
                     <br><small class="text-muted">${error}</small>
                 `);
-                $('#noQuestionsMessage').show();
-                $('#questionsList').hide();
-                $('#questionStats').hide();
             }
         });
     });
     
-    // Update statistics
     function updateStats() {
         const selected = $('.question-checkbox:checked');
         const count = selected.length;
         let totalScore = 0;
         
         selected.each(function() {
-            const questionId = $(this).val();
-            const question = availableQuestions.find(q => q.id == questionId);
-            if (question) {
-                totalScore += question.score;
-            }
+            const qId = $(this).val();
+            const question = availableQuestions.find(q => q.id == qId);
+            if (question) totalScore += question.score;
         });
         
         $('#selectedCount').text(count);
@@ -297,28 +448,44 @@ $(document).ready(function() {
         $('#totalQuestions').text(availableQuestions.length);
     }
     
-    // Publish switch label
-    $('#publishSwitch').on('change', function() {
-        if ($(this).is(':checked')) {
-            $('#publishLabel').text('Published (Visible to students)');
-        } else {
-            $('#publishLabel').text('Draft (Not visible to students)');
-        }
-    });
-    
     // Form validation
     $('#examForm').on('submit', function(e) {
-        const selected = $('.question-checkbox:checked').length;
-        if (selected === 0) {
+        // Remove novalidate to allow HTML5 validation
+        $(this).removeAttr('novalidate');
+        
+        // Check if questions are selected
+        if ($('.question-checkbox:checked').length === 0) {
             e.preventDefault();
             alert('Please select at least one question for the exam.');
             return false;
+        }
+        
+        // Validate schedule fields
+        const scheduleType = $('input[name="schedule_type"]:checked').val();
+        if (scheduleType === 'single_date') {
+            const startDate = $('input[name="start_date"]').val();
+            if (!startDate) {
+                e.preventDefault();
+                alert('Please set a start date for the exam.');
+                return false;
+            }
+        } else if (scheduleType === 'date_range') {
+            const fromDate = $('input[name="available_from"]').val();
+            const toDate = $('input[name="available_to"]').val();
+            if (!fromDate || !toDate) {
+                e.preventDefault();
+                alert('Please set both from and to dates for the date range.');
+                return false;
+            }
         }
         
         // Show loading
         $('#submitBtn').prop('disabled', true);
         $('#submitBtn').html('<span class="spinner-border spinner-border-sm" role="status"></span> Creating...');
     });
+    
+    // Remove novalidate on page load to allow HTML5 validation
+    $('#examForm').removeAttr('novalidate');
 });
 </script>
 @endpush

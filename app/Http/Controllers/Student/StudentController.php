@@ -10,21 +10,121 @@ use App\Models\Result;
 use App\Models\ReportCard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\View;
+use Carbon\Carbon;
 
 class StudentController extends Controller
 {
+ 
+   public function __construct()
+    {
+        // Apply auth middleware to all methods
+       // $this->middleware('auth');
+        
+        // Share available exams count with all student views
+        $this->shareAvailableExamsCount();
+    }
+
+    /**
+     * Share available exams count with all views
+     */
+    protected function shareAvailableExamsCount()
+    {
+        // Use view composer to share data
+        View::composer('student.*', function ($view) {
+            if (Auth::check() && Auth::user()->isStudent()) {
+                $student = Auth::user()->student;
+                $availableExamsCount = Exam::where('is_published', true)
+                    ->where('status', 'active')
+                    ->whereHas('subject', function($query) use ($student) {
+                        $query->where('class_id', $student->class_id);
+                    })
+                    ->where(function($query) {
+                        $now = Carbon::now(config('app.timezone'));
+                        $query->where('schedule_type', 'no_date')
+                            ->orWhere(function($q) use ($now) {
+                                $q->where('schedule_type', 'single_date')
+                                    ->where('start_date', '<=', $now)
+                                    ->where(function($sub) use ($now) {
+                                        $sub->whereNull('end_date')
+                                            ->orWhere('end_date', '>=', $now);
+                                    });
+                            })
+                            ->orWhere(function($q) use ($now) {
+                                $q->where('schedule_type', 'date_range')
+                                    ->where('available_from', '<=', $now)
+                                    ->where('available_to', '>=', $now);
+                            });
+                    })
+                    ->count();
+                
+                $view->with('availableExamsCount', $availableExamsCount);
+            }
+        });
+    }
+
     public function dashboard()
     {
         $student = Auth::user()->student;
         
-        $availableExams = Exam::where('status', 'active')
-                             ->where('start_date', '<=', now())
-                             ->where('end_date', '>=', now())
-                             ->whereHas('subject', function($query) use ($student) {
-                                 $query->where('class_id', $student->class_id);
-                             })
-                             ->count();
+        // Get the student's class and subjects
+        $class = $student->class;
+        $subjects = $class ? $class->subjects : collect();
         
+        // Get available exams for the student's class
+        $availableExamsList = Exam::where('is_published', true)
+            ->where('status', 'active')
+            ->whereHas('subject', function($query) use ($student) {
+                $query->where('class_id', $student->class_id);
+            })
+            ->where(function($query) {
+                $now = Carbon::now(config('app.timezone'));
+                $query->where('schedule_type', 'no_date')
+                    ->orWhere(function($q) use ($now) {
+                        $q->where('schedule_type', 'single_date')
+                            ->where('start_date', '<=', $now)
+                            ->where(function($sub) use ($now) {
+                                $sub->whereNull('end_date')
+                                    ->orWhere('end_date', '>=', $now);
+                            });
+                    })
+                    ->orWhere(function($q) use ($now) {
+                        $q->where('schedule_type', 'date_range')
+                            ->where('available_from', '<=', $now)
+                            ->where('available_to', '>=', $now);
+                    });
+            })
+            ->with(['subject', 'attempts' => function($query) use ($student) {
+                $query->where('student_id', $student->id);
+            }])
+            ->orderBy('start_date')
+            ->limit(6)
+            ->get();
+        
+        // Get upcoming exams
+        $upcomingExamsList = Exam::where('is_published', true)
+            ->where('status', 'active')
+            ->whereHas('subject', function($query) use ($student) {
+                $query->where('class_id', $student->class_id);
+            })
+            ->where(function($query) {
+                $now = Carbon::now(config('app.timezone'));
+                $query->where(function($q) use ($now) {
+                    $q->where('schedule_type', 'single_date')
+                        ->where('start_date', '>', $now);
+                })->orWhere(function($q) use ($now) {
+                    $q->where('schedule_type', 'date_range')
+                        ->where('available_from', '>', $now);
+                });
+            })
+            ->with('subject')
+            ->orderBy('start_date')
+            ->limit(4)
+            ->get();
+        
+        // Count statistics
+        $availableExams = $availableExamsList->count();
+        $upcomingExams = $upcomingExamsList->count();
         $completedExams = ExamAttempt::where('student_id', $student->id)
                                     ->where('status', 'submitted')
                                     ->count();
@@ -39,43 +139,76 @@ class StudentController extends Controller
                               ->get();
         
         return view('student.dashboard', compact(
-            'availableExams', 'completedExams', 'averageScore', 'recentResults'
+            'student',
+            'class',
+            'subjects',
+            'availableExamsList',
+            'upcomingExamsList',
+            'availableExams',
+            'upcomingExams',
+            'completedExams',
+            'averageScore',
+            'recentResults'
         ));
     }
 
-  // app/Http/Controllers/Student/StudentController.php
+// app/Http/Controllers/Student/StudentController.php
 // Update the exams method
 
 public function exams()
 {
     $student = Auth::user()->student;
     
-    // Get available exams (published, active, and within date range)
+    // Available exams (active and within date range)
     $availableExams = Exam::where('is_published', true)
-                         ->where('status', 'active')
-                         ->where('start_date', '<=', now())
-                         ->where('end_date', '>=', now())
-                         ->whereHas('subject', function($query) use ($student) {
-                             $query->where('class_id', $student->class_id);
-                         })
-                         ->with(['subject', 'attempts' => function($query) use ($student) {
-                             $query->where('student_id', $student->id);
-                         }])
-                         ->orderBy('start_date')
-                         ->get();
+        ->where('status', 'active')
+        ->whereHas('subject', function($query) use ($student) {
+            $query->where('class_id', $student->class_id);
+        })
+        ->where(function($query) {
+            $now = Carbon::now(config('app.timezone'));
+            $query->where('schedule_type', 'no_date')
+                ->orWhere(function($q) use ($now) {
+                    $q->where('schedule_type', 'single_date')
+                        ->where('start_date', '<=', $now)
+                        ->where(function($sub) use ($now) {
+                            $sub->whereNull('end_date')
+                                ->orWhere('end_date', '>=', $now);
+                        });
+                })
+                ->orWhere(function($q) use ($now) {
+                    $q->where('schedule_type', 'date_range')
+                        ->where('available_from', '<=', $now)
+                        ->where('available_to', '>=', $now);
+                });
+        })
+        ->with(['subject', 'attempts' => function($query) use ($student) {
+            $query->where('student_id', $student->id);
+        }])
+        ->orderBy('start_date')
+        ->get();
     
-    // Get upcoming exams
+    // Upcoming exams
     $upcomingExams = Exam::where('is_published', true)
-                        ->where('status', 'upcoming')
-                        ->where('start_date', '>', now())
-                        ->whereHas('subject', function($query) use ($student) {
-                            $query->where('class_id', $student->class_id);
-                        })
-                        ->with(['subject'])
-                        ->orderBy('start_date')
-                        ->get();
+        ->where('status', 'active')
+        ->whereHas('subject', function($query) use ($student) {
+            $query->where('class_id', $student->class_id);
+        })
+        ->where(function($query) {
+            $now = Carbon::now(config('app.timezone'));
+            $query->where(function($q) use ($now) {
+                $q->where('schedule_type', 'single_date')
+                    ->where('start_date', '>', $now);
+            })->orWhere(function($q) use ($now) {
+                $q->where('schedule_type', 'date_range')
+                    ->where('available_from', '>', $now);
+            });
+        })
+        ->with(['subject'])
+        ->orderBy('start_date')
+        ->get();
     
-    // Get completed exams
+    // Completed exams - ONLY get submitted attempts
     $completedExams = ExamAttempt::where('student_id', $student->id)
                                 ->where('status', 'submitted')
                                 ->with(['exam', 'exam.subject'])
@@ -85,6 +218,7 @@ public function exams()
     return view('student.exams', compact('availableExams', 'upcomingExams', 'completedExams'));
 }
 
+     // app/Http/Controllers/Student/StudentController.php
 public function takeExam($examId)
 {
     $student = Auth::user()->student;
@@ -105,16 +239,22 @@ public function takeExam($examId)
         return redirect()->route('student.exam.continue', $canTake['attempt']->id);
     }
     
-    // Create new attempt
+    // Count existing attempts
+    $attemptCount = ExamAttempt::where('exam_id', $examId)
+                              ->where('student_id', $student->id)
+                              ->count();
+    
+    // Create new attempt with attempt number
     $attempt = ExamAttempt::create([
         'exam_id' => $examId,
         'student_id' => $student->id,
+        'attempt_number' => $attemptCount + 1,
         'started_at' => now(),
         'status' => 'in_progress',
     ]);
     
     return redirect()->route('student.exam.continue', $attempt->id);
-}
+} 
 
     public function continueExam($attemptId)
     {
@@ -130,7 +270,7 @@ public function takeExam($examId)
         }
         
         // Check if exam is still active
-        if (!$attempt->exam->isActive()) {
+        if (!($attempt->exam->status == 'active')) {
             return redirect()->route('student.exams')
                 ->with('error', 'This exam has expired.');
         }

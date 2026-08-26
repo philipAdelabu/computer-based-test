@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
 
 class ExamAttempt extends Model
 {
@@ -12,6 +13,7 @@ class ExamAttempt extends Model
     protected $fillable = [
         'exam_id',
         'student_id',
+        'attempt_number',
         'started_at',
         'completed_at',
         'answers',
@@ -42,10 +44,10 @@ class ExamAttempt extends Model
             return 0;
         }
         
-        $started = $this->started_at;
-        $duration = $this->exam->duration_minutes;
-        $endTime = $started->addMinutes($duration);
-        $now = now();
+          $started = $this->started_at->timezone(config('app.timezone'));
+          $duration = $this->exam->duration_minutes;
+          $endTime = $started->addMinutes($duration);
+          $now = Carbon::now(config('app.timezone'));
         
         if ($now->gt($endTime)) {
             return 0;
@@ -60,7 +62,7 @@ class ExamAttempt extends Model
             return 0;
         }
         
-        $end = $this->completed_at ?? now();
-        return $this->started_at->diffInSeconds($end);
+         $end = $this->completed_at ?? Carbon::now(config('app.timezone'));
+         return $this->started_at->timezone(config('app.timezone'))->diffInSeconds($end->timezone(config('app.timezone')));
     }
 }

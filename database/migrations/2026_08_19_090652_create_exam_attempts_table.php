@@ -18,6 +18,7 @@ return new class extends Migration
             $table->json('answers')->nullable();
             $table->integer('score')->nullable();
             $table->integer('total_questions_answered')->default(0);
+            $table->integer('attempt_number')->default(1);
             $table->enum('status', ['in_progress', 'submitted', 'timed_out'])->default('in_progress');
             $table->timestamps();
         });

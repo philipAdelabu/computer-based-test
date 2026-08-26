@@ -10,27 +10,42 @@ class Exam extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'title',
-        'description',
-        'subject_id',
-        'duration_minutes',
-        'total_questions',
-        'total_score',
-        'start_date',
-        'end_date',
-        'status',
-        'created_by_role',
-        'created_by',
-        'instructions',
-        'is_published',
-    ];
+     const SCHEDULE_NO_DATE = 'no_date';
+    const SCHEDULE_SINGLE_DATE = 'single_date';
+    const SCHEDULE_DATE_RANGE = 'date_range';
 
-    protected $casts = [
-        'start_date' => 'datetime',
-        'end_date' => 'datetime',
-        'is_published' => 'boolean',
-    ];
+   protected $fillable = [
+    'title',
+    'description',
+    'subject_id',
+    'duration_minutes',
+    'total_questions',
+    'total_score',
+    'schedule_type',        // Add this
+    'start_date',
+    'end_date',
+    'available_from',       // Add this
+    'available_to',         // Add this
+    'status',
+    'created_by_role',
+    'created_by',
+    'instructions',
+    'is_published',
+    'max_attempts',         // Add this
+    'passing_score',        // Add this
+    'show_answers_after_completion', // Add this
+];
+
+protected $casts = [
+    'start_date' => 'datetime',
+    'end_date' => 'datetime',
+    'available_from' => 'datetime',
+    'available_to' => 'datetime',
+    'is_published' => 'boolean',
+    'show_answers_after_completion' => 'boolean',
+    'max_attempts' => 'integer',
+    'passing_score' => 'integer',
+];
 
     // Relationships
     public function subject()
@@ -144,23 +159,53 @@ class Exam extends Model
 
       public function getFormattedStartDateAttribute()
     {
+         if (!$this->start_date) {
+            return null;
+        }
         return $this->start_date->timezone(config('app.timezone'))->format('F d, Y h:i A');
     }
 
     public function getFormattedEndDateAttribute()
     {
+         if (!$this->end_date) {
+            return null;
+        }
         return $this->end_date->timezone(config('app.timezone'))->format('F d, Y h:i A');
     }
 
     // Get dates for JavaScript (ISO format with timezone)
     public function getStartDateIsoAttribute()
     {
+         if (!$this->start_date) {
+            return null;
+        }
         return $this->start_date->timezone(config('app.timezone'))->toISOString();
     }
 
     public function getEndDateIsoAttribute()
     {
+         if (!$this->end_date) {
+            return null;
+        }
         return $this->end_date->timezone(config('app.timezone'))->toISOString();
+    }
+
+     // Get available from date
+    public function getFormattedAvailableFromAttribute()
+    {
+        if (!$this->available_from) {
+            return 'Not Set';
+        }
+        return $this->available_from->timezone(config('app.timezone'))->format('F d, Y h:i A');
+    }
+
+    // Get available to date
+    public function getFormattedAvailableToAttribute()
+    {
+        if (!$this->available_to) {
+            return 'Not Set';
+        }
+        return $this->available_to->timezone(config('app.timezone'))->format('F d, Y h:i A');
     }
 
     // Check if exam is active in user's timezone
@@ -223,44 +268,221 @@ class Exam extends Model
         return sprintf('%02d:%02d', $minutes, $secs);
     }
 
-    // Check if student can take exam with timezone consideration
-    public function canStudentTake($studentId)
+    
+     // Check if exam is available for students
+    public function getIsAvailableAttribute()
     {
+        if (!$this->is_published) {
+            return false;
+        }
+
         $now = Carbon::now(config('app.timezone'));
-        $start = $this->start_date->timezone(config('app.timezone'));
-        $end = $this->end_date->timezone(config('app.timezone'));
+
+        switch ($this->schedule_type) {
+            case self::SCHEDULE_NO_DATE:
+                // Always available
+                return $this->status === 'active';
+
+            case self::SCHEDULE_SINGLE_DATE:
+                if (!$this->start_date) return false;
+                $start = $this->start_date->timezone(config('app.timezone'));
+                $end = $this->end_date ? $this->end_date->timezone(config('app.timezone')) : $start->copy()->addDay();
+                return $this->status === 'active' && $now->between($start, $end);
+
+            case self::SCHEDULE_DATE_RANGE:
+                if (!$this->available_from || !$this->available_to) return false;
+                $from = $this->available_from->timezone(config('app.timezone'));
+                $to = $this->available_to->timezone(config('app.timezone'));
+                return $this->status === 'active' && $now->between($from, $to);
+
+            default:
+                return false;
+        }
+    }
+
+    // Get formatted availability text
+    public function getAvailabilityTextAttribute()
+    {
+        switch ($this->schedule_type) {
+            case self::SCHEDULE_NO_DATE:
+                return 'Always Available';
+
+            case self::SCHEDULE_SINGLE_DATE:
+                if ($this->start_date && $this->end_date) {
+                    return $this->formatted_start_date . ' - ' . $this->formatted_end_date;
+                } elseif ($this->start_date) {
+                    return $this->formatted_start_date;
+                }
+                return 'Date not set';
+
+            case self::SCHEDULE_DATE_RANGE:
+                if ($this->available_from && $this->available_to) {
+                    return $this->available_from->timezone(config('app.timezone'))->format('M d, Y') . ' - ' . 
+                           $this->available_to->timezone(config('app.timezone'))->format('M d, Y');
+                }
+                return 'Date range not set';
+
+            default:
+                return 'Not available';
+        }
+    }
+
+    // Get the exam status with availability
+    public function getStatusWithAvailabilityAttribute()
+    {
+        if (!$this->is_published) {
+            return ['status' => 'draft', 'label' => 'Draft', 'color' => 'secondary'];
+        }
+
+        if ($this->status === 'completed') {
+            return ['status' => 'completed', 'label' => 'Completed', 'color' => 'secondary'];
+        }
+
+        if ($this->status === 'cancelled') {
+            return ['status' => 'cancelled', 'label' => 'Cancelled', 'color' => 'danger'];
+        }
+
+        if ($this->is_available) {
+            return ['status' => 'available', 'label' => 'Available', 'color' => 'success'];
+        }
+
+        // Check if it's upcoming
+        $now = Carbon::now(config('app.timezone'));
+        $start = $this->start_date ? $this->start_date->timezone(config('app.timezone')) : null;
+        $availableFrom = $this->available_from ? $this->available_from->timezone(config('app.timezone')) : null;
+
+        if (($start && $now->lt($start)) || ($availableFrom && $now->lt($availableFrom))) {
+            return ['status' => 'upcoming', 'label' => 'Upcoming', 'color' => 'info'];
+        }
+
+        // Check if it's expired
+        $end = $this->end_date ? $this->end_date->timezone(config('app.timezone')) : null;
+        $availableTo = $this->available_to ? $this->available_to->timezone(config('app.timezone')) : null;
+
+        if (($end && $now->gt($end)) || ($availableTo && $now->gt($availableTo))) {
+            return ['status' => 'expired', 'label' => 'Expired', 'color' => 'warning'];
+        }
+
+        return ['status' => 'inactive', 'label' => 'Inactive', 'color' => 'secondary'];
+    }
+
+  
+
+  // app/Models/Exam.php - Update the canStudentTake method
+
+public function canStudentTake($studentId)
+{
+    // Check if exam is published
+    if (!$this->is_published) {
+        return ['can' => false, 'reason' => 'This exam is not published yet.'];
+    }
+
+    // Check if exam is active
+    if ($this->status !== 'active') {
+        return ['can' => false, 'reason' => 'This exam is not active.'];
+    }
+
+    // Check availability
+    if (!$this->is_available) {
+        $now = Carbon::now(config('app.timezone'));
         
-        // Check if exam is active and published
-        if (!$this->is_active) {
+        if ($this->schedule_type === self::SCHEDULE_SINGLE_DATE && $this->start_date) {
+            $start = $this->start_date->timezone(config('app.timezone'));
             if ($now->lt($start)) {
                 return ['can' => false, 'reason' => 'This exam will start on ' . $this->formatted_start_date];
             }
-            if ($now->gt($end)) {
-                return ['can' => false, 'reason' => 'This exam has already ended.'];
-            }
-            return ['can' => false, 'reason' => 'Exam is not currently available.'];
         }
 
-        // Check if student is in the subject's class
-        $student = Student::find($studentId);
-        if (!$student || $student->class_id !== $this->subject->class_id) {
-            return ['can' => false, 'reason' => 'You are not enrolled in this subject.'];
-        }
-
-        // Check if student has already attempted
-        if ($this->hasStudentAttempted($studentId)) {
-            $attempt = $this->getStudentAttempt($studentId);
-            if ($attempt->status === 'submitted') {
-                return ['can' => false, 'reason' => 'You have already completed this exam.'];
-            }
-            if ($attempt->status === 'in_progress') {
-                return ['can' => true, 'reason' => 'Continue your exam.', 'attempt' => $attempt];
+        if ($this->schedule_type === self::SCHEDULE_DATE_RANGE && $this->available_from) {
+            $from = $this->available_from->timezone(config('app.timezone'));
+            if ($now->lt($from)) {
+                return ['can' => false, 'reason' => 'This exam will be available from ' . $this->availability_text];
             }
         }
 
-        return ['can' => true, 'reason' => 'You can take this exam.'];
+        return ['can' => false, 'reason' => 'This exam is not currently available.'];
     }
 
+    // Check if student is in the subject's class
+    $student = Student::find($studentId);
+    if (!$student || $student->class_id !== $this->subject->class_id) {
+        return ['can' => false, 'reason' => 'You are not enrolled in this subject.'];
+    }
+
+    // Check attempts
+    $attemptsCount = $this->attempts()->where('student_id', $studentId)->count();
+    
+    // Check max attempts
+    if ($this->max_attempts > 0 && $attemptsCount >= $this->max_attempts) {
+        // Check if any attempt is in progress
+        $inProgress = $this->attempts()
+            ->where('student_id', $studentId)
+            ->where('status', 'in_progress')
+            ->first();
+        
+        if ($inProgress) {
+            return ['can' => true, 'reason' => 'Continue your exam.', 'attempt' => $inProgress];
+        }
+        
+        return ['can' => false, 'reason' => 'You have reached the maximum number of attempts (' . $this->max_attempts . ').'];
+    }
+
+    // Check for in-progress attempt
+    $inProgress = $this->attempts()
+        ->where('student_id', $studentId)
+        ->where('status', 'in_progress')
+        ->first();
+
+    if ($inProgress) {
+        return ['can' => true, 'reason' => 'Continue your exam.', 'attempt' => $inProgress];
+    }
+
+    return ['can' => true, 'reason' => 'You can take this exam.'];
+}
+
+    // app/Models/Exam.php
+
+public function getDisplayDateAttribute()
+{
+    switch ($this->schedule_type) {
+        case 'no_date':
+            return 'Always Available';
+        case 'single_date':
+            $date = $this->formatted_start_date;
+            if ($this->end_date) {
+                $date .= ' - ' . $this->formatted_end_date;
+            }
+            return $date;
+        case 'date_range':
+            if ($this->available_from && $this->available_to) {
+                return $this->available_from->timezone(config('app.timezone'))->format('M d, Y h:i A') . 
+                       ' - ' . 
+                       $this->available_to->timezone(config('app.timezone'))->format('M d, Y h:i A');
+            }
+            return 'Date range not set';
+        default:
+            return 'Not set';
+    }
+}
+
+public function getShortDisplayDateAttribute()
+{
+    switch ($this->schedule_type) {
+        case 'no_date':
+            return 'Always Available';
+        case 'single_date':
+            return $this->start_date ? $this->start_date->timezone(config('app.timezone'))->format('M d, Y') : 'Not set';
+        case 'date_range':
+            if ($this->available_from && $this->available_to) {
+                return $this->available_from->timezone(config('app.timezone'))->format('M d') . 
+                       ' - ' . 
+                       $this->available_to->timezone(config('app.timezone'))->format('M d, Y');
+            }
+            return 'Not set';
+        default:
+            return 'Not set';
+    }
+}
 
 
 }

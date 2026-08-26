@@ -30,8 +30,8 @@
                         <th>Subject</th>
                         <th>Questions</th>
                         <th>Duration</th>
-                        <th>Start Date</th>
-                        <th>End Date</th>
+                        <th>Schedule Type</th>
+                        <th>Date/Time</th>
                         <th>Status</th>
                         <th>Published</th>
                         <th>Actions</th>
@@ -51,10 +51,42 @@
                             <td>{{ $exam->subject->name }}</td>
                             <td>{{ $exam->total_questions }}</td>
                             <td>{{ $exam->duration_minutes }} min</td>
-                            <td>{{ $exam->formatted_start_date }}</td>
-                            <td>{{ $exam->formatted_end_date }}</td>
                             <td>
-                                <span class="{{ $exam->status_badge }}">
+                                @if($exam->schedule_type == 'no_date')
+                                    <span class="badge bg-info">Always Available</span>
+                                @elseif($exam->schedule_type == 'single_date')
+                                    <span class="badge bg-primary">Single Date</span>
+                                @else
+                                    <span class="badge bg-warning">Date Range</span>
+                                @endif
+                            </td>
+                            <td>
+                                @if($exam->schedule_type == 'no_date')
+                                    <span class="text-success">Always Available</span>
+                                @elseif($exam->schedule_type == 'single_date')
+                                    <div>
+                                        <small class="text-muted">Start:</small><br>
+                                        <strong>{{ $exam->formatted_start_date }}</strong>
+                                    </div>
+                                    @if($exam->end_date)
+                                        <div>
+                                            <small class="text-muted">End:</small><br>
+                                            <strong>{{ $exam->formatted_end_date }}</strong>
+                                        </div>
+                                    @endif
+                                @elseif($exam->schedule_type == 'date_range')
+                                    <div>
+                                        <small class="text-muted">From:</small><br>
+                                        <strong>{{ $exam->available_from ? $exam->available_from->timezone(config('app.timezone'))->format('M d, Y h:i A') : 'N/A' }}</strong>
+                                    </div>
+                                    <div>
+                                        <small class="text-muted">To:</small><br>
+                                        <strong>{{ $exam->available_to ? $exam->available_to->timezone(config('app.timezone'))->format('M d, Y h:i A') : 'N/A' }}</strong>
+                                    </div>
+                                @endif
+                            </td>
+                            <td>
+                                <span class="{!! $exam->status_badge !!}">
                                     {{ $exam->status_text }}
                                 </span>
                             </td>
