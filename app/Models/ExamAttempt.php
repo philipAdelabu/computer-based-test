@@ -38,23 +38,37 @@ class ExamAttempt extends Model
         return $this->belongsTo(Student::class);
     }
 
-    public function getTimeRemainingAttribute()
-    {
-        if (!$this->started_at || $this->status === 'submitted') {
-            return 0;
-        }
-        
-          $started = $this->started_at->timezone(config('app.timezone'));
-          $duration = $this->exam->duration_minutes;
-          $endTime = $started->addMinutes($duration);
-          $now = Carbon::now(config('app.timezone'));
-        
-        if ($now->gt($endTime)) {
-            return 0;
-        }
-        
-        return $endTime->diffInSeconds($now);
+     // In ExamAttempt model
+public function getTimeRemainingAttribute()
+{
+    if (!$this->started_at || $this->status === 'submitted') {
+        return 0;
     }
+    
+    $started = $this->started_at->timezone(config('app.timezone'));
+    $duration = $this->exam->duration_minutes;
+    $examEndTime = $started->copy()->addMinutes($duration);
+    $now = Carbon::now(config('app.timezone'));
+    
+    // Also respect the exam's availability window
+    if ($this->exam->schedule_type === 'single_date' && $this->exam->end_date) {
+        $availabilityEnd = $this->exam->end_date->timezone(config('app.timezone'));
+        if ($availabilityEnd->lt($examEndTime)) {
+            $examEndTime = $availabilityEnd;
+        }
+    } elseif ($this->exam->schedule_type === 'date_range' && $this->exam->available_to) {
+        $availabilityEnd = $this->exam->available_to->timezone(config('app.timezone'));
+        if ($availabilityEnd->lt($examEndTime)) {
+            $examEndTime = $availabilityEnd;
+        }
+    }
+    
+    if ($now->gte($examEndTime)) {
+        return 0;
+    }
+    
+    return (int) $now->diffInSeconds($examEndTime);
+}
 
     public function getTimeSpentAttribute()
     {
@@ -62,7 +76,7 @@ class ExamAttempt extends Model
             return 0;
         }
         
-         $end = $this->completed_at ?? Carbon::now(config('app.timezone'));
-         return $this->started_at->timezone(config('app.timezone'))->diffInSeconds($end->timezone(config('app.timezone')));
+        $end = $this->completed_at ?? Carbon::now(config('app.timezone'));
+        return $this->started_at->timezone(config('app.timezone'))->diffInSeconds($end->timezone(config('app.timezone')));
     }
 }

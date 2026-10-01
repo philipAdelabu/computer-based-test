@@ -180,6 +180,11 @@
                                            class="btn btn-warning w-100 mt-3">
                                             <i class="bi bi-play-circle"></i> Continue Exam
                                         </a>
+                                    @elseif($attempt && $attempt->status === 'submitted')
+                                        <a href="{{ route('student.exam.result', $attempt->id) }}" 
+                                           class="btn btn-success w-100 mt-3">
+                                            <i class="bi bi-check-circle"></i> View Result
+                                        </a>
                                     @else
                                         <a href="{{ route('student.exam.take', $exam->id) }}" 
                                            class="btn btn-primary w-100 mt-3">
@@ -201,7 +206,7 @@
     </div>
 </div>
 
-<!-- Recent Results -->
+<!-- Recent Results & Quick Actions -->
 <div class="row">
     <div class="col-md-6">
         <div class="card">
@@ -254,12 +259,16 @@
             </div>
             <div class="card-body">
                 <div class="d-grid gap-3">
-                    <a href="{{ route('student.exams') }}" class="btn btn-primary py-3">
-                        <i class="bi bi-play-circle me-2"></i> Take Exam
-                        @if($availableExams > 0)
+                    @if($availableExams > 0)
+                        <a href="{{ route('student.exams') }}" class="btn btn-primary py-3">
+                            <i class="bi bi-play-circle me-2"></i> Take Exam
                             <span class="badge bg-light text-dark ms-2">{{ $availableExams }}</span>
-                        @endif
-                    </a>
+                        </a>
+                    @else
+                        <button class="btn btn-secondary py-3" disabled>
+                            <i class="bi bi-play-circle me-2"></i> No Exams Available
+                        </button>
+                    @endif
                     <a href="{{ route('student.results') }}" class="btn btn-outline-primary py-3">
                         <i class="bi bi-bar-chart me-2"></i> View Results
                     </a>

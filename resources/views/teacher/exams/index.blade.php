@@ -1,18 +1,18 @@
 <!-- resources/views/teacher/exams/index.blade.php -->
 @extends('layouts.app')
 
-@section('title', 'My Exams')
+@section('title', 'My Tests/Exams')
 
 @section('sidebar')
     @include('teacher.partials.sidebar')
 @endsection
 
-@section('page-title', 'My Exams')
+@section('page-title', 'My Tests/Exams')
 
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
     <a href="{{ route('teacher.exams.create') }}" class="btn btn-primary">
-        <i class="bi bi-plus-circle"></i> Create Exam
+        <i class="bi bi-plus-circle"></i> Create Test/Exam
     </a>
     <div>
         <span class="text-muted">Total Exams: {{ $exams->total() }}</span>

@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\QuestionController;
 use App\Http\Controllers\Teacher\QuestionController as TeacherQuestionController;
 use App\Http\Controllers\Teacher\TeacherController;
 use App\Http\Controllers\Teacher\ExamController;
+use App\Http\Controllers\Teacher\ReportCardController;
 use App\Http\Controllers\Student\StudentController;
 use App\Http\Middleware\CheckRole;
 
@@ -129,17 +130,27 @@ Route::middleware(['auth', CheckRole::class . ':teacher'])->prefix('teacher')->n
     // AJAX routes for exams
     Route::get('/exams/questions/{subjectId}', [ExamController::class, 'getQuestions'])->name('exams.questions');
     Route::get('/exams/students/{examId}', [ExamController::class, 'getStudents'])->name('exams.students');
+
+    Route::get('/report-cards', [ReportCardController::class, 'index'])->name('report-cards.index');
+    Route::post('/report-cards/generate', [ReportCardController::class, 'generate'])->name('report-cards.generate');
+    Route::get('/report-cards/{id}', [ReportCardController::class, 'show'])->name('report-cards.show');
+    Route::post('/report-cards/class-report', [ReportCardController::class, 'classReport'])->name('report-cards.class-report');
+
 });
 
 // Student Routes
 Route::middleware(['auth', CheckRole::class .':student'])->prefix('student')->name('student.')->group(function () {
+
     Route::get('/dashboard', [StudentController::class, 'dashboard'])->name('dashboard');
     Route::get('/exams', [StudentController::class, 'exams'])->name('exams');
+    
+    // Exam taking routes
     Route::get('/exam/take/{exam}', [StudentController::class, 'takeExam'])->name('exam.take');
     Route::get('/exam/continue/{attempt}', [StudentController::class, 'continueExam'])->name('exam.continue');
     Route::post('/exam/submit/{attempt}', [StudentController::class, 'submitExam'])->name('exam.submit');
     Route::get('/exam/result/{attempt}', [StudentController::class, 'examResult'])->name('exam.result');
     Route::post('/exam/save-answer/{attempt}', [StudentController::class, 'saveAnswer'])->name('exam.save-answer');
+    
     Route::get('/results', [StudentController::class, 'results'])->name('results');
     Route::get('/report-cards', [StudentController::class, 'reportCards'])->name('report-cards');
     Route::get('/report-card/{id}', [StudentController::class, 'viewReportCard'])->name('report-card.view');

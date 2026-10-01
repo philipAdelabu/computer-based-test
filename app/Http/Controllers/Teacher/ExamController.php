@@ -27,8 +27,6 @@ class ExamController extends Controller
         return view('teacher.exams.index', compact('exams'));
     }
 
-  // app/Http/Controllers/Teacher/ExamController.php
-// Update the create and store methods
 
 public function create()
 {
@@ -43,56 +41,62 @@ public function create()
     return view('teacher.exams.create', compact('subjects'));
 }
 
+  
+
 public function store(Request $request)
 {
     $validated = $request->validate([
         'title' => 'required|string|max:255',
+        'assessment_type' => 'required|in:test,exam',
+        'max_marks' => 'required|integer|min:1|max:200',
+        'benchmark' => 'required|integer|min:0|max:100',
+        'term' => 'required|string|max:50',
+        'academic_year' => 'required|integer|min:2020|max:2100',
         'description' => 'nullable|string',
         'subject_id' => 'required|exists:subjects,id',
         'duration_minutes' => 'required|integer|min:5|max:180',
         'schedule_type' => 'required|in:no_date,single_date,date_range',
-        'start_date' => 'nullable|date|after:now',
+        'start_date' => 'nullable|date',
         'end_date' => 'nullable|date|after:start_date',
-        'available_from' => 'nullable|date|after:now',
+        'available_from' => 'nullable|date',
         'available_to' => 'nullable|date|after:available_from',
         'instructions' => 'nullable|string',
         'question_ids' => 'required|array|min:1',
         'question_ids.*' => 'exists:questions,id',
         'is_published' => 'boolean',
         'max_attempts' => 'integer|min:1|max:10',
-        'passing_score' => 'nullable|integer|min:0|max:100',
         'show_answers_after_completion' => 'boolean',
     ]);
 
     // Verify teacher owns the subject
     $subject = Subject::findOrFail($validated['subject_id']);
     if ($subject->teacher_id !== Auth::id()) {
-        return back()->with('error', 'You are not authorized to create exams for this subject.');
+        return back()->with('error', 'You are not authorized to create assessments for this subject.');
     }
 
-    // Validate based on schedule type
-    if ($validated['schedule_type'] === 'single_date') {
-        if (empty($validated['start_date'])) {
-            return back()->with('error', 'Start date is required for single date schedule.');
-        }
-        if (empty($validated['end_date'])) {
-            $validated['end_date'] = Carbon::parse($validated['start_date'])->addDay();
-        }
-    } elseif ($validated['schedule_type'] === 'date_range') {
-        if (empty($validated['available_from']) || empty($validated['available_to'])) {
-            return back()->with('error', 'Both from and to dates are required for date range schedule.');
-        }
+    // Verify questions belong to subject and deduplicate
+    $questionIds = array_unique($validated['question_ids']);
+    $questions = Question::whereIn('id', $questionIds)
+                         ->where('subject_id', $validated['subject_id'])
+                         ->get();
+    
+    if ($questions->count() !== count($questionIds)) {
+        return back()->with('error', 'Some selected questions do not belong to this subject.')
+                     ->withInput();
     }
 
-    // Calculate total questions and score
-    $questions = Question::whereIn('id', $validated['question_ids'])->get();
     $totalQuestions = $questions->count();
     $totalScore = $questions->sum('score');
 
     // Prepare exam data
     $examData = [
         'title' => $validated['title'],
-        'description' => $validated['description'],
+        'assessment_type' => $validated['assessment_type'],
+        'max_marks' => $validated['max_marks'],
+        'benchmark' => $validated['benchmark'],
+        'term' => $validated['term'],
+        'academic_year' => $validated['academic_year'],
+        'description' => $validated['description'] ?? null,
         'subject_id' => $validated['subject_id'],
         'duration_minutes' => $validated['duration_minutes'],
         'total_questions' => $totalQuestions,
@@ -101,48 +105,40 @@ public function store(Request $request)
         'status' => 'active',
         'created_by_role' => 'teacher',
         'created_by' => Auth::id(),
-        'instructions' => $validated['instructions'],
+        'instructions' => $validated['instructions'] ?? null,
         'is_published' => $validated['is_published'] ?? false,
         'max_attempts' => $validated['max_attempts'] ?? 1,
-        'passing_score' => $validated['passing_score'] ?? null,
+        'passing_score' => $validated['benchmark'],
         'show_answers_after_completion' => $validated['show_answers_after_completion'] ?? false,
     ];
 
-    // Set dates based on schedule type
+    // Set dates based on schedule type (existing logic)
     switch ($validated['schedule_type']) {
         case 'single_date':
             $examData['start_date'] = Carbon::parse($validated['start_date'])->timezone(config('app.timezone'));
-            $examData['end_date'] = Carbon::parse($validated['end_date'])->timezone(config('app.timezone'));
-            $examData['available_from'] = null;
-            $examData['available_to'] = null;
+            $examData['end_date'] = !empty($validated['end_date']) 
+                ? Carbon::parse($validated['end_date'])->timezone(config('app.timezone'))
+                : Carbon::parse($validated['start_date'])->addDay()->timezone(config('app.timezone'));
             break;
-            
         case 'date_range':
-            $examData['start_date'] = null;
-            $examData['end_date'] = null;
             $examData['available_from'] = Carbon::parse($validated['available_from'])->timezone(config('app.timezone'));
             $examData['available_to'] = Carbon::parse($validated['available_to'])->timezone(config('app.timezone'));
             break;
-            
-        case 'no_date':
-        default:
-            $examData['start_date'] = null;
-            $examData['end_date'] = null;
-            $examData['available_from'] = null;
-            $examData['available_to'] = null;
-            break;
     }
 
-    // Create exam
     $exam = Exam::create($examData);
 
-    // Attach questions with order
-    foreach ($validated['question_ids'] as $index => $questionId) {
-        $exam->questions()->attach($questionId, ['question_order' => $index + 1]);
+    // Attach questions
+    $attachData = [];
+    foreach ($questionIds as $index => $questionId) {
+        $attachData[$questionId] = ['question_order' => $index + 1];
     }
+    $exam->questions()->attach($attachData);
 
     return redirect()->route('teacher.exams')
-        ->with('success', 'Exam created successfully.');
+        ->with('success', $exam->assessment_type === 'test' 
+            ? 'Test created successfully.' 
+            : 'Exam created successfully.');
 }
 
     public function show($id)
@@ -208,7 +204,10 @@ public function store(Request $request)
         ]);
 
         // Calculate total questions and score
-        $questions = Question::whereIn('id', $validated['question_ids'])->get();
+        $questionIds = array_unique($validated['question_ids']);
+        $questions = Question::whereIn('id', $questionIds)
+                     ->where('subject_id', $validated['subject_id'])
+                     ->get();
         $totalQuestions = $questions->count();
         $totalScore = $questions->sum('score');
 
@@ -228,9 +227,13 @@ public function store(Request $request)
 
         // Sync questions with order
         $exam->questions()->detach();
-        foreach ($validated['question_ids'] as $index => $questionId) {
-            $exam->questions()->attach($questionId, ['question_order' => $index + 1]);
+
+         // Attach unique questions only
+        $attachData = [];
+        foreach ($questions->pluck('id')->toArray() as $index => $questionId) {
+            $attachData[$questionId] = ['question_order' => $index + 1];
         }
+        $exam->questions()->attach($attachData);
 
         return redirect()->route('teacher.exams.show', $exam->id)
             ->with('success', 'Exam updated successfully.');

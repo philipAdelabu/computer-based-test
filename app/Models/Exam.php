@@ -8,44 +8,120 @@ use Carbon\Carbon;
 
 class Exam extends Model
 {
-    use HasFactory;
+        use HasFactory;
 
-     const SCHEDULE_NO_DATE = 'no_date';
+    const SCHEDULE_NO_DATE = 'no_date';
     const SCHEDULE_SINGLE_DATE = 'single_date';
     const SCHEDULE_DATE_RANGE = 'date_range';
+    
+    // Assessment types
+    const ASSESSMENT_TEST = 'test';
+    const ASSESSMENT_EXAM = 'exam';
 
-   protected $fillable = [
-    'title',
-    'description',
-    'subject_id',
-    'duration_minutes',
-    'total_questions',
-    'total_score',
-    'schedule_type',        // Add this
-    'start_date',
-    'end_date',
-    'available_from',       // Add this
-    'available_to',         // Add this
-    'status',
-    'created_by_role',
-    'created_by',
-    'instructions',
-    'is_published',
-    'max_attempts',         // Add this
-    'passing_score',        // Add this
-    'show_answers_after_completion', // Add this
-];
+    protected $fillable = [
+        'title',
+        'assessment_type',   // NEW
+        'max_marks',         // NEW
+        'benchmark',         // NEW
+        'term',              // NEW
+        'academic_year',     // NEW
+        'description',
+        'subject_id',
+        'duration_minutes',
+        'total_questions',
+        'total_score',
+        'schedule_type',
+        'start_date',
+        'end_date',
+        'available_from',
+        'available_to',
+        'status',
+        'created_by_role',
+        'created_by',
+        'instructions',
+        'is_published',
+        'max_attempts',
+        'passing_score',
+        'show_answers_after_completion',
+    ];
 
-protected $casts = [
-    'start_date' => 'datetime',
-    'end_date' => 'datetime',
-    'available_from' => 'datetime',
-    'available_to' => 'datetime',
-    'is_published' => 'boolean',
-    'show_answers_after_completion' => 'boolean',
-    'max_attempts' => 'integer',
-    'passing_score' => 'integer',
-];
+    protected $casts = [
+        'start_date' => 'datetime',
+        'end_date' => 'datetime',
+        'available_from' => 'datetime',
+        'available_to' => 'datetime',
+        'is_published' => 'boolean',
+        'show_answers_after_completion' => 'boolean',
+        'max_attempts' => 'integer',
+        'passing_score' => 'integer',
+        'max_marks' => 'integer',
+        'benchmark' => 'integer',
+        'academic_year' => 'integer',
+    ];
+
+    // ============ NEW HELPER METHODS ============
+
+    /**
+     * Check if this is a test
+     */
+    public function getIsTestAttribute()
+    {
+        return $this->assessment_type === self::ASSESSMENT_TEST;
+    }
+
+    /**
+     * Check if this is an exam
+     */
+    public function getIsExamAttribute()
+    {
+        return $this->assessment_type === self::ASSESSMENT_EXAM;
+    }
+
+    /**
+     * Get the assessment type label
+     */
+    public function getAssessmentTypeLabelAttribute()
+    {
+        return $this->assessment_type === self::ASSESSMENT_TEST ? 'Test' : 'Exam';
+    }
+
+    /**
+     * Get the assessment type badge
+     */
+    public function getAssessmentTypeBadgeAttribute()
+    {
+        return $this->assessment_type === self::ASSESSMENT_TEST
+            ? '<span class="badge bg-info">Test</span>'
+            : '<span class="badge bg-primary">Exam</span>';
+    }
+
+    /**
+     * Get the benchmark passing score (from benchmark field)
+     */
+    public function getBenchmarkScoreAttribute()
+    {
+        return $this->benchmark ?? 50;
+    }
+
+    /**
+     * Get the percentage score for an attempt
+     */
+    public function getAttemptPercentageAttribute($attempt)
+    {
+        if ($this->total_score == 0) return 0;
+        return ($attempt->score / $this->total_score) * 100;
+    }
+
+    /**
+     * Convert attempt score to the max marks scale (for report card)
+     * e.g., if test is out of 20 questions totaling 100 points but max_marks is 30,
+     * convert to a score out of 30
+     */
+    public function convertScoreToMaxMarks($rawScore)
+    {
+        if ($this->total_score == 0) return 0;
+        return round(($rawScore / $this->total_score) * $this->max_marks, 2);
+    }
 
     // Relationships
     public function subject()
@@ -222,6 +298,9 @@ protected $casts = [
 
     public function getIsUpcomingAttribute()
     {
+          if (!$this->start_date) {
+            return null;
+        }
         $now = Carbon::now(config('app.timezone'));
         $start = $this->start_date->timezone(config('app.timezone'));
         
@@ -232,6 +311,9 @@ protected $casts = [
 
     public function getIsCompletedAttribute()
     {
+          if (!$this->end_date) {
+            return null;
+        }
         $now = Carbon::now(config('app.timezone'));
         $end = $this->end_date->timezone(config('app.timezone'));
         

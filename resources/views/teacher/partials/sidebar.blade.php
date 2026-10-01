@@ -18,10 +18,16 @@
             <i class="bi bi-question-circle-fill"></i> Question Bank
         </a>
     </li>
-    <li class="nav-item">
+        <li class="nav-item">
         <a class="nav-link {{ request()->routeIs('teacher.exams*') ? 'active' : '' }}" 
            href="{{ route('teacher.exams') }}">
-            <i class="bi bi-file-text-fill"></i> Exams
+            <i class="bi bi-file-text-fill"></i> Tests & Exams
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {{ request()->routeIs('teacher.report-cards*') ? 'active' : '' }}" 
+           href="{{ route('teacher.report-cards.index') }}">
+            <i class="bi bi-file-earmark-text-fill"></i> Report Cards
         </a>
     </li>
     <li class="nav-item">

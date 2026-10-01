@@ -1,15 +1,76 @@
 <!-- resources/views/teacher/exams/create.blade.php -->
 @extends('layouts.app')
 
-@section('title', 'Create Exam')
+@section('title', 'Create Exam/Test')
 
 @section('sidebar')
     @include('teacher.partials.sidebar')
 @endsection
 
-@section('page-title', 'Create New Exam')
+@section('page-title', 'Create New Assessment')
 
 @section('content')
+
+   <!-- resources/views/teacher/exams/create.blade.php -->
+<!-- Add this section after the Title & Subject row -->
+
+<div class="row mb-3">
+    <div class="col-md-3">
+        <label class="form-label fw-semibold">Assessment Type <span class="text-danger">*</span></label>
+        <select name="assessment_type" id="assessmentType" class="form-select @error('assessment_type') is-invalid @enderror" required>
+            <option value="test" {{ old('assessment_type', 'exam') == 'test' ? 'selected' : '' }}>
+                Test (Continuous Assessment)
+            </option>
+            <option value="exam" {{ old('assessment_type', 'exam') == 'exam' ? 'selected' : '' }}>
+                Exam (Final Examination)
+            </option>
+        </select>
+        @error('assessment_type')
+            <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+    </div>
+    <div class="col-md-3">
+        <label class="form-label fw-semibold">Max Marks <span class="text-danger">*</span></label>
+        <input type="number" name="max_marks" id="maxMarks" class="form-control @error('max_marks') is-invalid @enderror" 
+               value="{{ old('max_marks', 30) }}" min="1" max="200" required>
+        <small class="text-muted">e.g., 30 for test, 70 for exam</small>
+        @error('max_marks')
+            <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+    </div>
+    <div class="col-md-3">
+        <label class="form-label fw-semibold">Benchmark (%) <span class="text-danger">*</span></label>
+        <input type="number" name="benchmark" id="benchmark" class="form-control @error('benchmark') is-invalid @enderror" 
+               value="{{ old('benchmark', 50) }}" min="0" max="100" required>
+        <small class="text-muted">Passing threshold</small>
+        @error('benchmark')
+            <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+    </div>
+    <div class="col-md-3">
+        <label class="form-label fw-semibold">Term <span class="text-danger">*</span></label>
+        <select name="term" class="form-select @error('term') is-invalid @enderror" required>
+            <option value="First Term" {{ old('term') == 'First Term' ? 'selected' : '' }}>First Term</option>
+            <option value="Second Term" {{ old('term') == 'Second Term' ? 'selected' : '' }}>Second Term</option>
+            <option value="Third Term" {{ old('term') == 'Third Term' ? 'selected' : '' }}>Third Term</option>
+        </select>
+        @error('term')
+            <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-3">
+        <label class="form-label fw-semibold">Academic Year <span class="text-danger">*</span></label>
+        <input type="number" name="academic_year" class="form-control @error('academic_year') is-invalid @enderror" 
+               value="{{ old('academic_year', date('Y')) }}" min="2020" max="2100" required>
+        @error('academic_year')
+            <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+    </div>
+</div>
+
 <div class="row">
     <div class="col-lg-10 mx-auto">
         <div class="card">
@@ -190,7 +251,7 @@
                                 <input class="form-check-input" type="checkbox" name="is_published" value="1" 
                                        id="publishSwitch" {{ old('is_published') ? 'checked' : '' }}>
                                 <label class="form-check-label" for="publishSwitch">
-                                    <strong>Publish Exam</strong>
+                                    <strong>Publish (make visible) </strong>
                                     <br>
                                     <small class="text-muted">Make visible to students</small>
                                 </label>
@@ -487,5 +548,35 @@ $(document).ready(function() {
     // Remove novalidate on page load to allow HTML5 validation
     $('#examForm').removeAttr('novalidate');
 });
+  
+ // Add to your existing <script> section
+
+// Auto-set max_marks and benchmark when assessment type changes
+$('#assessmentType').on('change', function() {
+    const type = $(this).val();
+    const maxMarksInput = $('#maxMarks');
+    const benchmarkInput = $('#benchmark');
+    
+    // Only auto-fill if user hasn't manually changed values
+    if (type === 'test') {
+        if (maxMarksInput.val() == '70' || maxMarksInput.val() == '') {
+            maxMarksInput.val(30);
+        }
+        if (benchmarkInput.val() == '' || benchmarkInput.val() == '50') {
+            benchmarkInput.val(40);
+        }
+    } else if (type === 'exam') {
+        if (maxMarksInput.val() == '30' || maxMarksInput.val() == '') {
+            maxMarksInput.val(70);
+        }
+        if (benchmarkInput.val() == '' || benchmarkInput.val() == '40') {
+            benchmarkInput.val(50);
+        }
+    }
+});
+
+// Trigger on page load
+$('#assessmentType').trigger('change');
+
 </script>
 @endpush
