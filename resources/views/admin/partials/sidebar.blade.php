@@ -33,7 +33,25 @@
     <li class="nav-item">
         <a class="nav-link {{ request()->routeIs('admin.questions*') ? 'active' : '' }}" 
            href="{{ route('admin.questions') }}">
-            <i class="bi bi-question-circle-fill"></i> Questions
+            <i class="bi bi-question-circle-fill"></i> Question Bank
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {{ request()->routeIs('admin.exams*') ? 'active' : '' }}" 
+           href="{{ route('admin.exams') }}">
+            <i class="bi bi-file-text-fill"></i> Tests & Exams
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {{ request()->routeIs('admin.scores*') ? 'active' : '' }}" 
+           href="{{ route('admin.scores') }}">
+            <i class="bi bi-clipboard-check-fill"></i> Student Scores
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {{ request()->routeIs('admin.report-cards*') ? 'active' : '' }}" 
+           href="{{ route('admin.report-cards.index') }}">
+            <i class="bi bi-file-earmark-text-fill"></i> Report Cards
         </a>
     </li>
 </ul>

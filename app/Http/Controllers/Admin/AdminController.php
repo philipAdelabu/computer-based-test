@@ -15,19 +15,58 @@ use Illuminate\Support\Facades\Storage;
 
 class AdminController extends Controller
 {
-    public function dashboard()
-    {
-        $totalStudents = Student::count();
-        $totalTeachers = User::where('role', 'teacher')->count();
-        $totalClasses = ClassModel::count();
-        $totalSubjects = Subject::count();
-        $totalExams = Exam::count();
-        
-        return view('admin.dashboard', compact(
-            'totalStudents', 'totalTeachers', 'totalClasses', 
-            'totalSubjects', 'totalExams'
-        ));
-    }
+   
+   // app/Http/Controllers/Admin/AdminController.php
+// Update the dashboard method
+
+public function dashboard()
+{
+    $totalStudents = Student::count();
+    $totalTeachers = User::where('role', 'teacher')->count();
+    $totalClasses = ClassModel::count();
+    $totalSubjects = Subject::count();
+    $totalQuestions = Question::count();
+    $totalTests = Exam::where('assessment_type', 'test')->count();
+    $totalExams = Exam::where('assessment_type', 'exam')->count();
+    $totalReportCards = ReportCard::count();
+    
+    // Recent assessments
+    $recentAssessments = Exam::with(['subject', 'creator'])
+                             ->orderBy('created_at', 'desc')
+                             ->limit(5)
+                             ->get();
+    
+    // Active assessments
+    $now = \Carbon\Carbon::now(config('app.timezone'));
+    $activeAssessments = Exam::where('is_published', true)
+        ->where('status', 'active')
+        ->where(function($query) use ($now) {
+            $query->where('schedule_type', 'no_date')
+                ->orWhere(function($q) use ($now) {
+                    $q->where('schedule_type', 'single_date')
+                        ->where('start_date', '<=', $now)
+                        ->where(function($sub) use ($now) {
+                            $sub->whereNull('end_date')
+                                ->orWhere('end_date', '>=', $now);
+                        });
+                })
+                ->orWhere(function($q) use ($now) {
+                    $q->where('schedule_type', 'date_range')
+                        ->where('available_from', '<=', $now)
+                        ->where('available_to', '>=', $now);
+                });
+        })
+        ->with('subject')
+        ->limit(5)
+        ->get();
+    
+    return view('admin.dashboard', compact(
+        'totalStudents', 'totalTeachers', 'totalClasses',
+        'totalSubjects', 'totalQuestions', 'totalTests',
+        'totalExams', 'totalReportCards', 'recentAssessments',
+        'activeAssessments'
+    ));
+}
 
     // Teacher Management
     public function teachers()

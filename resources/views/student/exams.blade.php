@@ -107,7 +107,7 @@
 <!-- Upcoming Exams -->
 <h5 class="mb-3">Upcoming Exams</h5>
 <div class="row g-4 mb-5">
-    @forelse($upcomingExams as $exam)
+    @forelse($upcomingAssessments as $exam)
         <div class="col-md-4">
             <div class="exam-card" style="border-left: 4px solid #ffc107;">
                 <div class="d-flex justify-content-between align-items-start">

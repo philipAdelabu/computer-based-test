@@ -34,4 +34,33 @@ class Question extends Model
                     ->withPivot('question_order')
                     ->orderBy('pivot_question_order');
     }
+
+
+    public function getImageUrlAttribute()
+    {
+        if (!$this->image_path) {
+            return null;
+        }
+        
+        // Check if the image is in the public folder
+        $publicPath = public_path($this->image_path);
+        if (file_exists($publicPath)) {
+            return asset($this->image_path);
+        }
+        
+        // Fallback: check the storage folder
+        $storagePath = storage_path('app/public/' . $this->image_path);
+        if (file_exists($storagePath)) {
+            return asset('storage/' . $this->image_path);
+        }
+        
+        return null;
+    }
+
+  
+    public function getHasImageAttribute()
+    {
+        return $this->image_url !== null;
+    }
+
 }

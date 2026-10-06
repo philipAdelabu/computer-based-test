@@ -121,12 +121,17 @@
                             <hr>
                             <div class="question-text">
                                 <p class="fs-5">{{ $currentQuestion->question_text }}</p>
-                                @if($currentQuestion->image_path)
-                                    <div class="my-3">
-                                        <img src="{{ asset('storage/' . $currentQuestion->image_path) }}" 
-                                             alt="Question Image" 
-                                             class="img-fluid rounded" 
-                                             style="max-height: 300px;">
+                               @if($currentQuestion->has_image)
+                                    <div class="my-3 text-center">
+                                        <img src="{{ $currentQuestion->image_url }}" 
+                                            alt="Question Image" 
+                                            class="img-fluid rounded border" 
+                                            style="max-height: 400px; cursor: pointer;"
+                                            onclick="window.open(this.src, '_blank')">
+                                        <br>
+                                        <small class="text-muted">
+                                            <i class="bi bi-zoom-in"></i> Click image to view full size
+                                        </small>
                                     </div>
                                 @endif
                             </div>

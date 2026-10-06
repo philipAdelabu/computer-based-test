@@ -41,7 +41,7 @@ class QuestionController extends Controller
         $validated = $request->validate([
             'subject_id' => 'required|exists:subjects,id',
             'question_text' => 'required|string',
-            'image' => 'nullable|image|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'options' => 'required|array|min:2',
             'options.*' => 'required|string',
             'correct_answer' => 'required|string',
@@ -49,7 +49,6 @@ class QuestionController extends Controller
             'difficulty' => 'required|in:easy,medium,hard',
         ]);
 
-        // Verify teacher owns the subject
         $subject = Subject::findOrFail($validated['subject_id']);
         if ($subject->teacher_id !== Auth::id()) {
             return back()->with('error', 'You are not authorized to add questions to this subject.');
@@ -57,7 +56,7 @@ class QuestionController extends Controller
 
         $imagePath = null;
         if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('questions', 'public');
+            $imagePath = $this->uploadImage($request->file('image'));
         }
 
         Question::create([
@@ -74,19 +73,8 @@ class QuestionController extends Controller
             ->with('success', 'Question created successfully.');
     }
 
-    public function edit($id)
-    {
-        $teacherId = Auth::id();
-        $question = Question::whereHas('subject', function($query) use ($teacherId) {
-            $query->where('teacher_id', $teacherId);
-        })->findOrFail($id);
-        
-        $subjects = Subject::where('teacher_id', $teacherId)->with('class')->get();
-        
-        return view('teacher.questions.edit', compact('question', 'subjects'));
-    }
-
-    public function update(Request $request, $id)
+    
+        public function update(Request $request, $id)
     {
         $teacherId = Auth::id();
         $question = Question::whereHas('subject', function($query) use ($teacherId) {
@@ -96,7 +84,7 @@ class QuestionController extends Controller
         $validated = $request->validate([
             'subject_id' => 'required|exists:subjects,id',
             'question_text' => 'required|string',
-            'image' => 'nullable|image|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'options' => 'required|array|min:2',
             'options.*' => 'required|string',
             'correct_answer' => 'required|string',
@@ -104,18 +92,22 @@ class QuestionController extends Controller
             'difficulty' => 'required|in:easy,medium,hard',
         ]);
 
-        // Verify teacher owns the subject
         $subject = Subject::findOrFail($validated['subject_id']);
         if ($subject->teacher_id !== Auth::id()) {
             return back()->with('error', 'You are not authorized to add questions to this subject.');
         }
 
         if ($request->hasFile('image')) {
+            // Delete old image from public folder
             if ($question->image_path) {
-                Storage::disk('public')->delete($question->image_path);
+                $oldPath = public_path('uploads/questions/' . basename($question->image_path));
+                if (file_exists($oldPath)) {
+                    @unlink($oldPath);
+                }
             }
-            $imagePath = $request->file('image')->store('questions', 'public');
-            $question->image_path = $imagePath;
+            
+            // Upload new image
+            $question->image_path = $this->uploadImage($request->file('image'));
         }
 
         $question->update([
@@ -138,14 +130,55 @@ class QuestionController extends Controller
             $query->where('teacher_id', $teacherId);
         })->findOrFail($id);
         
+        // Delete image from public folder
         if ($question->image_path) {
-            Storage::disk('public')->delete($question->image_path);
+            $oldPath = public_path('uploads/questions/' . basename($question->image_path));
+            if (file_exists($oldPath)) {
+                @unlink($oldPath);
+            }
         }
         
         $question->delete();
         
         return redirect()->route('teacher.questions')
             ->with('success', 'Question deleted successfully.');
+    }
+
+    /**
+     * Upload image to public/uploads/questions folder
+     */
+    private function uploadImage($file)
+    {
+        // Ensure directory exists
+        $uploadPath = public_path('uploads/questions');
+        if (!file_exists($uploadPath)) {
+            mkdir($uploadPath, 0755, true);
+        }
+        
+        // Generate unique filename
+        $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+        
+        // Move file to public folder
+        $file->move($uploadPath, $filename);
+        
+        // Return relative path for storage in DB
+        return 'uploads/questions/' . $filename;
+    }
+
+
+      
+
+
+      public function edit($id)
+    {
+        $teacherId = Auth::id();
+        $question = Question::whereHas('subject', function($query) use ($teacherId) {
+            $query->where('teacher_id', $teacherId);
+        })->findOrFail($id);
+        
+        $subjects = Subject::where('teacher_id', $teacherId)->with('class')->get();
+        
+        return view('teacher.questions.edit', compact('question', 'subjects'));
     }
 
     public function import()
@@ -161,8 +194,6 @@ class QuestionController extends Controller
         return view('teacher.questions.import', compact('subjects'));
     }
 
- // app/Http/Controllers/Teacher/QuestionController.php
-// Update the importCSV method
 
 public function importCSV(Request $request)
 {

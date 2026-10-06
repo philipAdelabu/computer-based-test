@@ -56,9 +56,16 @@
                                 <div class="text-truncate" style="max-width: 200px;">
                                     {{ Str::limit($question->question_text, 60) }}
                                 </div>
-                                @if($question->image_path)
-                                    <i class="bi bi-image text-primary" title="Has image"></i>
-                                @endif
+                                    @if($question->has_image)
+                                        <a href="{{ $question->image_url }}" target="_blank" title="View image">
+                                            <img src="{{ $question->image_url }}" 
+                                                alt="Question Image" 
+                                                class="rounded border"
+                                                style="width: 50px; height: 50px; object-fit: cover;">
+                                        </a>
+                                    @else
+                                        <span class="text-muted small">No image</span>
+                                    @endif
                             </td>
                             <td>
                                 <span class="badge bg-info">{{ $question->subject->name }}</span>

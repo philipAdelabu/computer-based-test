@@ -319,7 +319,7 @@ public function exams(Request $request)
         'availableExams',
         'availableAssessments',
         'upcomingAssessments',
-        'completedExams'
+        'completedExams' 
     ));
 }
 

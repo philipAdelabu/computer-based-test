@@ -4,6 +4,9 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\QuestionController;
+use App\Http\Controllers\Admin\ScoreController as AdminScoreController;
+use App\Http\Controllers\Admin\ExamController as AdminExamController;
+use App\Http\Controllers\Admin\ReportCardController as AdminReportCardController;
 use App\Http\Controllers\Teacher\QuestionController as TeacherQuestionController;
 use App\Http\Controllers\Teacher\TeacherController;
 use App\Http\Controllers\Teacher\ExamController;
@@ -88,7 +91,44 @@ Route::get('/subjects/stats', [AdminController::class, 'subjectStats'])->name('s
    // AJAX route for getting students by class
 Route::get('/students/by-class/{classId}', [AdminController::class, 'getStudentsByClass'])->name('students.by-class');
 
-});
+    // ============ EXAM MANAGEMENT ============
+    Route::get('/exams', [AdminExamController::class, 'index'])->name('exams');
+    Route::get('/exams/create', [AdminExamController::class, 'create'])->name('exams.create');
+    Route::post('/exams', [AdminExamController::class, 'store'])->name('exams.store');
+    Route::get('/exams/{id}', [AdminExamController::class, 'show'])->name('exams.show');
+    Route::get('/exams/{id}/edit', [AdminExamController::class, 'edit'])->name('exams.edit');
+    Route::put('/exams/{id}', [AdminExamController::class, 'update'])->name('exams.update');
+    Route::delete('/exams/{id}', [AdminExamController::class, 'delete'])->name('exams.delete');
+    Route::post('/exams/{id}/publish', [AdminExamController::class, 'publish'])->name('exams.publish');
+    Route::post('/exams/{id}/unpublish', [AdminExamController::class, 'unpublish'])->name('exams.unpublish');
+    
+    // AJAX for exams
+    Route::get('/exams/questions/{subjectId}', [AdminExamController::class, 'getQuestions'])->name('exams.questions');
+    Route::get('/exams/students/{examId}', [AdminExamController::class, 'getStudents'])->name('exams.students');
+    
+    // ============ SCORE MANAGEMENT ============
+    Route::get('/scores', [AdminScoreController::class, 'index'])->name('scores');
+    Route::get('/scores/create', [AdminScoreController::class, 'create'])->name('scores.create');
+    Route::post('/scores', [AdminScoreController::class, 'store'])->name('scores.store');
+    Route::get('/scores/{id}/edit', [AdminScoreController::class, 'edit'])->name('scores.edit');
+    Route::put('/scores/{id}', [AdminScoreController::class, 'update'])->name('scores.update');
+    Route::delete('/scores/{id}', [AdminScoreController::class, 'delete'])->name('scores.delete');
+    
+    // Bulk upload
+    Route::get('/scores/bulk-upload', [AdminScoreController::class, 'bulkUpload'])->name('scores.bulk-upload');
+    Route::post('/scores/bulk-upload', [AdminScoreController::class, 'bulkUploadStore'])->name('scores.bulk-upload.store');
+    
+    // AJAX
+    Route::get('/scores/students/{classId}', [AdminScoreController::class, 'getStudentsByClass'])->name('scores.students');
+    
+    // ============ REPORT CARDS ============
+    Route::get('/report-cards', [AdminReportCardController::class, 'index'])->name('report-cards.index');
+    Route::post('/report-cards/generate', [AdminReportCardController::class, 'generate'])->name('report-cards.generate');
+    Route::get('/report-cards/{id}', [AdminReportCardController::class, 'show'])->name('report-cards.show');
+    Route::delete('/report-cards/{id}', [AdminReportCardController::class, 'delete'])->name('report-cards.delete');
+    Route::post('/report-cards/class-report', [AdminReportCardController::class, 'classReport'])->name('report-cards.class-report');
+
+    });
 
 // Teacher Routes
 Route::middleware(['auth', CheckRole::class . ':teacher'])->prefix('teacher')->name('teacher.')->group(function () {

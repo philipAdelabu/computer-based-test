@@ -41,14 +41,24 @@
                         @enderror
                     </div>
                     
-                    <div class="mb-3">
+                     <div class="mb-3">
                         <label class="form-label fw-semibold">Question Image (Optional)</label>
-                        <input type="file" name="image" class="form-control @error('image') is-invalid @enderror" accept="image/*">
-                        <small class="text-muted">Supported formats: JPG, PNG, GIF. Max size: 2MB</small>
+                        <input type="file" name="image" id="imageInput" 
+                            class="form-control @error('image') is-invalid @enderror" 
+                            accept="image/jpeg,image/png,image/jpg,image/gif,image/webp">
+                        <small class="text-muted">
+                            Supported: JPG, PNG, GIF, WEBP. Max size: 2MB
+                        </small>
                         @error('image')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
-                    </div>
+                        
+                        <!-- Image Preview -->
+                        <div id="imagePreview" class="mt-2" style="display: none;">
+                            <img id="previewImg" src="" alt="Preview" 
+                                class="img-fluid rounded border" style="max-height: 200px;">
+                        </div>
+                     </div>
                     
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Options <span class="text-danger">*</span></label>
@@ -150,5 +160,21 @@ $(document).ready(function() {
         optionCount--;
     });
 });
+
+  // Image preview
+    $('#imageInput').on('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                $('#previewImg').attr('src', e.target.result);
+                $('#imagePreview').show();
+            };
+            reader.readAsDataURL(file);
+        } else {
+            $('#imagePreview').hide();
+        }
+    });
+
 </script>
 @endpush

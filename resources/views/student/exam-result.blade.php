@@ -179,13 +179,15 @@
                                     </div>
                                 </div>
                                 
-                                @if($item['question']->image_path)
-                                    <div class="mb-2">
-                                        <img src="{{ asset('storage/' . $item['question']->image_path) }}" 
-                                             class="img-fluid rounded" 
-                                             style="max-height: 200px;">
-                                    </div>
-                                @endif
+                                 @if($item['question']->has_image)
+                                        <div class="mb-2">
+                                            <img src="{{ $item['question']->image_url }}" 
+                                                alt="Question Image" 
+                                                class="img-fluid rounded border" 
+                                                style="max-height: 200px; cursor: pointer;"
+                                                onclick="window.open(this.src, '_blank')">
+                                        </div>
+                                 @endif
                                 
                                 <div class="row">
                                     @foreach($item['question']->options as $optIndex => $option)
