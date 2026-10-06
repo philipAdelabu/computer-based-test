@@ -1,3 +1,4 @@
+<!-- resources/views/student/results.blade.php -->
 @extends('layouts.app')
 
 @section('title', 'My Results')
@@ -9,6 +10,28 @@
 @section('page-title', 'My Results')
 
 @section('content')
+<!-- Filter Tabs -->
+<ul class="nav nav-tabs mb-4">
+    <li class="nav-item">
+        <a class="nav-link {{ request('type') != 'test' && request('type') != 'exam' ? 'active' : '' }}" 
+           href="{{ route('student.results') }}">
+            All Results
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {{ request('type') == 'test' ? 'active' : '' }}" 
+           href="{{ route('student.results') }}?type=test">
+            <i class="bi bi-file-text text-info"></i> Tests Only
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {{ request('type') == 'exam' ? 'active' : '' }}" 
+           href="{{ route('student.results') }}?type=exam">
+            <i class="bi bi-file-earmark-text text-primary"></i> Exams Only
+        </a>
+    </li>
+</ul>
+
 <div class="card">
     <div class="card-body p-0">
         <div class="table-responsive">
@@ -16,9 +39,9 @@
                 <thead>
                     <tr>
                         <th>#</th>
-                        <th>Subject</th>
-                        <th>Exam</th>
                         <th>Assessment</th>
+                        <th>Type</th>
+                        <th>Subject</th>
                         <th>Score</th>
                         <th>Percentage</th>
                         <th>Grade</th>
@@ -30,11 +53,25 @@
                     @forelse($results as $result)
                         <tr>
                             <td>{{ $loop->iteration + ($results->currentPage() - 1) * $results->perPage() }}</td>
-                            <td>{{ $result->subject->name ?? 'N/A' }}</td>
-                            <td>{{ $result->exam->title ?? 'N/A' }}</td>
                             <td>
-                                <span class="badge bg-info">{{ $result->assessment_type }}</span>
+                                <strong>{{ $result->exam->title ?? 'N/A' }}</strong>
+                                @if($result->exam)
+                                    <br>
+                                    <small class="text-muted">
+                                        Max Marks: {{ $result->exam->max_marks }}
+                                    </small>
+                                @endif
                             </td>
+                            <td>
+                                @if($result->exam && $result->exam->assessment_type == 'test')
+                                    <span class="badge bg-info">Test</span>
+                                @elseif($result->exam)
+                                    <span class="badge bg-primary">Exam</span>
+                                @else
+                                    <span class="badge bg-secondary">{{ $result->assessment_type }}</span>
+                                @endif
+                            </td>
+                            <td>{{ $result->subject->name ?? 'N/A' }}</td>
                             <td>
                                 <strong>{{ $result->score }}</strong>/{{ $result->max_score }}
                             </td>

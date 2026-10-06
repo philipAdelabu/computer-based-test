@@ -14,15 +14,18 @@
    <!-- resources/views/teacher/exams/create.blade.php -->
 <!-- Add this section after the Title & Subject row -->
 
+<form action="{{ route('teacher.exams.store') }}" method="POST" id="examForm" novalidate>
+            @csrf
 <div class="row mb-3">
     <div class="col-md-3">
+         
         <label class="form-label fw-semibold">Assessment Type <span class="text-danger">*</span></label>
         <select name="assessment_type" id="assessmentType" class="form-select @error('assessment_type') is-invalid @enderror" required>
             <option value="test" {{ old('assessment_type', 'exam') == 'test' ? 'selected' : '' }}>
                 Test (Continuous Assessment)
             </option>
             <option value="exam" {{ old('assessment_type', 'exam') == 'exam' ? 'selected' : '' }}>
-                Exam (Final Examination)
+                Exam (Examination)
             </option>
         </select>
         @error('assessment_type')
@@ -75,8 +78,7 @@
     <div class="col-lg-10 mx-auto">
         <div class="card">
             <div class="card-body">
-                <form action="{{ route('teacher.exams.store') }}" method="POST" id="examForm" novalidate>
-                    @csrf
+               
                     
                     <!-- Basic Information -->
                     <div class="row mb-3">
@@ -293,15 +295,17 @@
 
                     <div class="text-center mt-4">
                         <button type="submit" class="btn btn-primary btn-lg px-5" id="submitBtn">
-                            <i class="bi bi-save"></i> Create Exam
+                            <i class="bi bi-save"></i> Create
                         </button>
                         <a href="{{ route('teacher.exams') }}" class="btn btn-secondary btn-lg px-5">Cancel</a>
                     </div>
-                </form>
+               
             </div>
         </div>
     </div>
 </div>
+
+ </form>
 @endsection
 
 @push('styles')

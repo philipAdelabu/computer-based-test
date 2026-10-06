@@ -18,7 +18,7 @@
             <i class="bi bi-question-circle-fill"></i> Question Bank
         </a>
     </li>
-        <li class="nav-item">
+    <li class="nav-item">
         <a class="nav-link {{ request()->routeIs('teacher.exams*') ? 'active' : '' }}" 
            href="{{ route('teacher.exams') }}">
             <i class="bi bi-file-text-fill"></i> Tests & Exams

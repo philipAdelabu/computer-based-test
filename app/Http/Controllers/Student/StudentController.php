@@ -52,149 +52,276 @@ class StudentController extends Controller
         });
     }
 
-    public function dashboard()
-    {
-        $student = Auth::user()->student;
-        $class = $student->class;
-        $subjects = $class ? $class->subjects : collect();
-        
-        $availableExamsList = Exam::where('is_published', true)
-            ->where('status', 'active')
-            ->whereHas('subject', function($query) use ($student) {
-                $query->where('class_id', $student->class_id);
-            })
-            ->where(function($query) {
-                $now = Carbon::now(config('app.timezone'));
-                $query->where('schedule_type', 'no_date')
-                    ->orWhere(function($q) use ($now) {
-                        $q->where('schedule_type', 'single_date')
-                            ->where('start_date', '<=', $now)
-                            ->where(function($sub) use ($now) {
-                                $sub->whereNull('end_date')
-                                    ->orWhere('end_date', '>=', $now);
-                            });
-                    })
-                    ->orWhere(function($q) use ($now) {
-                        $q->where('schedule_type', 'date_range')
-                            ->where('available_from', '<=', $now)
-                            ->where('available_to', '>=', $now);
-                    });
-            })
-            ->with(['subject', 'attempts' => function($query) use ($student) {
-                $query->where('student_id', $student->id);
-            }])
-            ->orderBy('start_date')
-            ->limit(6)
-            ->get();
-        
-        $upcomingExamsList = Exam::where('is_published', true)
-            ->where('status', 'active')
-            ->whereHas('subject', function($query) use ($student) {
-                $query->where('class_id', $student->class_id);
-            })
-            ->where(function($query) {
-                $now = Carbon::now(config('app.timezone'));
-                $query->where(function($q) use ($now) {
-                    $q->where('schedule_type', 'single_date')
-                        ->where('start_date', '>', $now);
-                })->orWhere(function($q) use ($now) {
-                    $q->where('schedule_type', 'date_range')
-                        ->where('available_from', '>', $now);
-                });
-            })
-            ->with('subject')
-            ->orderBy('start_date')
-            ->limit(4)
-            ->get();
-        
-        $availableExams = $availableExamsList->count();
-        $upcomingExams = $upcomingExamsList->count();
-        $completedExams = ExamAttempt::where('student_id', $student->id)
-                                    ->where('status', 'submitted')
-                                    ->count();
-        
-        $averageScore = Result::where('student_id', $student->id)
-                             ->avg('percentage') ?? 0;
-        
-        $recentResults = Result::where('student_id', $student->id)
-                              ->with(['subject', 'exam'])
-                              ->latest()
-                              ->limit(5)
-                              ->get();
-        
-        return view('student.dashboard', compact(
-            'student',
-            'class',
-            'subjects',
-            'availableExamsList',
-            'upcomingExamsList',
-            'availableExams',
-            'upcomingExams',
-            'completedExams',
-            'averageScore',
-            'recentResults'
-        ));
-    }
 
-    public function exams()
-    {
-        $student = Auth::user()->student;
-        
-        $availableExams = Exam::where('is_published', true)
-            ->where('status', 'active')
-            ->whereHas('subject', function($query) use ($student) {
-                $query->where('class_id', $student->class_id);
-            })
-            ->where(function($query) {
-                $now = Carbon::now(config('app.timezone'));
-                $query->where('schedule_type', 'no_date')
-                    ->orWhere(function($q) use ($now) {
-                        $q->where('schedule_type', 'single_date')
-                            ->where('start_date', '<=', $now)
-                            ->where(function($sub) use ($now) {
-                                $sub->whereNull('end_date')
-                                    ->orWhere('end_date', '>=', $now);
-                            });
-                    })
-                    ->orWhere(function($q) use ($now) {
-                        $q->where('schedule_type', 'date_range')
-                            ->where('available_from', '<=', $now)
-                            ->where('available_to', '>=', $now);
-                    });
-            })
-            ->with(['subject', 'attempts' => function($query) use ($student) {
-                $query->where('student_id', $student->id);
-            }])
-            ->orderBy('start_date')
-            ->get();
-        
-        $upcomingExams = Exam::where('is_published', true)
-            ->where('status', 'active')
-            ->whereHas('subject', function($query) use ($student) {
-                $query->where('class_id', $student->class_id);
-            })
-            ->where(function($query) {
-                $now = Carbon::now(config('app.timezone'));
-                $query->where(function($q) use ($now) {
+public function dashboard()
+{
+    $student = Auth::user()->student;
+    $class = $student->class;
+    $subjects = $class ? $class->subjects : collect();
+    $now = Carbon::now(config('app.timezone'));
+    
+    // ============ AVAILABLE ASSESSMENTS ============
+    $availableAssessments = Exam::where('is_published', true)
+        ->where('status', 'active')
+        ->whereHas('subject', function($query) use ($student) {
+            $query->where('class_id', $student->class_id);
+        })
+        ->where(function($query) use ($now) {
+            $query->where('schedule_type', 'no_date')
+                ->orWhere(function($q) use ($now) {
                     $q->where('schedule_type', 'single_date')
-                        ->where('start_date', '>', $now);
-                })->orWhere(function($q) use ($now) {
+                        ->where('start_date', '<=', $now)
+                        ->where(function($sub) use ($now) {
+                            $sub->whereNull('end_date')
+                                ->orWhere('end_date', '>=', $now);
+                        });
+                })
+                ->orWhere(function($q) use ($now) {
                     $q->where('schedule_type', 'date_range')
-                        ->where('available_from', '>', $now);
+                        ->where('available_from', '<=', $now)
+                        ->where('available_to', '>=', $now);
                 });
+        })
+        ->with(['subject', 'attempts' => function($query) use ($student) {
+            $query->where('student_id', $student->id);
+        }])
+        ->orderBy('assessment_type')
+        ->orderBy('start_date')
+        ->limit(6)
+        ->get();
+    
+    // Split by type for display
+    $availableTests = $availableAssessments->where('assessment_type', 'test');
+    $availableExams = $availableAssessments->where('assessment_type', 'exam');
+    
+    // ============ UPCOMING ASSESSMENTS ============
+    $upcomingAssessments = Exam::where('is_published', true)
+        ->where('status', 'active')
+        ->whereHas('subject', function($query) use ($student) {
+            $query->where('class_id', $student->class_id);
+        })
+        ->where(function($query) use ($now) {
+            $query->where(function($q) use ($now) {
+                $q->where('schedule_type', 'single_date')
+                    ->where('start_date', '>', $now);
+            })->orWhere(function($q) use ($now) {
+                $q->where('schedule_type', 'date_range')
+                    ->where('available_from', '>', $now);
+            });
+        })
+        ->with('subject')
+        ->orderBy('start_date')
+        ->limit(4)
+        ->get();
+    
+    // ============ STATS ============
+    $availableCount = $availableAssessments->count();
+    $upcomingCount = $upcomingAssessments->count();
+    $completedCount = ExamAttempt::where('student_id', $student->id)
+                                 ->where('status', 'submitted')
+                                 ->count();
+    
+    // Get average from results
+    $averageScore = Result::where('student_id', $student->id)
+                         ->avg('percentage') ?? 0;
+    
+    // ============ RECENT RESULTS ============
+    $recentResults = Result::where('student_id', $student->id)
+                          ->with(['subject', 'exam'])
+                          ->latest()
+                          ->limit(5)
+                          ->get();
+    
+    // ============ SCORE BREAKDOWN ============
+    // Total Test Scores
+    $testResults = Result::where('student_id', $student->id)
+        ->whereHas('exam', function($query) {
+            $query->where('assessment_type', 'test');
+        })
+        ->with('exam')
+        ->get();
+    
+    $totalTestScore = 0;
+    $totalTestMax = 0;
+    foreach ($testResults as $result) {
+        if ($result->exam) {
+            $totalTestScore += $result->exam->convertScoreToMaxMarks($result->score);
+            $totalTestMax += $result->exam->max_marks;
+        }
+    }
+    
+    // Total Exam Scores
+    $examResults = Result::where('student_id', $student->id)
+        ->whereHas('exam', function($query) {
+            $query->where('assessment_type', 'exam');
+        })
+        ->with('exam')
+        ->get();
+    
+    $totalExamScore = 0;
+    $totalExamMax = 0;
+    foreach ($examResults as $result) {
+        if ($result->exam) {
+            $totalExamScore += $result->exam->convertScoreToMaxMarks($result->score);
+            $totalExamMax += $result->exam->max_marks;
+        }
+    }
+    
+    // ============ RECENT REPORT CARD ============
+    $latestReportCard = ReportCard::where('student_id', $student->id)
+                                  ->orderBy('academic_year', 'desc')
+                                  ->orderBy('created_at', 'desc')
+                                  ->first();
+    
+    // ============ SUBJECT-WISE BREAKDOWN ============
+    $subjectBreakdown = [];
+    foreach ($subjects as $subject) {
+        $subjectTests = Result::where('student_id', $student->id)
+            ->where('subject_id', $subject->id)
+            ->whereHas('exam', function($query) {
+                $query->where('assessment_type', 'test');
             })
-            ->with(['subject'])
-            ->orderBy('start_date')
+            ->with('exam')
             ->get();
         
-        $completedExams = ExamAttempt::where('student_id', $student->id)
-                                    ->where('status', 'submitted')
-                                    ->with(['exam', 'exam.subject'])
-                                    ->latest()
-                                    ->paginate(10);
+        $subjectExams = Result::where('student_id', $student->id)
+            ->where('subject_id', $subject->id)
+            ->whereHas('exam', function($query) {
+                $query->where('assessment_type', 'exam');
+            })
+            ->with('exam')
+            ->get();
         
-        return view('student.exams', compact('availableExams', 'upcomingExams', 'completedExams'));
+        $testScore = 0;
+        $testMax = 0;
+        foreach ($subjectTests as $result) {
+            if ($result->exam) {
+                $testScore += $result->exam->convertScoreToMaxMarks($result->score);
+                $testMax += $result->exam->max_marks;
+            }
+        }
+        
+        $examScore = 0;
+        $examMax = 0;
+        foreach ($subjectExams as $result) {
+            if ($result->exam) {
+                $examScore += $result->exam->convertScoreToMaxMarks($result->score);
+                $examMax += $result->exam->max_marks;
+            }
+        }
+        
+        $totalScore = $testScore + $examScore;
+        $totalMax = $testMax + $examMax;
+        $percentage = $totalMax > 0 ? ($totalScore / $totalMax) * 100 : 0;
+        
+        $subjectBreakdown[] = [
+            'subject' => $subject,
+            'test_score' => round($testScore, 2),
+            'test_max' => $testMax,
+            'exam_score' => round($examScore, 2),
+            'exam_max' => $examMax,
+            'total' => round($totalScore, 2),
+            'max' => $totalMax,
+            'percentage' => round($percentage, 2),
+        ];
     }
+    
+    return view('student.dashboard', compact(
+        'student',
+        'class',
+        'subjects',
+        'availableAssessments',
+        'availableTests',
+        'availableExams',
+        'upcomingAssessments',
+        'availableCount',
+        'upcomingCount',
+        'completedCount',
+        'averageScore',
+        'recentResults',
+        'totalTestScore',
+        'totalTestMax',
+        'totalExamScore',
+        'totalExamMax',
+        'latestReportCard',
+        'subjectBreakdown'
+    ));
+}
+
+
+public function exams(Request $request)
+{
+    $student = Auth::user()->student;
+    $now = Carbon::now(config('app.timezone'));
+    
+    // Base query for available assessments
+    $baseQuery = Exam::where('is_published', true)
+        ->where('status', 'active')
+        ->whereHas('subject', function($query) use ($student) {
+            $query->where('class_id', $student->class_id);
+        });
+    
+    // Available assessments
+    $availableQuery = clone $baseQuery;
+    $availableAssessments = $availableQuery
+        ->where(function($query) use ($now) {
+            $query->where('schedule_type', 'no_date')
+                ->orWhere(function($q) use ($now) {
+                    $q->where('schedule_type', 'single_date')
+                        ->where('start_date', '<=', $now)
+                        ->where(function($sub) use ($now) {
+                            $sub->whereNull('end_date')
+                                ->orWhere('end_date', '>=', $now);
+                        });
+                })
+                ->orWhere(function($q) use ($now) {
+                    $q->where('schedule_type', 'date_range')
+                        ->where('available_from', '<=', $now)
+                        ->where('available_to', '>=', $now);
+                });
+        })
+        ->with(['subject', 'attempts' => function($query) use ($student) {
+            $query->where('student_id', $student->id);
+        }])
+        ->orderBy('assessment_type')
+        ->orderBy('start_date')
+        ->get();
+    
+    // Split by assessment type
+    $availableTests = $availableAssessments->where('assessment_type', 'test');
+    $availableExams = $availableAssessments->where('assessment_type', 'exam');
+    
+    // Upcoming assessments
+    $upcomingQuery = clone $baseQuery;
+    $upcomingAssessments = $upcomingQuery
+        ->where(function($query) use ($now) {
+            $query->where(function($q) use ($now) {
+                $q->where('schedule_type', 'single_date')
+                    ->where('start_date', '>', $now);
+            })->orWhere(function($q) use ($now) {
+                $q->where('schedule_type', 'date_range')
+                    ->where('available_from', '>', $now);
+            });
+        })
+        ->with(['subject'])
+        ->orderBy('start_date')
+        ->get();
+    
+    // Completed assessments
+    $completedExams = ExamAttempt::where('student_id', $student->id)
+                                ->where('status', 'submitted')
+                                ->with(['exam', 'exam.subject'])
+                                ->latest()
+                                ->paginate(10);
+    
+    return view('student.exams', compact(
+        'availableTests',
+        'availableExams',
+        'availableAssessments',
+        'upcomingAssessments',
+        'completedExams'
+    ));
+}
 
     /**
      * START EXAM - When student clicks "Start Exam" button
@@ -519,16 +646,32 @@ public function examResult($attemptId)
     ));
    }
 
-    public function results()
-    {
-        $student = Auth::user()->student;
-        $results = Result::where('student_id', $student->id)
-                        ->with(['subject', 'exam'])
-                        ->latest()
-                        ->paginate(15);
-        
-        return view('student.results', compact('results'));
+
+
+public function results(Request $request)
+{
+    $student = Auth::user()->student;
+    
+    $query = Result::where('student_id', $student->id)
+                   ->with(['subject', 'exam']);
+    
+    // Filter by type
+    if ($request->has('type')) {
+        if ($request->type === 'test') {
+            $query->whereHas('exam', function($q) {
+                $q->where('assessment_type', 'test');
+            });
+        } elseif ($request->type === 'exam') {
+            $query->whereHas('exam', function($q) {
+                $q->where('assessment_type', 'exam');
+            });
+        }
     }
+    
+    $results = $query->latest()->paginate(15);
+    
+    return view('student.results', compact('results'));
+}
 
     public function reportCards()
     {

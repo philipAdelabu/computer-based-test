@@ -170,7 +170,7 @@
                                 </a>
                             @endif
                             <button type="button" class="btn btn-success ms-2" data-bs-toggle="modal" data-bs-target="#submitModal">
-                                <i class="bi bi-check-circle"></i> Submit Exam
+                                <i class="bi bi-check-circle"></i> Submit
                             </button>
                         </div>
                     </div>
@@ -223,7 +223,7 @@
                         </div>
                         
                         <button type="button" class="btn btn-danger w-100 mt-3" data-bs-toggle="modal" data-bs-target="#submitModal">
-                            <i class="bi bi-check-circle"></i> Submit Exam
+                            <i class="bi bi-check-circle"></i> Submit
                         </button>
                     </div>
                 </div>
@@ -235,7 +235,7 @@
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">Submit Exam</h5>
+                        <h5 class="modal-title">Submit</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
@@ -250,7 +250,7 @@
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                         <form action="{{ route('student.exam.submit', $attempt->id) }}" method="POST" id="submitForm">
                             @csrf
-                            <button type="submit" class="btn btn-success">Submit Exam</button>
+                            <button type="submit" class="btn btn-success">Submit</button>
                         </form>
                     </div>
                 </div>

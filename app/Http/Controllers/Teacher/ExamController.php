@@ -201,6 +201,11 @@ public function store(Request $request)
             'question_ids' => 'required|array|min:1',
             'question_ids.*' => 'exists:questions,id',
             'is_published' => 'boolean',
+            'assessment_type' => 'required|in:test,exam',
+            'max_marks' => 'required|integer|min:1|max:200',
+            'benchmark' => 'required|integer|min:0|max:100',
+            'term' => 'required|string|max:50',
+            'academic_year' => 'required|integer|min:2020|max:2100',
         ]);
 
         // Calculate total questions and score
