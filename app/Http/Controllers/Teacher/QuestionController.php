@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Teacher;
 use App\Http\Controllers\Controller;
 use App\Models\Subject;
 use App\Models\Question;
+use App\Models\ClassModel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -13,14 +14,89 @@ use Illuminate\Support\Facades\Validator;
 
 class QuestionController extends Controller
 {
-    public function index()
+
+
+    public function index(Request $request)
     {
         $teacherId = Auth::id();
-        $questions = Question::whereHas('subject', function($query) use ($teacherId) {
-            $query->where('teacher_id', $teacherId);
-        })->with('subject')->paginate(20);
         
-        return view('teacher.questions.index', compact('questions'));
+        // Get filter parameters
+        $classId = $request->get('class_id');
+        $subjectId = $request->get('subject_id');
+        $difficulty = $request->get('difficulty');
+        $search = $request->get('search');
+        
+        // Get teacher's subjects
+        $teacherSubjects = Subject::where('teacher_id', $teacherId)
+                                ->with('class')
+                                ->orderBy('name')
+                                ->get();
+        
+        $teacherSubjectIds = $teacherSubjects->pluck('id');
+        
+        // Build query - only teacher's subjects
+        $query = Question::with(['subject.class'])
+                        ->whereIn('subject_id', $teacherSubjectIds);
+        
+        // Apply filters
+        if ($classId) {
+            $query->whereHas('subject', function($q) use ($classId) {
+                $q->where('class_id', $classId);
+            });
+        }
+        
+        if ($subjectId) {
+            $query->where('subject_id', $subjectId);
+        }
+        
+        if ($difficulty) {
+            $query->where('difficulty', $difficulty);
+        }
+        
+        if ($search) {
+            $query->where('question_text', 'LIKE', "%{$search}%");
+        }
+        
+        $questions = $query->orderBy('subject_id')->latest()->paginate(20)->withQueryString();
+        
+        // Get classes from teacher's subjects
+        $classIds = $teacherSubjects->pluck('class_id')->unique();
+        $classes = ClassModel::whereIn('id', $classIds)
+                            ->withCount(['subjects' => function($q) use ($teacherId) {
+                                $q->where('teacher_id', $teacherId);
+                            }])
+                            ->orderBy('name')
+                            ->get();
+        
+        // Get all subjects (teacher's only) for filter
+        $subjects = $teacherSubjects;
+        
+        $selectedSubject = $subjectId ? Subject::with('class')->find($subjectId) : null;
+        $selectedClass = $classId ? ClassModel::find($classId) : null;
+        
+        $totalQuestions = Question::whereIn('subject_id', $teacherSubjectIds)->count();
+        $filteredCount = $questions->total();
+        
+        return view('teacher.questions.index', compact(
+            'questions',
+            'classes',
+            'subjects',
+            'selectedSubject',
+            'selectedClass',
+            'totalQuestions',
+            'filteredCount',
+            'teacherSubjects'
+        ));
+    }
+
+    public function bySubject($subjectId)
+    {
+        return redirect()->route('teacher.questions', ['subject_id' => $subjectId]);
+    }
+
+    public function byClass($classId)
+    {
+        return redirect()->route('teacher.questions', ['class_id' => $classId]);
     }
 
     public function create()
@@ -143,6 +219,8 @@ class QuestionController extends Controller
         return redirect()->route('teacher.questions')
             ->with('success', 'Question deleted successfully.');
     }
+
+    
 
     /**
      * Upload image to public/uploads/questions folder

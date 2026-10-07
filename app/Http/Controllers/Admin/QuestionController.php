@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Subject;
 use App\Models\Question;
+use App\Models\ClassModel;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Storage;
@@ -14,10 +15,79 @@ use Illuminate\Support\Facades\Validator;
 
 class QuestionController extends Controller
 {
-    public function index()
+        public function index(Request $request)
     {
-        $questions = Question::with('subject')->paginate(20);
-       return view('admin.questions.index', compact('questions'));
+        // Get filter parameters
+        $classId = $request->get('class_id');
+        $subjectId = $request->get('subject_id');
+        $difficulty = $request->get('difficulty');
+        $search = $request->get('search');
+        
+        // Build query
+        $query = Question::with(['subject.class']);
+        
+        // Apply filters
+        if ($classId) {
+            $query->whereHas('subject', function($q) use ($classId) {
+                $q->where('class_id', $classId);
+            });
+        }
+        
+        if ($subjectId) {
+            $query->where('subject_id', $subjectId);
+        }
+        
+        if ($difficulty) {
+            $query->where('difficulty', $difficulty);
+        }
+        
+        if ($search) {
+            $query->where('question_text', 'LIKE', "%{$search}%");
+        }
+        
+        $questions = $query->orderBy('subject_id')->latest()->paginate(20)->withQueryString();
+        
+        // Get statistics per class and subject
+        $classes = ClassModel::with(['subjects' => function($q) {
+            $q->withCount('questions');
+        }])->withCount('subjects')->orderBy('name')->get();
+        
+        // Get all subjects for filter dropdown
+        $subjects = Subject::with('class')->orderBy('name')->get();
+        
+        // Selected subject (if filtering by subject)
+        $selectedSubject = $subjectId ? Subject::with('class')->find($subjectId) : null;
+        $selectedClass = $classId ? ClassModel::find($classId) : null;
+        
+        // Group counts
+        $totalQuestions = Question::count();
+        $filteredCount = $questions->total();
+        
+        return view('admin.questions.index', compact(
+            'questions',
+            'classes',
+            'subjects',
+            'selectedSubject',
+            'selectedClass',
+            'totalQuestions',
+            'filteredCount'
+        ));
+    }
+
+    /**
+     * View questions by subject
+     */
+    public function bySubject($subjectId)
+    {
+        return redirect()->route('admin.questions', ['subject_id' => $subjectId]);
+    }
+
+    /**
+     * View questions by class
+     */
+    public function byClass($classId)
+    {
+        return redirect()->route('admin.questions', ['class_id' => $classId]);
     }
 
     public function create()
@@ -153,6 +223,24 @@ class QuestionController extends Controller
         return redirect()->route('admin.questions')
             ->with('success', 'Question deleted successfully.');
     }
+
+      public function bulkDelete(Request $request)
+        {
+            $request->validate([
+                'question_ids' => 'required|array',
+                'question_ids.*' => 'exists:questions,id',
+            ]);
+
+            $questions = Question::whereIn('id', $request->question_ids)->get();
+
+            foreach ($questions as $question) {
+                $this->deleteImage($question->image_path);
+                $question->delete();
+            }
+
+            return redirect()->route('admin.questions')
+                ->with('success', $questions->count() . ' questions deleted successfully.');
+        }
   
 
     public function import()

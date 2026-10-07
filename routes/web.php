@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\ReportCardController as AdminReportCardController
 use App\Http\Controllers\Teacher\QuestionController as TeacherQuestionController;
 use App\Http\Controllers\Teacher\TeacherController;
 use App\Http\Controllers\Teacher\ExamController;
+use App\Http\Controllers\Teacher\ScoreController;
 use App\Http\Controllers\Teacher\ReportCardController;
 use App\Http\Controllers\Student\StudentController;
 use App\Http\Middleware\CheckRole;
@@ -64,6 +65,7 @@ Route::middleware(['auth', CheckRole::class .':admin'])->prefix('admin')->name('
     Route::get('/questions/{id}/edit', [QuestionController::class, 'edit'])->name('questions.edit');
     Route::put('/questions/{id}', [QuestionController::class, 'update'])->name('questions.update');
     Route::delete('/questions/{id}', [QuestionController::class, 'delete'])->name('questions.delete');
+    Route::delete('/questions/bulk-delete', [QuestionController::class, 'bulkDelete'])->name('questions.bulk-delete');
     
 
     Route::post('/questions/import', [QuestionController::class, 'importExcel'])->name('questions.import.process');
@@ -186,7 +188,21 @@ Route::middleware(['auth', CheckRole::class . ':teacher'])->prefix('teacher')->n
     Route::post('/report-cards/generate', [ReportCardController::class, 'generate'])->name('report-cards.generate');
     Route::get('/report-cards/{id}', [ReportCardController::class, 'show'])->name('report-cards.show');
     Route::post('/report-cards/class-report', [ReportCardController::class, 'classReport'])->name('report-cards.class-report');
-
+// ============ SCORE MANAGEMENT ============
+    Route::get('/scores', [ScoreController::class, 'index'])->name('scores');
+    Route::get('/scores/create', [ScoreController::class, 'create'])->name('scores.create');
+    Route::post('/scores', [ScoreController::class, 'store'])->name('scores.store');
+    Route::get('/scores/{id}/edit', [ScoreController::class, 'edit'])->name('scores.edit');
+    Route::put('/scores/{id}', [ScoreController::class, 'update'])->name('scores.update');
+    Route::delete('/scores/{id}', [ScoreController::class, 'delete'])->name('scores.delete');
+    
+    // Bulk upload
+    Route::get('/scores/bulk-upload', [ScoreController::class, 'bulkUpload'])->name('scores.bulk-upload');
+    Route::post('/scores/bulk-upload', [ScoreController::class, 'bulkUploadStore'])->name('scores.bulk-upload.store');
+    
+    // AJAX routes
+    Route::get('/scores/students/{subjectId}', [ScoreController::class, 'getStudentsBySubject'])->name('scores.students');
+    Route::get('/scores/subjects/{classId}', [ScoreController::class, 'getSubjectsByClass'])->name('scores.subjects');
 });
 
 // Student Routes

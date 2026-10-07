@@ -93,4 +93,6 @@ class Subject extends Model
     {
         return $query->where('teacher_id', $teacherId);
     }
+ 
+
 }

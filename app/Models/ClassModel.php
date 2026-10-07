@@ -26,4 +26,9 @@ class ClassModel extends Model
     {
         return $this->hasMany(Student::class, 'class_id'); // Specify foreign key
     }
+
+    public function questions()
+    {
+        return $this->hasManyThrough(Question::class, Subject::class, 'class_id', 'subject_id');
+    }
 }

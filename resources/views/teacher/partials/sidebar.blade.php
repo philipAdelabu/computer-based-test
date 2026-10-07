@@ -31,8 +31,9 @@
         </a>
     </li>
     <li class="nav-item">
-        <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#uploadScoreModal">
-            <i class="bi bi-upload"></i> Upload Scores
+        <a class="nav-link {{ request()->routeIs('teacher.scores*') ? 'active' : '' }}" 
+        href="{{ route('teacher.scores') }}">
+            <i class="bi bi-clipboard-check-fill"></i> Upload Scores
         </a>
-    </li>
+   </li>
 </ul>
