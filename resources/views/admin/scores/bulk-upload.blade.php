@@ -94,9 +94,9 @@ $('#classSelect').on('change', function() {
     }
     
     $('#studentsContainer').html('<div class="text-center py-4"><div class="spinner-border"></div><p class="mt-2">Loading students...</p></div>');
-    
+    const baseUrl = '{{ url('/') }}'; // Get the base URL of the application
     $.ajax({
-        url: `/admin/scores/students/${classId}`,
+        url: `${baseUrl}/admin/scores/students/${classId}`,
         method: 'GET',
         success: function(students) {
             if (students.length === 0) {

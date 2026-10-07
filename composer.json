@@ -36,7 +36,8 @@
         },
         "files":[
             "app/Helpers/TimeZoneHelper.php",
-            "app/Helpers/ExamHelper.php"
+            "app/Helpers/ExamHelper.php",
+             "app/Helpers/SettingHelper.php"
         ]
     },
     "autoload-dev": {

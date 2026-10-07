@@ -55,22 +55,33 @@
                         @enderror
                     </div>
                     
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Question Image</label>
-                        @if($question->image_path)
-                            <div class="mb-2">
-                                <img src="{{ asset('storage/' . $question->image_path) }}" 
-                                     alt="Current Image" 
-                                     style="max-height: 150px; max-width: 100%;" 
-                                     class="rounded border">
+                      <div class="mb-3">
+                            <label class="form-label fw-semibold">Question Image</label>
+                            
+                            @if($question->has_image)
+                                <div class="mb-2">
+                                    <img src="{{ $question->image_url }}" 
+                                        alt="Current Image" 
+                                        class="img-fluid rounded border"
+                                        style="max-height: 200px;">
+                                    <br>
+                                    <small class="text-muted">Current image. Upload a new one to replace it.</small>
+                                </div>
+                            @endif
+                            
+                            <input type="file" name="image" id="imageInput" 
+                                class="form-control @error('image') is-invalid @enderror" 
+                                accept="image/jpeg,image/png,image/jpg,image/gif,image/webp">
+                            @error('image')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            
+                            <div id="imagePreview" class="mt-2" style="display: none;">
+                                <p class="mb-1 small text-info">New image preview:</p>
+                                <img id="previewImg" src="" alt="Preview" 
+                                    class="img-fluid rounded border" style="max-height: 200px;">
                             </div>
-                        @endif
-                        <input type="file" name="image" class="form-control @error('image') is-invalid @enderror" accept="image/*">
-                        <small class="text-muted">Leave empty to keep current image. Max size: 2MB</small>
-                        @error('image')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
+                        </div>
                     
                     <div class="row mb-3">
                         <div class="col-md-12">
@@ -167,5 +178,20 @@ $(document).ready(function() {
         optionCount--;
     });
 });
+    
+    $('#imageInput').on('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                $('#previewImg').attr('src', e.target.result);
+                $('#imagePreview').show();
+            };
+            reader.readAsDataURL(file);
+        } else {
+            $('#imagePreview').hide();
+        }
+    });
+
 </script>
 @endpush

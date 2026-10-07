@@ -54,4 +54,10 @@
             <i class="bi bi-file-earmark-text-fill"></i> Report Cards
         </a>
     </li>
+    <li class="nav-item">
+        <a class="nav-link {{ request()->routeIs('admin.settings*') ? 'active' : '' }}" 
+        href="{{ route('admin.settings') }}">
+            <i class="bi bi-gear-fill"></i> System Settings
+        </a>
+   </li>
 </ul>

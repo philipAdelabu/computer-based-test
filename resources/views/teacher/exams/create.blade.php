@@ -97,6 +97,7 @@
                                 @foreach($subjects as $subject)
                                     <option value="{{ $subject->id }}" {{ old('subject_id') == $subject->id ? 'selected' : '' }}>
                                         {{ $subject->name }} ({{ $subject->class->name }})
+                                          {{ $subject->teacher->name ?? 'No Teacher' }}
                                     </option>
                                 @endforeach
                             </select>

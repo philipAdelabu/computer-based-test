@@ -9,6 +9,7 @@ use App\Models\ClassModel;
 use App\Models\Subject;
 use App\Models\Exam;
 use App\Models\Question;
+use App\Models\ReportCard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;

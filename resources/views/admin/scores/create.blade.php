@@ -103,9 +103,9 @@ $('#classSelect').on('change', function() {
     }
     
     studentSelect.html('<option value="">Loading...</option>');
-    
+    const baseUrl = '{{ url('/') }}'; // Get the base URL of the application
     $.ajax({
-        url: `/admin/scores/students/${classId}`,
+        url: `${baseUrl}/admin/scores/students/${classId}`,
         method: 'GET',
         success: function(students) {
             let options = '<option value="">-- Select Student --</option>';

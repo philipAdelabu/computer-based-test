@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\QuestionController;
 use App\Http\Controllers\Admin\ScoreController as AdminScoreController;
 use App\Http\Controllers\Admin\ExamController as AdminExamController;
@@ -55,6 +56,11 @@ Route::middleware(['auth', CheckRole::class .':admin'])->prefix('admin')->name('
     Route::get('/questions', [QuestionController::class, 'index'])->name('questions');
     Route::get('/questions/create', [QuestionController::class, 'create'])->name('questions.create');
     Route::post('/questions', [QuestionController::class, 'store'])->name('questions.store');
+
+          // AJAX route for fetching questions by subject
+    Route::get('/questions/by-subject/{subjectId}', [QuestionController::class, 'getQuestionsBySubject'])
+        ->name('questions.by-subject');
+
     Route::get('/questions/{id}/edit', [QuestionController::class, 'edit'])->name('questions.edit');
     Route::put('/questions/{id}', [QuestionController::class, 'update'])->name('questions.update');
     Route::delete('/questions/{id}', [QuestionController::class, 'delete'])->name('questions.delete');
@@ -127,6 +133,11 @@ Route::get('/students/by-class/{classId}', [AdminController::class, 'getStudents
     Route::get('/report-cards/{id}', [AdminReportCardController::class, 'show'])->name('report-cards.show');
     Route::delete('/report-cards/{id}', [AdminReportCardController::class, 'delete'])->name('report-cards.delete');
     Route::post('/report-cards/class-report', [AdminReportCardController::class, 'classReport'])->name('report-cards.class-report');
+     // Settings Routes
+    Route::get('/settings', [SettingController::class, 'index'])->name('settings');
+    Route::put('/settings', [SettingController::class, 'update'])->name('settings.update');
+
+ 
 
     });
 
@@ -197,9 +208,23 @@ Route::middleware(['auth', CheckRole::class .':student'])->prefix('student')->na
 });
 
 // Home Route
+// routes/web.php - Replace the default home route
+
 Route::get('/', function () {
-    return redirect()->route('login');
-});
+    // If user is logged in, redirect to their dashboard
+    if (auth()->check()) {
+        $user = auth()->user();
+        if ($user->isAdmin()) {
+            return redirect()->route('admin.dashboard');
+        } elseif ($user->isTeacher()) {
+            return redirect()->route('teacher.dashboard');
+        } else {
+            return redirect()->route('student.dashboard');
+        }
+    }
+    
+    return view('welcome');
+})->name('home');
 
 // routes/web.php - Add for debugging
 Route::get('/test-excel', function() {

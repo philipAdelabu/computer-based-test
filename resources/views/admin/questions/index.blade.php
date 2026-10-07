@@ -78,13 +78,16 @@
                                 @endif
                             </td>
                             <td>
-                                @if($question->image_path)
-                                    <a href="{{ asset('storage/' . $question->image_path) }}" target="_blank">
-                                        <i class="bi bi-image fs-5 text-primary"></i>
-                                    </a>
-                                @else
-                                    <span class="text-muted">None</span>
-                                @endif
+                                   @if($question->has_image)
+                                        <a href="{{ $question->image_url }}" target="_blank" title="View image">
+                                            <img src="{{ $question->image_url }}" 
+                                                alt="Question Image" 
+                                                class="rounded border"
+                                                style="width: 50px; height: 50px; object-fit: cover;">
+                                        </a>
+                                    @else
+                                        <span class="text-muted small">No image</span>
+                                    @endif
                             </td>
                             <td>
                                 <div class="btn-group" role="group">

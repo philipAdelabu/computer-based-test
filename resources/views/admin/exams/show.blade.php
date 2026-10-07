@@ -1,13 +1,13 @@
-<!-- resources/views/teacher/exams/show.blade.php -->
+<!-- resources/views/admin/exams/show.blade.php -->
 @extends('layouts.app')
 
-@section('title', 'Exam Details')
+@section('title', 'Assessment Details')
 
 @section('sidebar')
-    @include('teacher.partials.sidebar')
+    @include('admin.partials.sidebar')
 @endsection
 
-@section('page-title', 'Exam Details')
+@section('page-title', 'Assessment Details')
 
 @section('content')
 <div class="row">
@@ -15,11 +15,23 @@
         <div class="card">
             <div class="card-header bg-white">
                 <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">{{ $exam->title }}</h5>
                     <div>
-                        <span class="{!! $exam->status_badge !!}">
-                            {{ $exam->status_text }}
-                        </span>
+                        <h5 class="mb-0">
+                            @if($exam->assessment_type == 'test')
+                                <span class="badge bg-info me-2">Test</span>
+                            @else
+                                <span class="badge bg-primary me-2">Exam</span>
+                            @endif
+                            {{ $exam->title }}
+                        </h5>
+                        @if($exam->term)
+                            <small class="text-muted">
+                                {{ $exam->term }} | {{ $exam->academic_year }} Academic Session
+                            </small>
+                        @endif
+                    </div>
+                    <div>
+                        {!! $exam->status_badge !!}
                         @if($exam->is_published)
                             <span class="badge bg-success">Published</span>
                         @else
@@ -31,15 +43,29 @@
             <div class="card-body">
                 <div class="row mb-4">
                     <div class="col-md-6">
-                        <h6>Exam Information</h6>
+                        <h6>Assessment Information</h6>
                         <table class="table table-sm table-borderless">
                             <tr>
+                                <td><strong>Type:</strong></td>
+                                <td>
+                                    @if($exam->assessment_type == 'test')
+                                        <span class="badge bg-info">Test (Continuous Assessment)</span>
+                                    @else
+                                        <span class="badge bg-primary">Exam (Final Examination)</span>
+                                    @endif
+                                </td>
+                            </tr>
+                            <tr>
                                 <td><strong>Subject:</strong></td>
-                                <td>{{ $exam->subject->name }}</td>
+                                <td>{{ $exam->subject->name ?? 'N/A' }}</td>
                             </tr>
                             <tr>
                                 <td><strong>Class:</strong></td>
-                                <td>{{ $exam->subject->class->name }}</td>
+                                <td>{{ $exam->subject->class->name ?? 'N/A' }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Teacher:</strong></td>
+                                <td>{{ $exam->subject->teacher->name ?? 'N/A' }}</td>
                             </tr>
                             <tr>
                                 <td><strong>Duration:</strong></td>
@@ -50,13 +76,41 @@
                                 <td>{{ $exam->total_questions }}</td>
                             </tr>
                             <tr>
-                                <td><strong>Total Score:</strong></td>
-                                <td>{{ $exam->total_score }}</td>
+                                <td><strong>Raw Total Score:</strong></td>
+                                <td>{{ $exam->total_score }} points</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Max Marks:</strong></td>
+                                <td><strong>{{ $exam->max_marks }}</strong> marks</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Benchmark:</strong></td>
+                                <td>{{ $exam->benchmark }}% to pass</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Max Attempts:</strong></td>
+                                <td>
+                                    @if($exam->max_attempts > 0)
+                                        {{ $exam->max_attempts }}
+                                    @else
+                                        Unlimited
+                                    @endif
+                                </td>
                             </tr>
                             <tr>
                                 <td><strong>Created By:</strong></td>
-                                <td>{{ $exam->creator->name }}</td>
+                                <td>
+                                    {{ $exam->creator->name ?? 'N/A' }}
+                                    <span class="badge bg-light text-dark">
+                                        {{ ucfirst($exam->created_by_role) }}
+                                    </span>
+                                </td>
                             </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Schedule</h6>
+                        <table class="table table-sm table-borderless">
                             <tr>
                                 <td><strong>Schedule Type:</strong></td>
                                 <td>
@@ -69,35 +123,7 @@
                                     @endif
                                 </td>
                             </tr>
-                            @if($exam->max_attempts > 0)
-                                <tr>
-                                    <td><strong>Max Attempts:</strong></td>
-                                    <td>{{ $exam->max_attempts }}</td>
-                                </tr>
-                            @else
-                                <tr>
-                                    <td><strong>Max Attempts:</strong></td>
-                                    <td>Unlimited</td>
-                                </tr>
-                            @endif
-                            @if($exam->passing_score)
-                                <tr>
-                                    <td><strong>Passing Score:</strong></td>
-                                    <td>{{ $exam->passing_score }}%</td>
-                                </tr>
-                            @endif
-                        </table>
-                    </div>
-                    <div class="col-md-6">
-                        <h6>Schedule</h6>
-                        <table class="table table-sm table-borderless">
-                            @if($exam->schedule_type == 'no_date')
-                                <tr>
-                                    <td colspan="2">
-                                        <span class="text-success"><i class="bi bi-infinity"></i> Always Available</span>
-                                    </td>
-                                </tr>
-                            @elseif($exam->schedule_type == 'single_date')
+                            @if($exam->schedule_type == 'single_date')
                                 <tr>
                                     <td><strong>Start Date:</strong></td>
                                     <td>{{ $exam->formatted_start_date }}</td>
@@ -128,7 +154,7 @@
                                     @elseif($exam->is_completed)
                                         <span class="badge bg-secondary">Completed</span>
                                     @else
-                                        <span class="badge bg-secondary">{{ $exam->status }}</span>
+                                        <span class="badge bg-secondary">{{ ucfirst($exam->status) }}</span>
                                     @endif
                                 </td>
                             </tr>
@@ -155,24 +181,23 @@
                         <table class="table table-sm table-bordered">
                             <thead class="table-light">
                                 <tr>
-                                    <th>#</th>
+                                    <th style="width: 40px;">#</th>
                                     <th>Question</th>
-                                    <th>Score</th>
-                                    <th>Difficulty</th>
+                                    <th style="width: 70px;">Score</th>
+                                    <th style="width: 90px;">Difficulty</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($exam->questions as $index => $question)
+                                @forelse($exam->questions as $index => $question)
                                     <tr>
                                         <td>{{ $index + 1 }}</td>
                                         <td>
                                             {{ Str::limit($question->question_text, 100) }}
-                                               @if($question->has_image)
+                                                @if($question->has_image)
                                                     <a href="{{ $question->image_url }}" target="_blank">
                                                         <i class="bi bi-image text-primary" title="Has image"></i>
                                                     </a>
                                                 @endif
-
                                         </td>
                                         <td>{{ $question->score }}</td>
                                         <td>
@@ -185,7 +210,13 @@
                                             </span>
                                         </td>
                                     </tr>
-                                @endforeach
+                                @empty
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted py-3">
+                                            No questions attached to this assessment.
+                                        </td>
+                                    </tr>
+                                @endforelse
                             </tbody>
                         </table>
                     </div>
@@ -193,21 +224,26 @@
 
                 @if($exam->status !== 'completed')
                     <div class="mt-3">
-                        <form action="{{ route('teacher.exams.publish', $exam->id) }}" method="POST" class="d-inline">
-                            @csrf
-                            @if(!$exam->is_published)
+                        @if(!$exam->is_published)
+                            <form action="{{ route('admin.exams.publish', $exam->id) }}" method="POST" class="d-inline">
+                                @csrf
                                 <button type="submit" class="btn btn-success">
-                                    <i class="bi bi-check-circle"></i> Publish Exam
+                                    <i class="bi bi-check-circle"></i> Publish Assessment
                                 </button>
-                            @else
-                                <button type="submit" formaction="{{ route('teacher.exams.unpublish', $exam->id) }}" 
-                                        class="btn btn-warning">
-                                    <i class="bi bi-x-circle"></i> Unpublish Exam
+                            </form>
+                        @else
+                            <form action="{{ route('admin.exams.unpublish', $exam->id) }}" method="POST" class="d-inline">
+                                @csrf
+                                <button type="submit" class="btn btn-warning">
+                                    <i class="bi bi-x-circle"></i> Unpublish Assessment
                                 </button>
-                            @endif
-                        </form>
-                        <a href="{{ route('teacher.exams.edit', $exam->id) }}" class="btn btn-primary">
-                            <i class="bi bi-pencil"></i> Edit Exam
+                            </form>
+                        @endif
+                        <a href="{{ route('admin.exams.edit', $exam->id) }}" class="btn btn-primary">
+                            <i class="bi bi-pencil"></i> Edit Assessment
+                        </a>
+                        <a href="{{ route('admin.exams') }}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Back to List
                         </a>
                     </div>
                 @endif
@@ -222,37 +258,34 @@
             </div>
             <div class="card-body">
                 <div class="mb-3">
-                    <h6>Total Students</h6>
-                    <h3>{{ $exam->total_students }}</h3>
+                    <h6 class="text-muted small">Total Students</h6>
+                    <h3 class="mb-0">{{ $exam->total_students }}</h3>
                 </div>
                 <div class="mb-3">
-                    <h6>Average Score</h6>
-                    <h3>{{ number_format($exam->average_score, 1) }}%</h3>
+                    <h6 class="text-muted small">Average Score</h6>
+                    <h3 class="mb-0">{{ number_format($exam->average_score, 1) }}%</h3>
                 </div>
                 <div class="mb-3">
-                    <h6>Pass Rate</h6>
-                    <h3>{{ $exam->pass_rate }}%</h3>
+                    <h6 class="text-muted small">Pass Rate</h6>
+                    <h3 class="mb-0">{{ $exam->pass_rate }}%</h3>
                 </div>
-                <div class="progress mb-3">
-                    <div class="progress-bar bg-success" style="width: {{ $exam->pass_rate }}%">
+                <div class="progress mb-3" style="height: 20px;">
+                    <div class="progress-bar bg-success" 
+                         style="width: {{ $exam->pass_rate }}%">
                         {{ $exam->pass_rate }}%
                     </div>
                 </div>
-                @if($exam->max_attempts > 0)
-                    <div class="mb-3">
-                        <h6>Max Attempts</h6>
-                        <h5>{{ $exam->max_attempts }}</h5>
-                    </div>
-                @endif
             </div>
         </div>
 
-        @if($attempts->count() > 0)
-            <div class="card mt-3">
-                <div class="card-header bg-white">
-                    <h6 class="mb-0">Recent Attempts</h6>
-                </div>
-                <div class="card-body p-0">
+        <div class="card mt-3">
+            <div class="card-header bg-white">
+                <h6 class="mb-0">
+                    <i class="bi bi-clipboard-check"></i> Recent Attempts
+                </h6>
+            </div>
+            <div class="card-body p-0">
+                @if($attempts->count() > 0)
                     <div class="table-responsive">
                         <table class="table table-sm table-hover mb-0">
                             <thead>
@@ -265,8 +298,20 @@
                             <tbody>
                                 @foreach($attempts as $attempt)
                                     <tr>
-                                        <td>{{ $attempt->student->user->name }}</td>
-                                        <td>{{ $attempt->score ?? 'N/A' }}/{{ $exam->total_score }}</td>
+                                        <td>
+                                            <small>
+                                                {{ $attempt->student->user->name ?? 'N/A' }}
+                                                <br>
+                                                <span class="text-muted">
+                                                    {{ $attempt->student->admission_number ?? '' }}
+                                                </span>
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <small>
+                                                {{ $attempt->score ?? 'N/A' }}/{{ $exam->total_score }}
+                                            </small>
+                                        </td>
                                         <td>
                                             <span class="badge 
                                                 @if($attempt->status == 'submitted') bg-success
@@ -281,12 +326,19 @@
                             </tbody>
                         </table>
                     </div>
-                    <div class="card-footer bg-white">
-                        {{ $attempts->links() }}
+                    @if($attempts->hasPages())
+                        <div class="card-footer bg-white">
+                            {{ $attempts->links() }}
+                        </div>
+                    @endif
+                @else
+                    <div class="text-center py-4">
+                        <i class="bi bi-inbox fs-1 d-block text-muted"></i>
+                        <p class="text-muted small mb-0 mt-2">No attempts yet.</p>
                     </div>
-                </div>
+                @endif
             </div>
-        @endif
+        </div>
     </div>
 </div>
 @endsection

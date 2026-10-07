@@ -26,111 +26,45 @@ class QuestionController extends Controller
         return view('admin.questions.create', compact('subjects'));
     }
 
-     // app/Http/Controllers/Admin/QuestionController.php
-// Add the same uploadImage helper and update store, update, delete methods
+    // =====================================================
+    // STORE
+    // =====================================================
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'subject_id' => 'required|exists:subjects,id',
+            'question_text' => 'required|string',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'options' => 'required|array|min:2',
+            'options.*' => 'required|string',
+            'correct_answer' => 'required|string',
+            'score' => 'required|integer|min:1',
+            'difficulty' => 'required|in:easy,medium,hard',
+        ]);
 
-public function store(Request $request)
-{
-    $validated = $request->validate([
-        'subject_id' => 'required|exists:subjects,id',
-        'question_text' => 'required|string',
-        'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
-        'options' => 'required|array|min:2',
-        'options.*' => 'required|string',
-        'correct_answer' => 'required|string',
-        'score' => 'required|integer|min:1',
-        'difficulty' => 'required|in:easy,medium,hard',
-    ]);
-
-    $imagePath = null;
-    if ($request->hasFile('image')) {
-        $imagePath = $this->uploadImage($request->file('image'));
-    }
-
-    Question::create([
-        'subject_id' => $validated['subject_id'],
-        'question_text' => $validated['question_text'],
-        'image_path' => $imagePath,
-        'options' => $validated['options'],
-        'correct_answer' => $validated['correct_answer'],
-        'score' => $validated['score'],
-        'difficulty' => $validated['difficulty'],
-    ]);
-
-    return redirect()->route('admin.questions')
-        ->with('success', 'Question created successfully.');
-}
-
-public function update(Request $request, $id)
-{
-    $question = Question::findOrFail($id);
-    
-    $validated = $request->validate([
-        'subject_id' => 'required|exists:subjects,id',
-        'question_text' => 'required|string',
-        'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
-        'options' => 'required|array|min:2',
-        'options.*' => 'required|string',
-        'correct_answer' => 'required|string',
-        'score' => 'required|integer|min:1',
-        'difficulty' => 'required|in:easy,medium,hard',
-    ]);
-
-    if ($request->hasFile('image')) {
-        // Delete old image
-        if ($question->image_path) {
-            $oldPath = public_path('uploads/questions/' . basename($question->image_path));
-            if (file_exists($oldPath)) {
-                @unlink($oldPath);
-            }
+        // Handle image upload to public folder
+        $imagePath = null;
+        if ($request->hasFile('image')) {
+            $imagePath = $this->uploadImage($request->file('image'));
         }
-        
-        $question->image_path = $this->uploadImage($request->file('image'));
+
+        Question::create([
+            'subject_id' => $validated['subject_id'],
+            'question_text' => $validated['question_text'],
+            'image_path' => $imagePath,
+            'options' => $validated['options'],
+            'correct_answer' => $validated['correct_answer'],
+            'score' => $validated['score'],
+            'difficulty' => $validated['difficulty'],
+        ]);
+
+        return redirect()->route('admin.questions')
+            ->with('success', 'Question created successfully.');
     }
 
-    $question->update([
-        'subject_id' => $validated['subject_id'],
-        'question_text' => $validated['question_text'],
-        'options' => $validated['options'],
-        'correct_answer' => $validated['correct_answer'],
-        'score' => $validated['score'],
-        'difficulty' => $validated['difficulty'],
-    ]);
-
-    return redirect()->route('admin.questions')
-        ->with('success', 'Question updated successfully.');
-}
-
-public function delete($id)
-{
-    $question = Question::findOrFail($id);
-    
-    if ($question->image_path) {
-        $oldPath = public_path('uploads/questions/' . basename($question->image_path));
-        if (file_exists($oldPath)) {
-            @unlink($oldPath);
-        }
-    }
-    
-    $question->delete();
-    
-    return redirect()->route('admin.questions')
-        ->with('success', 'Question deleted successfully.');
-}
-
-private function uploadImage($file)
-{
-    $uploadPath = public_path('uploads/questions');
-    if (!file_exists($uploadPath)) {
-        mkdir($uploadPath, 0755, true);
-    }
-    
-    $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-    $file->move($uploadPath, $filename);
-    
-    return 'uploads/questions/' . $filename;
-}
-
+    // =====================================================
+    // EDIT
+    // =====================================================
     public function edit($id)
     {
         $question = Question::findOrFail($id);
@@ -138,6 +72,87 @@ private function uploadImage($file)
         return view('admin.questions.edit', compact('question', 'subjects'));
     }
 
+    // =====================================================
+    // UPDATE
+    // =====================================================
+    public function update(Request $request, $id)
+    {
+        $question = Question::findOrFail($id);
+
+        $validated = $request->validate([
+            'subject_id' => 'required|exists:subjects,id',
+            'question_text' => 'required|string',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'options' => 'required|array|min:2',
+            'options.*' => 'required|string',
+            'correct_answer' => 'required|string',
+            'score' => 'required|integer|min:1',
+            'difficulty' => 'required|in:easy,medium,hard',
+        ]);
+
+        // Handle image upload
+        if ($request->hasFile('image')) {
+            // Delete old image from public folder
+            if ($question->image_path) {
+                $oldPath = public_path('uploads/questions/' . basename($question->image_path));
+                if (file_exists($oldPath)) {
+                    @unlink($oldPath);
+                }
+            }
+            
+            // Upload new image
+            $question->image_path = $this->uploadImage($request->file('image'));
+        }
+
+        $question->update([
+            'subject_id' => $validated['subject_id'],
+            'question_text' => $validated['question_text'],
+            'options' => $validated['options'],
+            'correct_answer' => $validated['correct_answer'],
+            'score' => $validated['score'],
+            'difficulty' => $validated['difficulty'],
+        ]);
+
+        return redirect()->route('admin.questions')
+            ->with('success', 'Question updated successfully.');
+    }
+
+      /**
+     * Upload image to public/uploads/questions folder
+     */
+    private function uploadImage($file)
+    {
+        // Ensure directory exists
+        $uploadPath = public_path('uploads/questions');
+        if (!file_exists($uploadPath)) {
+            mkdir($uploadPath, 0755, true);
+        }
+        
+        // Generate unique filename
+        $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+        
+        // Move file to public folder
+        $file->move($uploadPath, $filename);
+        
+        // Return relative path for storage in DB
+        return 'uploads/questions/' . $filename;
+    }
+
+    // =====================================================
+    // DELETE
+    // =====================================================
+    public function delete($id)
+    {
+        $question = Question::findOrFail($id);
+
+        // Delete image from wherever it lives
+        $this->deleteImage($question->image_path);
+
+        $question->delete();
+
+        return redirect()->route('admin.questions')
+            ->with('success', 'Question deleted successfully.');
+    }
   
 
     public function import()
@@ -492,4 +507,20 @@ private function uploadImage($file)
             return back()->with('error', 'Error importing questions: ' . $e->getMessage());
         }
     }
+
+    public function getQuestionsBySubject($subjectId)
+    {
+        try {
+            $questions = Question::where('subject_id', $subjectId)
+                                ->get(['id', 'question_text', 'score', 'difficulty']);
+            
+            return response()->json($questions);
+            
+        } catch (\Exception $e) {
+            \Log::error('Error fetching questions: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to load questions'], 500);
+        }
+    }
+
+
 }
