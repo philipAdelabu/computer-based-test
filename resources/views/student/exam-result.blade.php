@@ -160,8 +160,10 @@
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <h6 class="mb-0">
                                         <span class="badge bg-secondary me-2">Q{{ $index + 1 }}</span>
-                                        {{ $item['question']->question_text }}
                                     </h6>
+                                      <div class="question-text">
+                                        {!! \Purifier::clean($item['question']->question_text) !!}
+                                      </div>
                                     <div>
                                         @if($item['status'] === 'correct')
                                             <span class="badge bg-success">
@@ -250,3 +252,40 @@
     </div>
 </div>
 @endsection
+
+@push('styles')
+<style>
+    .math {
+        font-family: 'Times New Roman', serif;
+        font-style: italic;
+    }
+    .question-text {
+    line-height: 1.6;
+    }
+    .question-text img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 6px;
+    }
+    .question-text table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 10px 0;
+    }
+    .question-text table td,
+    .question-text table th {
+        border: 1px solid #dee2e6;
+        padding: 6px 10px;
+    }
+    .question-text ul,
+    .question-text ol {
+        padding-left: 25px;
+    }
+    .question-text code {
+        background: #f4f4f4;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: 'Courier New', monospace;
+    }
+</style>
+@endpush

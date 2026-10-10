@@ -166,7 +166,7 @@
                                     <tr>
                                         <td>{{ $index + 1 }}</td>
                                         <td>
-                                            {{ Str::limit($question->question_text, 100) }}
+                                            {!! \Purifier::clean($question->question_text) !!}
                                                @if($question->has_image)
                                                     <a href="{{ $question->image_url }}" target="_blank">
                                                         <i class="bi bi-image text-primary" title="Has image"></i>

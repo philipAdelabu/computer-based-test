@@ -120,7 +120,7 @@
                             </div>
                             <hr>
                             <div class="question-text">
-                                <p class="fs-5">{{ $currentQuestion->question_text }}</p>
+                                 {!! \Purifier::clean($currentQuestion->question_text) !!}
                                @if($currentQuestion->has_image)
                                     <div class="my-3 text-center">
                                         <img src="{{ $currentQuestion->image_url }}" 
@@ -270,6 +270,43 @@
     @endif
 </div>
 @endsection
+
+@push('styles')
+<style>
+    .math {
+        font-family: 'Times New Roman', serif;
+        font-style: italic;
+    }
+    .question-text {
+    line-height: 1.6;
+    }
+    .question-text img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 6px;
+    }
+    .question-text table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 10px 0;
+    }
+    .question-text table td,
+    .question-text table th {
+        border: 1px solid #dee2e6;
+        padding: 6px 10px;
+    }
+    .question-text ul,
+    .question-text ol {
+        padding-left: 25px;
+    }
+    .question-text code {
+        background: #f4f4f4;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: 'Courier New', monospace;
+    }
+</style>
+@endpush
 
 @push('scripts')
 <script>

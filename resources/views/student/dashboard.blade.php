@@ -16,6 +16,41 @@
     $subjects = $class ? $class->subjects : collect();
 @endphp
 
+
+@php
+    $student = Auth::user()->student;
+@endphp
+
+@if($student && !$student->is_assessment_active)
+    <div class="alert alert-danger d-flex align-items-center" role="alert">
+        <i class="bi bi-shield-exclamation fs-2 me-3"></i>
+        <div>
+            <h5 class="alert-heading mb-1">Assessment Access Deactivated</h5>
+            <p class="mb-1">
+                Your access to taking tests and exams has been temporarily suspended.
+            </p>
+            @if($student->deactivation_reason)
+                <p class="mb-1">
+                    <strong>Reason:</strong> {{ $student->deactivation_reason }}
+                </p>
+            @endif
+            @if($student->reactivate_at)
+                <p class="mb-0">
+                    <small>
+                        <i class="bi bi-clock"></i>
+                        Auto-reactivation scheduled for 
+                        {{ $student->reactivate_at->timezone(config('app.timezone'))->format('F d, Y h:i A') }}
+                    </small>
+                </p>
+            @else
+                <p class="mb-0">
+                    <small>Please contact your school administrator for assistance.</small>
+                </p>
+            @endif
+        </div>
+    </div>
+@endif
+
 <!-- Student Info Card -->
 <div class="row mb-4">
     <div class="col-md-12">

@@ -254,7 +254,7 @@
                                             </a>
                                         @endif
                                         <div>
-                                            {{ Str::limit($question->question_text, 100) }}
+                                             {!! \Purifier::clean(Str::limit($question->question_text, 100)) !!}
                                         </div>
                                     </div>
                                 </td>
@@ -320,7 +320,7 @@
                                                 </div>
                                                 <div class="modal-body">
                                                     <p>Delete this question?</p>
-                                                    <p class="text-muted small">{{ Str::limit($question->question_text, 200) }}</p>
+                                                    <p class="text-muted small"> {!! \Purifier::clean(Str::limit($question->question_text, 200)) !!}</p>
                                                 </div>
                                                 <div class="modal-footer">
                                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>

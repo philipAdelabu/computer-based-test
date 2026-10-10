@@ -18,9 +18,10 @@
         <a href="{{ route('admin.subjects.assign') }}" class="btn btn-success">
             <i class="bi bi-person-check"></i> Assign Subject
         </a>
+        <!--
         <a href="{{ route('admin.subjects.bulk-assign') }}" class="btn btn-info">
             <i class="bi bi-people"></i> Bulk Assign
-        </a>
+        </a>  -->
     </div>
     <div>
         <a href="{{ route('admin.subjects.stats') }}" class="btn btn-outline-secondary">

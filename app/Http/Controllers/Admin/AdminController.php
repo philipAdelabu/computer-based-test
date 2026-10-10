@@ -460,8 +460,9 @@ public function getStudentsByClass($classId)
     public function bulkAssignForm()
     {
         $classes = ClassModel::all();
+        $subjects = Subject::all();
         $teachers = User::where('role', 'teacher')->orderBy('name')->get();
-        return view('admin.subjects.bulk-assign', compact('classes', 'teachers'));
+        return view('admin.subjects.bulk-assign', compact('classes', 'teachers', 'subjects'));
     }
 
     public function bulkAssign(Request $request)

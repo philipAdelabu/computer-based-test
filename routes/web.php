@@ -8,13 +8,16 @@ use App\Http\Controllers\Admin\QuestionController;
 use App\Http\Controllers\Admin\ScoreController as AdminScoreController;
 use App\Http\Controllers\Admin\ExamController as AdminExamController;
 use App\Http\Controllers\Admin\ReportCardController as AdminReportCardController;
+use App\Http\Controllers\Admin\StudentAccessController;
 use App\Http\Controllers\Teacher\QuestionController as TeacherQuestionController;
 use App\Http\Controllers\Teacher\TeacherController;
 use App\Http\Controllers\Teacher\ExamController;
 use App\Http\Controllers\Teacher\ScoreController;
 use App\Http\Controllers\Teacher\ReportCardController;
+use App\Http\Controllers\Teacher\StudentAccessController as TeacherStudentAccessController;
 use App\Http\Controllers\Student\StudentController;
 use App\Http\Middleware\CheckRole;
+use App\Http\Controllers\RichEditorController;
 
 // Auth Routes
 Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -139,7 +142,22 @@ Route::get('/students/by-class/{classId}', [AdminController::class, 'getStudents
     Route::get('/settings', [SettingController::class, 'index'])->name('settings');
     Route::put('/settings', [SettingController::class, 'update'])->name('settings.update');
 
- 
+     // Student Assessment Access
+    Route::post('/students/{studentId}/deactivate-assessments', 
+        [\App\Http\Controllers\Admin\StudentAccessController::class, 'deactivate'])
+        ->name('students.deactivate-assessments');
+    
+    Route::post('/students/{studentId}/reactivate-assessments', 
+        [\App\Http\Controllers\Admin\StudentAccessController::class, 'reactivate'])
+        ->name('students.reactivate-assessments');
+    
+    Route::post('/students/bulk-deactivate', 
+        [\App\Http\Controllers\Admin\StudentAccessController::class, 'bulkDeactivate'])
+        ->name('students.bulk-deactivate');
+    
+    Route::post('/students/bulk-reactivate', 
+        [\App\Http\Controllers\Admin\StudentAccessController::class, 'bulkReactivate'])
+        ->name('students.bulk-reactivate');
 
     });
 
@@ -203,6 +221,16 @@ Route::middleware(['auth', CheckRole::class . ':teacher'])->prefix('teacher')->n
     // AJAX routes
     Route::get('/scores/students/{subjectId}', [ScoreController::class, 'getStudentsBySubject'])->name('scores.students');
     Route::get('/scores/subjects/{classId}', [ScoreController::class, 'getSubjectsByClass'])->name('scores.subjects');
+
+       // Student Assessment Access
+    Route::post('/students/{studentId}/deactivate-assessments', 
+        [\App\Http\Controllers\Teacher\TeacherStudentAccessController::class, 'deactivate'])
+        ->name('students.deactivate-assessments');
+    
+    Route::post('/students/{studentId}/reactivate-assessments', 
+        [\App\Http\Controllers\Teacher\TeacherStudentAccessController::class, 'reactivate'])
+        ->name('students.reactivate-assessments');
+
 });
 
 // Student Routes
@@ -258,4 +286,9 @@ Route::get('/test-excel', function() {
             'message' => $e->getMessage()
         ]);
     }
+});
+
+Route::middleware(['auth'])->group(function () {
+    Route::post('/rich-editor/upload-image', [RichEditorController::class, 'uploadImage'])
+        ->name('rich-editor.upload-image');
 });

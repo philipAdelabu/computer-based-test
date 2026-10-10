@@ -519,7 +519,65 @@ public function canStudentTake($studentId)
         return ['can' => true, 'reason' => 'Continue your exam.', 'attempt' => $inProgress];
     }
 
+   
+
+    // ============ NEW: Check student assessment access ============
+    $student = Student::find($studentId);
+    
+    if (!$student) {
+        return ['can' => false, 'reason' => 'Student record not found.'];
+    }
+
+    // Check if student is enrolled in the subject's class
+    if ($student->class_id !== $this->subject->class_id) {
+        return ['can' => false, 'reason' => 'You are not enrolled in this subject.'];
+    }
+
+    // Check if student is active
+    if ($student->status !== 'active') {
+        return ['can' => false, 'reason' => 'Your student account is currently ' . $student->status . '.'];
+    }
+
+    // ============ NEW: Check assessment access permission ============
+    if (!$student->is_assessment_active) {
+        $reason = $student->deactivation_reason 
+            ? ' Reason: ' . $student->deactivation_reason 
+            : '';
+        
+        return [
+            'can' => false, 
+            'reason' => 'You have been deactivated from taking assessments.' . $reason
+        ];
+    }
+
+    // Check attempts
+    $attemptsCount = $this->attempts()->where('student_id', $studentId)->count();
+    
+    if ($this->max_attempts > 0 && $attemptsCount >= $this->max_attempts) {
+        $inProgress = $this->attempts()
+            ->where('student_id', $studentId)
+            ->where('status', 'in_progress')
+            ->first();
+        
+        if ($inProgress) {
+            return ['can' => true, 'reason' => 'Continue your exam.', 'attempt' => $inProgress];
+        }
+        
+        return ['can' => false, 'reason' => 'You have reached the maximum number of attempts (' . $this->max_attempts . ').'];
+    }
+
+    // Check for in-progress attempt
+    $inProgress = $this->attempts()
+        ->where('student_id', $studentId)
+        ->where('status', 'in_progress')
+        ->first();
+
+    if ($inProgress) {
+        return ['can' => true, 'reason' => 'Continue your exam.', 'attempt' => $inProgress];
+    }
+
     return ['can' => true, 'reason' => 'You can take this exam.'];
+
 }
 
     // app/Models/Exam.php

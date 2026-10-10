@@ -59,4 +59,58 @@
 <div class="mt-4">
     {{ $subjects->links() }}
 </div>
+
+
+<!-- Add to teacher/subjects.blade.php or a new teacher/students.blade.php -->
+<div class="card mt-4">
+    <div class="card-header bg-white">
+        <h6 class="mb-0">
+            <i class="bi bi-shield-check"></i> Student Assessment Access
+        </h6>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Class</th>
+                        <th>Access</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($students as $student)
+                        <tr class="{{ !$student->is_assessment_active ? 'table-warning' : '' }}">
+                            <td>{{ $student->user->name }}</td>
+                            <td>{{ $student->class->name ?? 'N/A' }}</td>
+                            <td>
+                                {!! $student->assessment_access_badge !!}
+                            </td>
+                            <td>
+                                @if($student->is_assessment_active)
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-danger"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#teacherDeactivateModal{{ $student->id }}">
+                                        <i class="bi bi-shield-x"></i> Deactivate
+                                    </button>
+                                @else
+                                    <form action="{{ route('teacher.students.reactivate-assessments', $student->id) }}" 
+                                          method="POST" class="d-inline">
+                                        @csrf
+                                        <button type="submit" class="btn btn-sm btn-outline-success"
+                                                onclick="return confirm('Reactivate this student?')">
+                                            <i class="bi bi-shield-check"></i> Reactivate
+                                        </button>
+                                    </form>
+                                @endif
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 @endsection

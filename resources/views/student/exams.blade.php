@@ -9,6 +9,11 @@
 
 @section('page-title', 'Tests & Exams')
 
+@php
+    $student = Auth::user()->student;
+    $studentCanTake = $student->is_assessment_active;
+@endphp
+
 @section('content')
 <!-- Info Banner -->
 <div class="alert alert-info alert-dismissible fade show" role="alert">
@@ -247,6 +252,12 @@
             <span class="badge bg-primary">{{ $availableExams->count() }}</span>
         </div>
         <div class="card-body">
+            <!-- In the exam card -->
+            @if(!$studentCanTake)
+                <button class="btn btn-secondary w-100 mt-3" disabled>
+                    <i class="bi bi-shield-x"></i> Access Deactivated
+                </button>
+            @else
             <div class="row g-3">
                 @foreach($availableExams as $exam)
                     @php

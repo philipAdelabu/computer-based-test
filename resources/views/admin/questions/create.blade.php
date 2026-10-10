@@ -45,14 +45,22 @@
                         </div>
                     </div>
                     
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Question Text <span class="text-danger">*</span></label>
-                        <textarea name="question_text" class="form-control @error('question_text') is-invalid @enderror" 
-                                  rows="4" required>{{ old('question_text') }}</textarea>
-                        @error('question_text')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
+                       <div class="mb-3">
+                            <label class="form-label fw-semibold">
+                                Question <span class="text-danger">*</span>
+                            </label>
+                            <textarea name="question_text" 
+                                    id="questionTextEditor" 
+                                    class="form-control rich-editor @error('question_text') is-invalid @enderror"
+                                    rows="6">{{ old('question_text') }}</textarea>
+                            @error('question_text')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <small class="text-muted">
+                                <i class="bi bi-info-circle"></i>
+                                Use the toolbar to format text, add lists, tables, formulas, or insert images.
+                            </small>
+                        </div>
                     
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Question Image (Optional)</label>
@@ -155,3 +163,5 @@ $(document).ready(function() {
 });
 </script>
 @endpush
+
+@include('partials.rich-editor')

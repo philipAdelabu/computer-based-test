@@ -211,7 +211,15 @@
         }
     </style>
     @stack('styles')
-</head>
+
+    <!-- TinyMCE Rich Text Editor -->
+   
+<script src="https://cdn.jsdelivr.net/npm/tinymce@6.8.2/tinymce.min.js" referrerpolicy="origin"></script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+
+
+</head> 
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark">
      
