@@ -252,12 +252,7 @@
             <span class="badge bg-primary">{{ $availableExams->count() }}</span>
         </div>
         <div class="card-body">
-            <!-- In the exam card -->
-            @if(!$studentCanTake)
-                <button class="btn btn-secondary w-100 mt-3" disabled>
-                    <i class="bi bi-shield-x"></i> Access Deactivated
-                </button>
-            @else
+          
             <div class="row g-3">
                 @foreach($availableExams as $exam)
                     @php
@@ -357,30 +352,38 @@
                                 @endif
                             </div>
                             <div class="card-footer bg-transparent border-0">
-                                @if($hasActiveAttempt)
-                                    <a href="{{ route('student.exam.continue', $attempt->id) }}" 
-                                       class="btn btn-warning w-100">
-                                        <i class="bi bi-play-circle"></i> Continue Exam
-                                    </a>
-                                @elseif($hasSubmitted)
-                                    <div class="d-grid gap-2">
-                                        <a href="{{ route('student.exam.result', $attempt->id) }}" 
-                                           class="btn btn-success">
-                                            <i class="bi bi-check-circle"></i> View Result
-                                        </a>
-                                        @if($exam->max_attempts > 1 && $attemptsCount < $exam->max_attempts)
+                                  <!-- In the exam card -->
+                                @if(!$studentCanTake)
+                                    <button class="btn btn-secondary w-100 mt-3" disabled>
+                                        <i class="bi bi-shield-x"></i> Access Deactivated
+                                    </button>
+                                @else
+
+                                        @if($hasActiveAttempt)
+                                            <a href="{{ route('student.exam.continue', $attempt->id) }}" 
+                                            class="btn btn-warning w-100">
+                                                <i class="bi bi-play-circle"></i> Continue Exam
+                                            </a>
+                                        @elseif($hasSubmitted)
+                                            <div class="d-grid gap-2">
+                                                <a href="{{ route('student.exam.result', $attempt->id) }}" 
+                                                class="btn btn-success">
+                                                    <i class="bi bi-check-circle"></i> View Result
+                                                </a>
+                                                @if($exam->max_attempts > 1 && $attemptsCount < $exam->max_attempts)
+                                                    <a href="{{ route('student.exam.take', $exam->id) }}" 
+                                                    class="btn btn-outline-primary btn-sm">
+                                                        <i class="bi bi-arrow-repeat"></i> Retake Exam
+                                                    </a>
+                                                @endif
+                                            </div>
+                                        @else
                                             <a href="{{ route('student.exam.take', $exam->id) }}" 
-                                               class="btn btn-outline-primary btn-sm">
-                                                <i class="bi bi-arrow-repeat"></i> Retake Exam
+                                            class="btn btn-primary w-100">
+                                                <i class="bi bi-play-circle"></i> Start Exam
                                             </a>
                                         @endif
-                                    </div>
-                                @else
-                                    <a href="{{ route('student.exam.take', $exam->id) }}" 
-                                       class="btn btn-primary w-100">
-                                        <i class="bi bi-play-circle"></i> Start Exam
-                                    </a>
-                                @endif
+                                 @endif
                             </div>
                         </div>
                     </div>
@@ -616,6 +619,8 @@
     @endif
 </div>
 @endsection
+
+
 
 @push('styles')
 <style>

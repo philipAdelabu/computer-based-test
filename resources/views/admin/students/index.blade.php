@@ -63,10 +63,11 @@
                                             <i class="bi bi-check-circle"></i> Active
                                         </span>
                                         <button type="button" 
-                                                class="btn btn-sm btn-outline-danger ms-1"
+                                                class="btn btn-sm btn-outline-danger ms-1 deactivate-btn"
                                                 title="Deactivate from assessments"
-                                                data-bs-toggle="modal" 
-                                                data-bs-target="#deactivateModal{{ $student->id }}">
+                                                data-student-id="{{ $student->id }}"
+                                                data-student-name="{{ $student->user->name }}"
+                                                data-student-admission="{{ $student->admission_number }}">
                                             <i class="bi bi-shield-x"></i>
                                         </button>
                                     @else
@@ -88,72 +89,23 @@
                             <td>
                                 <div class="btn-group" role="group">
                                     <a href="{{ route('admin.students.edit', $student->id) }}" 
-                                       class="btn btn-sm btn-outline-primary">
+                                       class="btn btn-sm btn-outline-primary" title="Edit Student">
                                         <i class="bi bi-pencil"></i>
                                     </a>
-                                    <button type="button" 
-                                            class="btn btn-sm btn-outline-danger" 
-                                            data-bs-toggle="modal" 
-                                            data-bs-target="#deleteModal{{ $student->id }}">
+                                      <button type="button" 
+                                            class="btn btn-sm btn-outline-danger delete-student-btn"
+                                            title="Delete Student"
+                                            data-student-id="{{ $student->id }}"
+                                            data-student-name="{{ $student->user->name }}"
+                                            data-student-admission="{{ $student->admission_number }}"
+                                            data-student-class="{{ $student->class->name ?? 'N/A' }}"
+                                            data-student-email="{{ $student->user->email }}">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </div>
 
 
-                                 <!-- Deactivate Modal (per student) -->
-                        @if($student->is_assessment_active)
-                            <div class="modal fade" id="deactivateModal{{ $student->id }}" tabindex="-1">
-                                <div class="modal-dialog">
-                                    <div class="modal-content">
-                                        <form action="{{ route('admin.students.deactivate-assessments', $student->id) }}" 
-                                            method="POST">
-                                            @csrf
-                                            <div class="modal-header">
-                                                <h5 class="modal-title">
-                                                    <i class="bi bi-shield-x text-danger"></i>
-                                                    Deactivate Student from Assessments
-                                                </h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                <div class="alert alert-warning">
-                                                    <strong>{{ $student->user->name }}</strong> will not be able 
-                                                    to take any tests or exams until reactivated.
-                                                </div>
-                                                
-                                                <div class="mb-3">
-                                                    <label class="form-label fw-semibold">
-                                                        Reason for Deactivation <span class="text-danger">*</span>
-                                                    </label>
-                                                    <textarea name="reason" class="form-control" rows="3" 
-                                                            placeholder="e.g., Outstanding fees, Disciplinary action, Administrative hold"
-                                                            required></textarea>
-                                                    <small class="text-muted">
-                                                        This reason will be shown to the student when they try to take an assessment.
-                                                    </small>
-                                                </div>
-                                                
-                                                <div class="mb-3">
-                                                    <label class="form-label fw-semibold">
-                                                        Auto-Reactivate On (Optional)
-                                                    </label>
-                                                    <input type="datetime-local" name="reactivate_at" class="form-control">
-                                                    <small class="text-muted">
-                                                        Leave blank to keep deactivated until manually reactivated.
-                                                    </small>
-                                                </div>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                <button type="submit" class="btn btn-danger">
-                                                    <i class="bi bi-shield-x"></i> Deactivate
-                                                </button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                                @endif
+                       
                                 
                                 <!-- Delete Modal -->
                                 <div class="modal fade" id="deleteModal{{ $student->id }}" tabindex="-1">
@@ -200,4 +152,254 @@
         {{ $students->links() }}
     </div>
 </div>
+
+
+  <!-- ============================================ -->
+<!-- SHARED DEACTIVATE MODAL (outside the table)  -->
+<!-- ============================================ -->
+<div class="modal fade" id="sharedDeactivateModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="sharedDeactivateForm" method="POST" action="">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-shield-x text-danger"></i>
+                        Deactivate Student from Assessments
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning mb-3">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-person-x fs-3 me-2"></i>
+                            <div>
+                                <strong id="modalStudentName">Student Name</strong><br>
+                                <small class="text-muted">
+                                    Admission: <span id="modalStudentAdmission">-</span>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <p class="small text-muted mb-3">
+                        This student will not be able to take any tests or exams until reactivated.
+                    </p>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            Reason for Deactivation <span class="text-danger">*</span>
+                        </label>
+                        <textarea name="reason" 
+                                  id="deactivateReason" 
+                                  class="form-control" 
+                                  rows="3" 
+                                  placeholder="e.g., Outstanding fees, Disciplinary action, Administrative hold"
+                                  required></textarea>
+                        <small class="text-muted">
+                            This reason will be shown to the student when they try to take an assessment.
+                        </small>
+                    </div>
+
+                    <div class="mb-0">
+                        <label class="form-label fw-semibold">
+                            Auto-Reactivate On (Optional)
+                        </label>
+                        <input type="datetime-local" name="reactivate_at" class="form-control">
+                        <small class="text-muted">
+                            Leave blank to require manual reactivation.
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-shield-x"></i> Deactivate
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SHARED DELETE MODAL                          -->
+<!-- ============================================ -->
+<div class="modal fade" id="sharedDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="sharedDeleteForm" method="POST" action="">
+                @csrf
+                @method('DELETE')
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        Delete Student
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger mb-3">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-person-x-fill fs-3 me-2"></i>
+                            <div>
+                                <strong id="deleteStudentName">Student Name</strong><br>
+                                <small>
+                                    Admission: <span id="deleteStudentAdmission">-</span> | 
+                                    Class: <span id="deleteStudentClass">-</span>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="mb-2">
+                        <strong>Are you sure you want to delete this student?</strong>
+                    </p>
+                    
+                    <div class="alert alert-warning small mb-3">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>This action cannot be undone.</strong>
+                        The following data will be permanently removed:
+                        <ul class="mb-0 mt-2 ps-3">
+                            <li>Student account and login credentials</li>
+                            <li>All exam attempts and results</li>
+                            <li>All report cards</li>
+                        </ul>
+                    </div>
+
+                    <div class="mb-0">
+                        <label class="form-label small text-muted">
+                            Type <strong class="text-danger">DELETE</strong> to confirm:
+                        </label>
+                        <input type="text" 
+                               id="deleteConfirmInput" 
+                               class="form-control" 
+                               placeholder="Type DELETE here"
+                               autocomplete="off">
+                        <div class="form-text text-danger" id="deleteConfirmError" style="display: none;">
+                            <i class="bi bi-x-circle"></i> Please type DELETE to confirm.
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x"></i> Cancel
+                    </button>
+                    <button type="submit" 
+                            class="btn btn-danger" 
+                            id="deleteSubmitBtn"
+                            disabled>
+                        <i class="bi bi-trash"></i> Delete Permanently
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @endsection
+
+
+@push('scripts')
+<script>
+$(document).ready(function() {
+    // Handle deactivate button clicks
+    $(document).on('click', '.deactivate-btn', function() {
+        const studentId = $(this).data('student-id');
+        const studentName = $(this).data('student-name');
+        const studentAdmission = $(this).data('student-admission');
+
+        // Populate the modal
+        $('#modalStudentName').text(studentName);
+        $('#modalStudentAdmission').text(studentAdmission);
+
+        // Set the form action dynamically
+        const actionUrl = '{{ route("admin.students.deactivate-assessments", ":id") }}'
+            .replace(':id', studentId);
+        $('#sharedDeactivateForm').attr('action', actionUrl);
+
+        // Reset the form fields
+        $('#deactivateReason').val('');
+        $('#sharedDeactivateForm input[name="reactivate_at"]').val('');
+
+        // Show the modal
+        const modal = new bootstrap.Modal(document.getElementById('sharedDeactivateModal'));
+        modal.show();
+    });
+});
+
+// ============ SHARED DELETE MODAL ============
+$(document).on('click', '.delete-student-btn', function() {
+    const studentId = $(this).data('student-id');
+    const studentName = $(this).data('student-name');
+    const studentAdmission = $(this).data('student-admission');
+    const studentClass = $(this).data('student-class');
+    const studentEmail = $(this).data('student-email');
+
+    // Populate modal
+    $('#deleteStudentName').text(studentName);
+    $('#deleteStudentAdmission').text(studentAdmission);
+    $('#deleteStudentClass').text(studentClass);
+
+    // Set form action
+    const actionUrl = '{{ route("admin.students.delete", ":id") }}'
+        .replace(':id', studentId);
+    $('#sharedDeleteForm').attr('action', actionUrl);
+
+    // Reset the confirmation input
+    $('#deleteConfirmInput').val('');
+    $('#deleteConfirmError').hide();
+    $('#deleteSubmitBtn').prop('disabled', true);
+
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('sharedDeleteModal'));
+    modal.show();
+});
+
+// Enable delete button only when "DELETE" is typed
+$(document).on('input', '#deleteConfirmInput', function() {
+    const value = $(this).val().trim();
+    
+    if (value === 'DELETE') {
+        $('#deleteSubmitBtn').prop('disabled', false);
+        $('#deleteConfirmError').hide();
+        $(this).removeClass('is-invalid');
+    } else {
+        $('#deleteSubmitBtn').prop('disabled', true);
+        if (value.length > 0) {
+            $(this).addClass('is-invalid');
+        } else {
+            $(this).removeClass('is-invalid');
+        }
+    }
+});
+
+// Confirm on submit
+$(document).on('submit', '#sharedDeleteForm', function(e) {
+    const value = $('#deleteConfirmInput').val().trim();
+    
+    if (value !== 'DELETE') {
+        e.preventDefault();
+        $('#deleteConfirmError').show();
+        $('#deleteConfirmInput').addClass('is-invalid');
+        return false;
+    }
+    
+    // Disable the button to prevent double-submit
+    $('#deleteSubmitBtn').prop('disabled', true)
+        .html('<span class="spinner-border spinner-border-sm"></span> Deleting...');
+});
+
+// Reset modal on close
+$(document).on('hidden.bs.modal', '#sharedDeleteModal', function() {
+    $('#deleteConfirmInput').val('').removeClass('is-invalid');
+    $('#deleteConfirmError').hide();
+    $('#deleteSubmitBtn').prop('disabled', true)
+        .html('<i class="bi bi-trash"></i> Delete Permanently');
+});
+
+
+</script>
+@endpush

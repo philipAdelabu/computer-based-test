@@ -224,11 +224,11 @@ Route::middleware(['auth', CheckRole::class . ':teacher'])->prefix('teacher')->n
 
        // Student Assessment Access
     Route::post('/students/{studentId}/deactivate-assessments', 
-        [\App\Http\Controllers\Teacher\TeacherStudentAccessController::class, 'deactivate'])
+        [TeacherStudentAccessController::class, 'deactivate'])
         ->name('students.deactivate-assessments');
     
     Route::post('/students/{studentId}/reactivate-assessments', 
-        [\App\Http\Controllers\Teacher\TeacherStudentAccessController::class, 'reactivate'])
+        [TeacherStudentAccessController::class, 'reactivate'])
         ->name('students.reactivate-assessments');
 
 });

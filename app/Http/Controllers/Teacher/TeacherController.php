@@ -173,8 +173,23 @@ class TeacherController extends Controller
                               }
                           ])
                           ->paginate(10);
+   
+           // ============ GET STUDENTS FOR TEACHER'S CLASSES ============
+    // Get unique class IDs from the teacher's subjects
+    $classIds = Subject::where('teacher_id', $teacherId)
+                       ->pluck('class_id')
+                       ->unique()
+                       ->toArray();
+    
+    // Get all students in those classes
+    $students = Student::whereIn('class_id', $classIds)
+                       ->where('status', 'active')
+                       ->with(['user', 'class'])
+                       ->orderBy('class_id')
+                       ->orderBy('admission_number')
+                       ->get();
         
-        return view('teacher.subjects', compact('subjects'));
+        return view('teacher.subjects', compact('subjects', 'students'));
     }
 
     public function uploadScores(Request $request)
