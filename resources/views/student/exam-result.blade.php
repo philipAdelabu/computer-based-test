@@ -1,12 +1,12 @@
 @extends('layouts.app')
 
-@section('title', 'Exam Result')
+@section('title', 'Assessment Result')
 
 @section('sidebar')
     @include('student.partials.sidebar')
 @endsection
 
-@section('page-title', 'Exam Result')
+@section('page-title', 'Assessment Result')
 
 @section('content')
 <div class="row">
@@ -52,12 +52,7 @@
                             <div class="p-3 bg-light rounded">
                                 <h6 class="text-muted">Grade</h6>
                                 <h3>
-                                    <span class="badge 
-                                        @if($result->percentage >= 70) bg-success
-                                        @elseif($result->percentage >= 50) bg-warning
-                                        @else bg-danger
-                                        @endif" 
-                                        style="font-size: 1.5rem; padding: 0.5rem 1rem;">
+                                    <span class="badge bg-{{ $result->grade_color }}" style="font-size: 1.5rem; padding: 0.5rem 1rem; color: #000">
                                         {{ $result->grade }}
                                     </span>
                                 </h3>

@@ -371,18 +371,34 @@
                 <span class="d-inline d-sm-none">CBT</span>
             </a>
             
-            <div class="ms-auto d-flex align-items-center gap-2">
-                <span class="nav-link d-none d-md-inline">
-                    <i class="bi bi-person-circle"></i> {{ Auth::user()->name }}
-                </span>
-                <form action="{{ route('logout') }}" method="POST" class="d-inline">
-                    @csrf
-                    <button type="submit" class="nav-link btn btn-link" style="color: rgba(255,255,255,0.9);">
-                        <i class="bi bi-box-arrow-right"></i> 
-                        <span class="d-none d-sm-inline">Logout</span>
-                    </button>
-                </form>
-            </div>
+         
+                <div class="ms-auto d-flex align-items-center gap-2">
+                    <!-- User avatar -->
+                    <div class="d-flex align-items-center gap-2">
+                        @if(Auth::user()->has_photo)
+                            <img src="{{ Auth::user()->photo_url }}" 
+                                alt="{{ Auth::user()->name }}"
+                                class="rounded-circle border border-2 border-white"
+                                style="width: 36px; height: 36px; object-fit: cover;">
+                        @else
+                            <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold"
+                                style="width: 36px; height: 36px; background: rgba(255,255,255,0.25); color: white; font-size: 0.85rem;">
+                                {{ Auth::user()->initials }}
+                            </div>
+                        @endif
+                        <span class="nav-link d-none d-md-inline mb-0">
+                            {{ Auth::user()->name }}
+                        </span>
+                    </div>
+                    
+                    <form action="{{ route('logout') }}" method="POST" class="d-inline">
+                        @csrf
+                        <button type="submit" class="nav-link btn btn-link" style="color: rgba(255,255,255,0.9);">
+                            <i class="bi bi-box-arrow-right"></i> 
+                            <span class="d-none d-sm-inline">Logout</span>
+                        </button>
+                    </form>
+                </div>
         </div>
     </nav>
 

@@ -10,22 +10,42 @@
 @section('page-title', 'Dashboard')
 
 @section('content')
-<!-- Welcome Banner -->
+  <!-- ============ TEACHER INFO CARD WITH PHOTO ============ -->
 <div class="row mb-4">
-    <div class="col-md-12">
-        <div class="card bg-primary text-white">
+    <div class="col-12">
+        <div class="card bg-primary text-white welcome-card">
             <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
+                <div class="d-flex flex-column flex-md-row align-items-center align-items-md-start gap-3">
+                    <!-- Photo -->
+                    <div class="welcome-photo">
+                        @if(Auth::user()->has_photo)
+                            <img src="{{ Auth::user()->photo_url }}" 
+                                 alt="{{ Auth::user()->name }}"
+                                 class="welcome-photo-img">
+                        @else
+                            <div class="welcome-photo-fallback">
+                                {{ Auth::user()->initials }}
+                            </div>
+                        @endif
+                    </div>
+                    
+                    <!-- Info -->
+                    <div class="flex-grow-1 text-center text-md-start">
                         <h4 class="mb-1">Welcome back, {{ Auth::user()->name }}!</h4>
-                        <p class="mb-0">
+                        <p class="mb-0 opacity-90">
                             <i class="bi bi-calendar"></i> 
                             {{ now()->timezone(config('app.timezone'))->format('l, F d, Y') }}
                         </p>
+                        <p class="mb-0 mt-1 opacity-90">
+                            <i class="bi bi-person-badge"></i> 
+                            <strong>Role:</strong> Teacher
+                        </p>
                     </div>
-                    <div class="text-end">
-                        <span class="badge bg-light text-dark fs-6">
-                            <i class="bi bi-person-badge"></i> Teacher
+                    
+                    <!-- Badge -->
+                    <div class="text-md-end">
+                        <span class="badge bg-light text-dark">
+                            <i class="bi bi-award"></i> {{ $totalSubjects }} Subjects
                         </span>
                     </div>
                 </div>
@@ -390,3 +410,40 @@
     </div>
 </div>
 @endsection
+
+@push('styles')
+<style>
+.welcome-photo-img {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid rgba(255,255,255,0.4);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+.welcome-photo-fallback {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: 700;
+    color: white;
+    border: 4px solid rgba(255,255,255,0.4);
+    letter-spacing: 2px;
+}
+.opacity-90 { opacity: 0.92; }
+
+@media (max-width: 767.98px) {
+    .welcome-photo-img,
+    .welcome-photo-fallback {
+        width: 75px;
+        height: 75px;
+        font-size: 1.75rem;
+    }
+}
+</style>
+@endpush

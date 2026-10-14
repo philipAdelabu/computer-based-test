@@ -51,28 +51,44 @@
     </div>
 @endif
 
-<!-- Student Info Card -->
+ <!-- ============ STUDENT INFO CARD WITH PHOTO ============ -->
 <div class="row mb-4">
-    <div class="col-md-12">
-        <div class="card bg-primary text-white">
+    <div class="col-12">
+        <div class="card bg-primary text-white welcome-card">
             <div class="card-body">
-                <div class="row align-items-center">
-                    <div class="col-md-8">
+                <div class="d-flex flex-column flex-md-row align-items-center align-items-md-start gap-3">
+                    <!-- Photo -->
+                    <div class="welcome-photo">
+                        @if(Auth::user()->has_photo)
+                            <img src="{{ Auth::user()->photo_url }}" 
+                                 alt="{{ Auth::user()->name }}"
+                                 class="welcome-photo-img">
+                        @else
+                            <div class="welcome-photo-fallback">
+                                {{ Auth::user()->initials }}
+                            </div>
+                        @endif
+                    </div>
+                    
+                    <!-- Info -->
+                    <div class="flex-grow-1 text-center text-md-start">
                         <h4 class="mb-1">Welcome back, {{ Auth::user()->name }}!</h4>
-                        <p class="mb-0">
+                        <p class="mb-0 opacity-90">
                             <i class="bi bi-mortarboard"></i> 
                             <strong>Class:</strong> {{ $class ? $class->name : 'Not Assigned' }} | 
                             <strong>Admission #:</strong> {{ $student->admission_number }}
                         </p>
                         @if($class)
-                            <p class="mb-0 mt-1">
+                            <p class="mb-0 mt-1 opacity-90">
                                 <i class="bi bi-book"></i> 
                                 <strong>Subjects:</strong> {{ $subjects->count() }} subjects
                             </p>
                         @endif
                     </div>
-                    <div class="col-md-4 text-md-end">
-                        <span class="badge bg-light text-dark fs-6">
+                    
+                    <!-- Date badge -->
+                    <div class="text-md-end">
+                        <span class="badge bg-light text-dark">
                             <i class="bi bi-calendar"></i> 
                             {{ now()->timezone(config('app.timezone'))->format('F d, Y') }}
                         </span>
@@ -571,5 +587,42 @@
     transform: translateY(-3px);
     box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.08);
 }
+
+   .welcome-photo {
+    flex-shrink: 0;
+}
+.welcome-photo-img {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid rgba(255,255,255,0.4);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+.welcome-photo-fallback {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: 700;
+    color: white;
+    border: 4px solid rgba(255,255,255,0.4);
+    letter-spacing: 2px;
+}
+.opacity-90 { opacity: 0.92; }
+
+@media (max-width: 767.98px) {
+    .welcome-photo-img,
+    .welcome-photo-fallback {
+        width: 75px;
+        height: 75px;
+        font-size: 1.75rem;
+    }
+}
+
 </style>
 @endpush

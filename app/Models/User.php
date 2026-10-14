@@ -17,6 +17,7 @@ class User extends Authenticatable
         'role',
         'phone',
         'address',
+        'photo_path',
     ];
 
     protected $hidden = [
@@ -56,4 +57,67 @@ class User extends Authenticatable
     {
         return $this->role === 'student';
     }
+
+      // ============ NEW: Photo URL Accessor ============
+    /**
+     * Get the full URL to the user's photo
+     */
+    public function getPhotoUrlAttribute()
+    {
+        if (!$this->photo_path) {
+            return null;
+        }
+
+        // Public folder check
+        $publicPath = public_path($this->photo_path);
+        if (file_exists($publicPath)) {
+            return asset($this->photo_path);
+        }
+
+        // Storage fallback
+        $storagePath = storage_path('app/public/' . $this->photo_path);
+        if (file_exists($storagePath)) {
+            return asset('storage/' . $this->photo_path);
+        }
+
+        return null;
+    }
+
+    /**
+     * Get initials from name (for avatar fallback)
+     */
+    public function getInitialsAttribute()
+    {
+        $words = explode(' ', trim($this->name));
+        $initials = '';
+
+        foreach ($words as $word) {
+            if (!empty($word)) {
+                $initials .= strtoupper($word[0]);
+            }
+            if (strlen($initials) >= 2) break;
+        }
+
+        return $initials ?: 'U';
+    }
+
+    /**
+     * Check if user has a photo
+     */
+    public function getHasPhotoAttribute()
+    {
+        return $this->photo_url !== null;
+    }
+
+    /**
+     * Get avatar color (deterministic based on name)
+     */
+    public function getAvatarColorAttribute()
+    {
+        $colors = ['primary', 'success', 'info', 'warning', 'danger', 'secondary'];
+        $hash = crc32($this->name);
+        return $colors[$hash % count($colors)];
+    }
+
+    
 }

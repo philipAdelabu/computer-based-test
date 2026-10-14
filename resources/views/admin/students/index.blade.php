@@ -37,11 +37,26 @@
                     @forelse($students as $student)
                         <tr class="{{ !$student->is_assessment_active ? 'table-warning' : '' }}">
                             <td>{{ $loop->iteration + ($students->currentPage() - 1) * $students->perPage() }}</td>
-                            <td>{{ $student->user->name }}
-                                  @if(!$student->is_assessment_active)
-                                    <i class="bi bi-shield-exclamation text-danger" 
-                                    title="Deactivated from assessments"></i>
-                                @endif
+                             <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    @if($student->user->has_photo)
+                                        <img src="{{ $student->user->photo_url }}" 
+                                            alt="{{ $student->user->name }}"
+                                            class="rounded-circle"
+                                            style="width: 40px; height: 40px; object-fit: cover;">
+                                    @else
+                                        <div class="rounded-circle d-flex align-items-center justify-content-center bg-secondary text-white fw-bold"
+                                            style="width: 40px; height: 40px; font-size: 0.9rem;">
+                                            {{ $student->user->initials }}
+                                        </div>
+                                    @endif
+                                    <div>
+                                        <strong>{{ $student->user->name }}</strong>
+                                        @if(!$student->is_assessment_active)
+                                            <i class="bi bi-shield-exclamation text-danger ms-1"></i>
+                                        @endif
+                                    </div>
+                                </div>
                             </td>
                             <td>{{ $student->user->email }}</td>
                             <td>{{ $student->admission_number }}</td>

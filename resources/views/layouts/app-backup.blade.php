@@ -217,7 +217,8 @@
 <script src="https://cdn.jsdelivr.net/npm/tinymce@6.8.2/tinymce.min.js" referrerpolicy="origin"></script>
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
-
+<link rel="stylesheet" href="{{ url('css/cropper.css') }}">
+<script src="{{ url('js/cropper.js') }}"></script>
 
 </head> 
 <body>

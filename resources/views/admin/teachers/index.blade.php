@@ -34,7 +34,22 @@
                     @forelse($teachers as $teacher)
                         <tr>
                             <td>{{ $loop->iteration + ($teachers->currentPage() - 1) * $teachers->perPage() }}</td>
-                            <td>{{ $teacher->name }}</td>
+                             <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    @if($teacher->has_photo)
+                                        <img src="{{ $teacher->photo_url }}" 
+                                            alt="{{ $teacher->name }}"
+                                            class="rounded-circle"
+                                            style="width: 40px; height: 40px; object-fit: cover;">
+                                    @else
+                                        <div class="rounded-circle d-flex align-items-center justify-content-center bg-secondary text-white fw-bold"
+                                            style="width: 40px; height: 40px; font-size: 0.9rem;">
+                                            {{ $teacher->initials }}
+                                        </div>
+                                    @endif
+                                    <strong>{{ $teacher->name }}</strong>
+                                </div>
+                            </td>
                             <td>{{ $teacher->email }}</td>
                             <td>{{ $teacher->phone ?? 'N/A' }}</td>
                             <td>

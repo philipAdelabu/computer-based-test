@@ -14,8 +14,22 @@
     <div class="col-lg-8 mx-auto">
         <div class="card">
             <div class="card-body">
-                <form action="{{ route('admin.teachers.store') }}" method="POST">
+                <form action="{{ route('admin.teachers.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf
+
+                       <!-- ============ PHOTO UPLOAD ============ -->
+                        <div class="row mb-4">
+                            <div class="col-12 text-center">
+                                  @include('partials.photo-upload-cropper', [
+                                        'name' => 'photo',
+                                        'currentPhoto' => null,
+                                        'userId' => 'teacher-create',
+                                        'aspectRatio' => 1,
+                                        'maxSize' => 2,
+                                        'helpText' => 'JPG, PNG, or WEBP. Max 2MB. The image will be cropped to a square.',
+                                    ])
+                            </div>
+                        </div>
                     
                     <div class="row mb-3">
                         <div class="col-md-6">
@@ -75,3 +89,74 @@
     </div>
 </div>
 @endsection
+
+
+@push('styles')
+<style>
+.photo-upload-wrapper {
+    display: inline-block;
+}
+.photo-preview {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    border: 3px dashed #cbd5e0;
+    background: #f8f9fc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    margin: 0 auto;
+    transition: all 0.3s;
+}
+.photo-preview:hover {
+    border-color: #4e73df;
+    background: #f0f4ff;
+}
+.photo-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.photo-placeholder {
+    text-align: center;
+    color: #999;
+}
+.photo-placeholder i {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+.photo-placeholder span {
+    font-size: 0.75rem;
+}
+</style>
+@endpush
+
+@push('scripts')
+<script>
+document.getElementById('photoInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const preview = document.getElementById('photoPreview');
+            preview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+            document.getElementById('removePhotoBtn').classList.remove('d-none');
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+function removePhoto() {
+    document.getElementById('photoInput').value = '';
+    document.getElementById('photoPreview').innerHTML = `
+        <div class="photo-placeholder">
+            <i class="bi bi-camera"></i>
+            <span>Upload Photo</span>
+        </div>
+    `;
+    document.getElementById('removePhotoBtn').classList.add('d-none');
+}
+</script>
+@endpush

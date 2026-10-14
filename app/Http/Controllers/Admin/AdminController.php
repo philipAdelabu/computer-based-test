@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\FuncController;
 use App\Models\User;
 use App\Models\Student;
 use App\Models\ClassModel;
@@ -89,7 +90,13 @@ public function dashboard()
             'password' => 'required|min:8',
             'phone' => 'nullable|string',
             'address' => 'nullable|string',
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',  // NEW
         ]);
+
+           $photoPath = null;
+        if ($request->hasFile('photo')) {
+            $photoPath = $this->uploadPhoto($request->file('photo'), 'teachers');
+        }
 
         $user = User::create([
             'name' => $validated['name'],
@@ -98,6 +105,7 @@ public function dashboard()
             'role' => 'teacher',
             'phone' => $validated['phone'] ?? null,
             'address' => $validated['address'] ?? null,
+            'photo_path' => $photoPath,
         ]);
 
         return redirect()->route('admin.teachers')
@@ -110,7 +118,7 @@ public function dashboard()
         return view('admin.teachers.edit', compact('teacher'));
     }
 
-    public function updateTeacher(Request $request, $id)
+      public function updateTeacher(Request $request, $id)
     {
         $teacher = User::findOrFail($id);
         
@@ -119,13 +127,31 @@ public function dashboard()
             'email' => 'required|email|unique:users,email,' . $id,
             'phone' => 'nullable|string',
             'address' => 'nullable|string',
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'remove_photo' => 'nullable|boolean',
         ]);
 
-        $teacher->update($validated);
+        $userData = [
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'phone' => $validated['phone'] ?? null,
+            'address' => $validated['address'] ?? null,
+        ];
 
         if ($request->filled('password')) {
-            $teacher->update(['password' => Hash::make($request->password)]);
+            $userData['password'] = Hash::make($request->password);
         }
+
+        // Handle photo
+        if ($request->hasFile('photo')) {
+            $this->deletePhoto($teacher->photo_path);
+            $userData['photo_path'] = $this->uploadPhoto($request->file('photo'), 'teachers');
+        } elseif ($request->has('remove_photo') && $request->remove_photo) {
+            $this->deletePhoto($teacher->photo_path);
+            $userData['photo_path'] = null;
+        }
+
+        $teacher->update($userData);
 
         return redirect()->route('admin.teachers')
             ->with('success', 'Teacher updated successfully.');
@@ -173,6 +199,7 @@ public function getStudentsByClass($classId)
                 'name' => $student->user->name ?? 'Unknown',
                 'admission_number' => $student->admission_number,
                 'email' => $student->user->email ?? 'No email',
+                'photo_path' => $student->user->photo_path ?? null,  // NEW
             ];
         });
 
@@ -201,13 +228,21 @@ public function getStudentsByClass($classId)
             'date_of_birth' => 'nullable|date',
             'guardian_name' => 'nullable|string',
             'guardian_phone' => 'nullable|string',
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',  // NEW
         ]);
+
+         // Handle photo upload
+    $photoPath = null;
+    if ($request->hasFile('photo')) {
+        $photoPath = $this->uploadPhoto($request->file('photo'), 'students');
+    }
 
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
             'role' => 'student',
+            'photo_path' => $photoPath,  // NEW
         ]);
 
         Student::create([
@@ -223,6 +258,24 @@ public function getStudentsByClass($classId)
             ->with('success', 'Student created successfully.');
     }
 
+    // ============ HELPER METHODS ============
+
+    /**
+     * Upload a photo to public/uploads/{folder}
+     */
+    private function uploadPhoto($file, $folder = 'users')
+    {
+        return  FuncController::uploadPhoto($file, $folder);
+    }
+
+    /**
+     * Delete a photo from wherever it lives
+     */
+    private function deletePhoto($photoPath)
+    {
+       FuncController::deletePhoto($photoPath);
+    }
+
     public function editStudent($id)
     {
         $student = Student::with('user')->findOrFail($id);
@@ -230,7 +283,7 @@ public function getStudentsByClass($classId)
         return view('admin.students.edit', compact('student', 'classes'));
     }
 
-    public function updateStudent(Request $request, $id)
+     public function updateStudent(Request $request, $id)
     {
         $student = Student::findOrFail($id);
         
@@ -242,16 +295,33 @@ public function getStudentsByClass($classId)
             'guardian_name' => 'nullable|string',
             'guardian_phone' => 'nullable|string',
             'status' => 'required|in:active,graduated,suspended',
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',  // NEW
+            'remove_photo' => 'nullable|boolean',  // NEW
         ]);
 
-        $student->user->update([
+        $userData = [
             'name' => $validated['name'],
             'email' => $validated['email'],
-        ]);
+        ];
 
         if ($request->filled('password')) {
-            $student->user->update(['password' => Hash::make($request->password)]);
+            $userData['password'] = Hash::make($request->password);
         }
+
+
+        // Handle photo
+        if ($request->hasFile('photo')) {
+            
+            // Delete old photo
+            $this->deletePhoto($student->user->photo_path);
+            // Upload new
+            $userData['photo_path'] = $this->uploadPhoto($request->file('photo'), 'students');
+        } elseif ($request->has('remove_photo') && $request->remove_photo) {
+            $this->deletePhoto($student->user->photo_path);
+            $userData['photo_path'] = null;
+        }
+
+        $student->user->update($userData);
 
         $student->update([
             'class_id' => $validated['class_id'],

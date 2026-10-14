@@ -139,12 +139,22 @@
     <!-- GRADING KEY -->
     <div class="report-grading">
         <span class="grading-title">Grading:</span>
-        <span class="grading-item"><strong>A</strong> 80-100 (Excellent)</span>
-        <span class="grading-item"><strong>B</strong> 70-79 (Very Good)</span>
-        <span class="grading-item"><strong>C</strong> 60-69 (Good)</span>
-        <span class="grading-item"><strong>D</strong> 50-59 (Fair)</span>
-        <span class="grading-item"><strong>E</strong> 40-49 (Poor)</span>
-        <span class="grading-item"><strong>F</strong> Below 40 (Very Poor)</span>
+        @php
+            $gradingScale = \App\Models\GradingScale::getDefault();
+        @endphp
+        @if($gradingScale)
+            @foreach($gradingScale->items as $item)
+                <span class="grading-item">
+                    <strong>{{ $item->grade }}</strong> 
+                    {{ number_format($item->min_score, 0) }}-{{ number_format($item->max_score, 0) }}
+                    @if($item->remark)
+                        ({{ $item->remark }})
+                    @endif
+                </span>
+            @endforeach
+        @else
+            <span class="grading-item text-muted">No grading scale configured</span>
+        @endif
     </div>
     
     <!-- FOOTER -->
@@ -285,12 +295,15 @@
     <div class="mobile-grading">
         <div class="mobile-grading-title">Grading System</div>
         <div class="mobile-grading-grid">
-            <span><strong>A</strong> 80-100</span>
-            <span><strong>B</strong> 70-79</span>
-            <span><strong>C</strong> 60-69</span>
-            <span><strong>D</strong> 50-59</span>
-            <span><strong>E</strong> 40-49</span>
-            <span><strong>F</strong> &lt;40</span>
+            @php $gradingScale = \App\Models\GradingScale::getDefault(); @endphp
+            @if($gradingScale)
+                @foreach($gradingScale->items as $item)
+                    <span>
+                        <strong>{{ $item->grade }}</strong> 
+                        {{ number_format($item->min_score, 0) }}-{{ number_format($item->max_score, 0) }}
+                    </span>
+                @endforeach
+            @endif
         </div>
     </div>
     
