@@ -11,6 +11,7 @@ use App\Models\Subject;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use App\Services\GradeService;
 
 class ReportCardService
 {
@@ -254,4 +255,25 @@ class ReportCardService
         if ($percentage >= 40) return 'Poor';
         return 'Very Poor';
     }
+
+    
+        public function getGradeAttribute()
+        {
+            $service = new GradeService();
+            return $service->getGrade($this->percentage);
+        }
+
+        public function getRemarksAttribute()
+        {
+            $service = new GradeService();
+            return $service->getRemark($this->percentage);
+        }
+
+        public function getGradeColorAttribute()
+        {
+            $service = new GradeService();
+            return $service->getColor($this->percentage);
+        }
+
+
 }

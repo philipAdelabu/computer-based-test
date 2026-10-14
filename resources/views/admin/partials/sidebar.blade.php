@@ -60,4 +60,11 @@
             <i class="bi bi-gear-fill"></i> System Settings
         </a>
    </li>
+    <li class="nav-item">
+        <a class="nav-link {{ request()->routeIs('admin.grading*') ? 'active' : '' }}" 
+        href="{{ route('admin.grading.index') }}">
+            <i class="bi bi-award-fill"></i> Grading System
+        </a>
+    </li>
+    
 </ul>

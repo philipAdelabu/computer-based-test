@@ -169,5 +169,146 @@
             by {{ $reportCard->generator->name }}
         @endif
     </div>
+
+
+    <!-- ============ MOBILE CARD VIEW (only shows on small screens) ============ -->
+<div class="report-mobile-view d-md-none">
+    <!-- Header -->
+    <div class="mobile-report-header">
+        @php $logoUrl = \App\Helpers\SettingHelper::schoolLogo(); @endphp
+        @if($logoUrl)
+            <img src="{{ $logoUrl }}" alt="Logo" class="mobile-logo">
+        @endif
+        <div class="mobile-school-name">{{ \App\Helpers\SettingHelper::schoolName() }}</div>
+        <div class="mobile-report-title">STUDENT REPORT CARD</div>
+        <div class="mobile-report-term">
+            {{ $reportCard->term }} — {{ $reportCard->academic_year }}
+        </div>
+    </div>
+    
+    <!-- Student Info -->
+    <div class="mobile-info-box">
+        <div class="mobile-info-row">
+            <span class="mobile-info-label">Name</span>
+            <span class="mobile-info-value">{{ $reportCard->student->user->name }}</span>
+        </div>
+        <div class="mobile-info-row">
+            <span class="mobile-info-label">Admission</span>
+            <span class="mobile-info-value">{{ $reportCard->student->admission_number }}</span>
+        </div>
+        <div class="mobile-info-row">
+            <span class="mobile-info-label">Class</span>
+            <span class="mobile-info-value">{{ $reportCard->class->name }}</span>
+        </div>
+        <div class="mobile-info-row">
+            <span class="mobile-info-label">Position</span>
+            <span class="mobile-info-value">#{{ $reportCard->position ?? 'N/A' }} of {{ $reportCard->total_students ?? 'N/A' }}</span>
+        </div>
+    </div>
+    
+    <!-- Subject Cards -->
+    <div class="mobile-subjects">
+        @php $counter = 1; @endphp
+        @foreach($reportCard->subject_scores as $score)
+            <div class="mobile-subject-card">
+                <div class="mobile-subject-header">
+                    <span class="mobile-subject-num">{{ $counter++ }}</span>
+                    <span class="mobile-subject-name">{{ $score['subject'] ?? 'N/A' }}</span>
+                    <span class="grade grade-{{ strtolower($score['grade'] ?? 'f') }}">
+                        {{ $score['grade'] ?? 'N/A' }}
+                    </span>
+                </div>
+                
+                <div class="mobile-subject-scores">
+                    <div class="mobile-score-box">
+                        <div class="mobile-score-label">Test</div>
+                        <div class="mobile-score-value text-info">
+                            {{ $score['test_score'] ?? 0 }}<small>/{{ $score['test_max'] ?? 0 }}</small>
+                        </div>
+                    </div>
+                    <div class="mobile-score-box">
+                        <div class="mobile-score-label">Exam</div>
+                        <div class="mobile-score-value text-primary">
+                            {{ $score['exam_score'] ?? 0 }}<small>/{{ $score['exam_max'] ?? 0 }}</small>
+                        </div>
+                    </div>
+                    <div class="mobile-score-box">
+                        <div class="mobile-score-label">Total</div>
+                        <div class="mobile-score-value">
+                            {{ $score['total'] ?? 0 }}<small>/{{ $score['max'] ?? 0 }}</small>
+                        </div>
+                    </div>
+                    <div class="mobile-score-box">
+                        <div class="mobile-score-label">%</div>
+                        <div class="mobile-score-value">{{ $score['percentage'] ?? 0 }}%</div>
+                    </div>
+                </div>
+                
+                <div class="mobile-subject-remark">
+                    <i class="bi bi-chat-left-text"></i> {{ $score['remark'] ?? 'N/A' }}
+                </div>
+            </div>
+        @endforeach
+    </div>
+    
+    <!-- Grand Total -->
+    <div class="mobile-grand-total">
+        <div class="mobile-grand-row">
+            <span>Test Total</span>
+            <strong class="text-info">{{ $reportCard->total_test_score }}/{{ $reportCard->total_test_max }}</strong>
+        </div>
+        <div class="mobile-grand-row">
+            <span>Exam Total</span>
+            <strong class="text-primary">{{ $reportCard->total_exam_score }}/{{ $reportCard->total_exam_max }}</strong>
+        </div>
+        <div class="mobile-grand-row mobile-grand-highlight">
+            <span>Grand Total</span>
+            <strong>{{ $reportCard->grand_total }}/{{ $reportCard->grand_max }}</strong>
+        </div>
+        <div class="mobile-grand-row">
+            <span>Percentage</span>
+            <strong>{{ $reportCard->overall_percentage }}%</strong>
+        </div>
+        <div class="mobile-grand-row">
+            <span>Grade</span>
+            <span class="grade grade-{{ strtolower($reportCard->grade) }}">
+                {{ $reportCard->grade }}
+            </span>
+        </div>
+        <div class="mobile-grand-row">
+            <span>Remarks</span>
+            <strong>{{ $reportCard->remarks }}</strong>
+        </div>
+    </div>
+    
+    <!-- Grading Key -->
+    <div class="mobile-grading">
+        <div class="mobile-grading-title">Grading System</div>
+        <div class="mobile-grading-grid">
+            <span><strong>A</strong> 80-100</span>
+            <span><strong>B</strong> 70-79</span>
+            <span><strong>C</strong> 60-69</span>
+            <span><strong>D</strong> 50-59</span>
+            <span><strong>E</strong> 40-49</span>
+            <span><strong>F</strong> &lt;40</span>
+        </div>
+    </div>
+    
+    <!-- Signatures -->
+    <div class="mobile-signatures">
+        <div>
+            <div class="mobile-signature-line"></div>
+            <small>Class Teacher's Signature</small>
+        </div>
+        <div>
+            <div class="mobile-signature-line"></div>
+            <small>Principal's Signature</small>
+        </div>
+    </div>
+    
+    <div class="mobile-footer-note">
+        Generated on {{ $reportCard->generated_date ? $reportCard->generated_date->format('F d, Y') : $reportCard->created_at->format('F d, Y') }}
+    </div>
+</div>
     
 </div>

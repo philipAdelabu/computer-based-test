@@ -81,7 +81,7 @@
                     <!-- Basic Information -->
                     <div class="row mb-3">
                         <div class="col-md-8">
-                            <label class="form-label fw-semibold">Exam Title <span class="text-danger">*</span></label>
+                            <label class="form-label fw-semibold">Assessment Title <span class="text-danger">*</span></label>
                             <input type="text" name="title" class="form-control @error('title') is-invalid @enderror" 
                                    value="{{ old('title') }}" placeholder="e.g., Mathematics Mid-Term Exam" required>
                             @error('title')

@@ -63,6 +63,16 @@
                             </div>
                         </div>
                     </div>
+                     <!-- In the class card, add this below the student/subject counts -->
+
+                    <hr>
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-person-badge text-primary me-2"></i>
+                        <div>
+                            <small class="text-muted d-block">Class Teacher</small>
+                            <strong>{{ $class->class_teacher_name }}</strong>
+                        </div>
+                    </div>
                     
                    <!-- In the class card, update the admit button -->
                     @if($class->students_count > 0)

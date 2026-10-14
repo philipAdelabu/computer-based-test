@@ -284,7 +284,9 @@ public function getStudentsByClass($classId)
 
     public function createClass()
     {
-        return view('admin.classes.create');
+        // Get all teachers for the dropdown
+        $teachers = User::where('role', 'teacher')->orderBy('name')->get();
+        return view('admin.classes.create', compact('teachers'));
     }
 
     public function storeClass(Request $request)
@@ -293,7 +295,16 @@ public function getStudentsByClass($classId)
             'name' => 'required|string|max:255',
             'code' => 'required|unique:classes',
             'description' => 'nullable|string',
+            'class_teacher_id' => 'nullable|exists:users,id',
         ]);
+
+        // Verify the selected user is a teacher
+        if (!empty($validated['class_teacher_id'])) {
+            $teacher = User::find($validated['class_teacher_id']);
+            if (!$teacher || $teacher->role !== 'teacher') {
+                return back()->with('error', 'Selected user is not a teacher.')->withInput();
+            }
+        }
 
         ClassModel::create($validated);
 
@@ -304,7 +315,8 @@ public function getStudentsByClass($classId)
     public function editClass($id)
     {
         $class = ClassModel::findOrFail($id);
-        return view('admin.classes.edit', compact('class'));
+        $teachers = User::where('role', 'teacher')->orderBy('name')->get();
+        return view('admin.classes.edit', compact('class', 'teachers'));
     }
 
     public function updateClass(Request $request, $id)
@@ -315,7 +327,15 @@ public function getStudentsByClass($classId)
             'name' => 'required|string|max:255',
             'code' => 'required|unique:classes,code,' . $id,
             'description' => 'nullable|string',
+            'class_teacher_id' => 'nullable|exists:users,id',
         ]);
+
+        if (!empty($validated['class_teacher_id'])) {
+            $teacher = User::find($validated['class_teacher_id']);
+            if (!$teacher || $teacher->role !== 'teacher') {
+                return back()->with('error', 'Selected user is not a teacher.')->withInput();
+            }
+        }
 
         $class->update($validated);
 

@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\ScoreController as AdminScoreController;
 use App\Http\Controllers\Admin\ExamController as AdminExamController;
 use App\Http\Controllers\Admin\ReportCardController as AdminReportCardController;
 use App\Http\Controllers\Admin\StudentAccessController;
+use App\Http\Controllers\Admin\GradingScaleController;
 use App\Http\Controllers\Teacher\QuestionController as TeacherQuestionController;
 use App\Http\Controllers\Teacher\TeacherController;
 use App\Http\Controllers\Teacher\ExamController;
@@ -158,6 +159,16 @@ Route::get('/students/by-class/{classId}', [AdminController::class, 'getStudents
     Route::post('/students/bulk-reactivate', 
         [\App\Http\Controllers\Admin\StudentAccessController::class, 'bulkReactivate'])
         ->name('students.bulk-reactivate');
+
+    // ============ GRADING SYSTEM ============
+    Route::get('/grading', [GradingScaleController::class, 'index'])->name('grading.index');
+    Route::get('/grading/create', [GradingScaleController::class, 'create'])->name('grading.create');
+    Route::post('/grading', [GradingScaleController::class, 'store'])->name('grading.store');
+    Route::get('/grading/{id}/edit', [GradingScaleController::class, 'edit'])->name('grading.edit');
+    Route::put('/grading/{id}', [GradingScaleController::class, 'update'])->name('grading.update');
+    Route::delete('/grading/{id}', [GradingScaleController::class, 'delete'])->name('grading.delete');
+    Route::post('/grading/{id}/set-default', [GradingScaleController::class, 'setDefault'])->name('grading.set-default');
+
 
     });
 

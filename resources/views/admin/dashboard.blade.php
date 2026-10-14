@@ -10,100 +10,20 @@
 @section('page-title', 'Dashboard')
 
 @section('content')
-<!-- Stats Row 1 -->
-<div class="row g-4 mb-4">
-    <div class="col-md-3">
-        <div class="stat-card" style="border-left-color: var(--primary-color);">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h6 class="text-muted mb-1">Students</h6>
-                    <h3 class="mb-0">{{ $totalStudents }}</h3>
-                </div>
-                <div class="stat-icon text-primary"><i class="bi bi-people"></i></div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="stat-card" style="border-left-color: var(--secondary-color);">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h6 class="text-muted mb-1">Teachers</h6>
-                    <h3 class="mb-0">{{ $totalTeachers }}</h3>
-                </div>
-                <div class="stat-icon text-success"><i class="bi bi-person-badge"></i></div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="stat-card" style="border-left-color: var(--warning-color);">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h6 class="text-muted mb-1">Classes</h6>
-                    <h3 class="mb-0">{{ $totalClasses }}</h3>
-                </div>
-                <div class="stat-icon text-warning"><i class="bi bi-building"></i></div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="stat-card" style="border-left-color: var(--info-color);">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h6 class="text-muted mb-1">Subjects</h6>
-                    <h3 class="mb-0">{{ $totalSubjects }}</h3>
-                </div>
-                <div class="stat-icon text-info"><i class="bi bi-book"></i></div>
-            </div>
-        </div>
-    </div>
+
+<!-- Replace the stats section -->
+<div class="row g-3 mb-4">
+    @include('partials.stat-card', ['color' => 'primary',   'icon' => 'bi-people',           'label' => 'Students',   'value' => $totalStudents])
+    @include('partials.stat-card', ['color' => 'success',   'icon' => 'bi-person-badge',     'label' => 'Teachers',   'value' => $totalTeachers])
+    @include('partials.stat-card', ['color' => 'warning',   'icon' => 'bi-building',         'label' => 'Classes',    'value' => $totalClasses])
+    @include('partials.stat-card', ['color' => 'info',      'icon' => 'bi-book',             'label' => 'Subjects',   'value' => $totalSubjects])
 </div>
 
-<!-- Stats Row 2 -->
-<div class="row g-4 mb-4">
-    <div class="col-md-3">
-        <div class="stat-card">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h6 class="text-muted mb-1">Question Bank</h6>
-                    <h3 class="mb-0">{{ $totalQuestions }}</h3>
-                </div>
-                <div class="stat-icon text-primary"><i class="bi bi-question-circle"></i></div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="stat-card" style="border-left-color: var(--info-color);">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h6 class="text-muted mb-1">Tests</h6>
-                    <h3 class="mb-0">{{ $totalTests }}</h3>
-                </div>
-                <div class="stat-icon text-info"><i class="bi bi-file-text"></i></div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="stat-card" style="border-left-color: var(--primary-color);">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h6 class="text-muted mb-1">Exams</h6>
-                    <h3 class="mb-0">{{ $totalExams }}</h3>
-                </div>
-                <div class="stat-icon text-primary"><i class="bi bi-file-earmark-text"></i></div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="stat-card" style="border-left-color: var(--secondary-color);">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h6 class="text-muted mb-1">Report Cards</h6>
-                    <h3 class="mb-0">{{ $totalReportCards }}</h3>
-                </div>
-                <div class="stat-icon text-success"><i class="bi bi-file-earmark-bar-graph"></i></div>
-            </div>
-        </div>
-    </div>
+<div class="row g-3 mb-4">
+    @include('partials.stat-card', ['color' => 'primary',   'icon' => 'bi-question-circle',  'label' => 'Questions',  'value' => $totalQuestions])
+    @include('partials.stat-card', ['color' => 'info',      'icon' => 'bi-file-text',        'label' => 'Tests',      'value' => $totalTests])
+    @include('partials.stat-card', ['color' => 'primary',   'icon' => 'bi-file-earmark-text','label' => 'Exams',      'value' => $totalExams])
+    @include('partials.stat-card', ['color' => 'success',   'icon' => 'bi-file-earmark-bar-graph','label' => 'Report Cards','value' => $totalReportCards])
 </div>
 
 <!-- Quick Actions -->

@@ -35,6 +35,24 @@
                             @enderror
                             <small class="text-muted">Unique identifier for the class</small>
                         </div>
+                        
+                    </div>
+                     <div class="mb-3">
+                        <label class="form-label fw-semibold">Class Teacher</label>
+                        <select name="class_teacher_id" class="form-select @error('class_teacher_id') is-invalid @enderror">
+                            <option value="">-- None --</option>
+                            @foreach($teachers as $teacher)
+                                <option value="{{ $teacher->id }}" {{ old('class_teacher_id') == $teacher->id ? 'selected' : '' }}>
+                                    {{ $teacher->name }} ({{ $teacher->email }})
+                                </option>
+                            @endforeach
+                        </select>
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle"></i> The class teacher oversees this class and its students.
+                        </small>
+                        @error('class_teacher_id')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
                     </div>
                     
                     <div class="mb-3">

@@ -182,5 +182,330 @@
     .info-table { font-size: 10px; }
     .summary-value { font-size: 11px; }
     .report-grading { font-size: 8px; }
+
+    /* Hide mobile view on print */
+     .report-mobile-view { display: none !important; }
+    .report-card-content > .report-header,
+    .report-card-content > .report-info,
+    .report-card-content > .report-table,
+    .report-card-content > .report-summary,
+    .report-card-content > .report-grading,
+    .report-card-content > .report-footer,
+    .report-card-content > .report-generation-info {
+        display: block !important;
+    }
 }
+
+ /* ============================================ */
+/* MOBILE REPORT CARD VIEW                      */
+/* ============================================ */
+.report-mobile-view {
+    padding: 12px;
+    font-family: 'Poppins', sans-serif;
+    color: #1a1a1a;
+    background: white;
+    font-size: 13px;
+}
+
+/* Header */
+.mobile-report-header {
+    text-align: center;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #1e40af;
+    margin-bottom: 12px;
+}
+.mobile-logo {
+    max-height: 50px;
+    max-width: 50px;
+    object-fit: contain;
+    margin-bottom: 6px;
+}
+.mobile-school-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1e40af;
+    line-height: 1.3;
+}
+.mobile-report-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    margin-top: 4px;
+}
+.mobile-report-term {
+    font-size: 0.75rem;
+    color: #666;
+    font-style: italic;
+    margin-top: 2px;
+}
+
+/* Info Box */
+.mobile-info-box {
+    background: #f8f9fc;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 14px;
+    border: 1px solid #e3e6f0;
+}
+.mobile-info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 0;
+    border-bottom: 1px dashed #e3e6f0;
+    font-size: 0.85rem;
+}
+.mobile-info-row:last-child { border-bottom: none; }
+.mobile-info-label {
+    color: #666;
+    font-weight: 500;
+}
+.mobile-info-value {
+    font-weight: 600;
+    text-align: right;
+    max-width: 60%;
+    word-break: break-word;
+}
+
+/* Subject Cards */
+.mobile-subjects {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+.mobile-subject-card {
+    background: white;
+    border: 1px solid #e3e6f0;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.mobile-subject-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #1e40af, #4e73df);
+    color: white;
+    padding: 8px 12px;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+.mobile-subject-num {
+    background: rgba(255,255,255,0.25);
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    flex-shrink: 0;
+}
+.mobile-subject-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Score Grid */
+.mobile-subject-scores {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    padding: 10px;
+}
+.mobile-score-box {
+    text-align: center;
+    padding: 6px 4px;
+    background: #f8f9fc;
+    border-radius: 6px;
+    border: 1px solid #e9eef5;
+}
+.mobile-score-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    color: #888;
+    letter-spacing: 0.3px;
+    margin-bottom: 2px;
+}
+.mobile-score-value {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #1e40af;
+    line-height: 1.2;
+}
+.mobile-score-value small {
+    font-size: 0.7rem;
+    color: #999;
+    font-weight: 400;
+}
+
+/* Subject Remark */
+.mobile-subject-remark {
+    padding: 8px 12px;
+    background: #f0f4ff;
+    border-top: 1px solid #e3e6f0;
+    font-size: 0.78rem;
+    color: #555;
+}
+.mobile-subject-remark i {
+    color: #4e73df;
+    margin-right: 4px;
+}
+
+/* Grand Total */
+.mobile-grand-total {
+    background: #f8f9fc;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 14px;
+    border: 1px solid #e3e6f0;
+}
+.mobile-grand-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 7px 0;
+    font-size: 0.85rem;
+    border-bottom: 1px dashed #e3e6f0;
+}
+.mobile-grand-row:last-child { border-bottom: none; }
+.mobile-grand-row span:first-child {
+    color: #666;
+    font-weight: 500;
+}
+.mobile-grand-highlight {
+    background: #e7f0ff;
+    margin: 4px -14px;
+    padding: 10px 14px;
+    border-bottom: none !important;
+    border-top: 2px solid #1e40af;
+    font-size: 0.95rem;
+}
+.mobile-grand-highlight span:first-child {
+    color: #1e40af;
+    font-weight: 700;
+}
+.mobile-grand-highlight strong {
+    color: #1e40af;
+    font-size: 1.05rem;
+}
+
+/* Grading */
+.mobile-grading {
+    background: #f0f4ff;
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 14px;
+    border: 1px solid #e3e6f0;
+}
+.mobile-grading-title {
+    font-weight: 700;
+    color: #1e40af;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-align: center;
+    margin-bottom: 8px;
+}
+.mobile-grading-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    font-size: 0.75rem;
+    text-align: center;
+}
+.mobile-grading-grid span {
+    padding: 4px 6px;
+    background: white;
+    border-radius: 5px;
+    color: #444;
+}
+.mobile-grading-grid strong {
+    color: #1e40af;
+    margin-right: 3px;
+}
+
+/* Signatures */
+.mobile-signatures {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-top: 18px;
+    margin-bottom: 10px;
+}
+.mobile-signature-line {
+    border-bottom: 1px solid #333;
+    height: 30px;
+    margin-bottom: 4px;
+}
+.mobile-signatures small {
+    font-size: 0.68rem;
+    color: #555;
+    display: block;
+    text-align: center;
+}
+
+/* Footer */
+.mobile-footer-note {
+    text-align: center;
+    font-size: 0.7rem;
+    color: #999;
+    padding-top: 8px;
+    border-top: 1px dashed #ddd;
+}
+
+/* Grade badges for mobile */
+.mobile-subject-card .grade {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 0.75rem;
+    min-width: 28px;
+    text-align: center;
+}
+
+/* Hide mobile view on tablets and up, hide desktop view on mobile */
+@media (min-width: 768px) {
+    .report-mobile-view { display: none !important; }
+}
+@media (max-width: 767.98px) {
+    .report-card-content > .report-header,
+    .report-card-content > .report-info,
+    .report-card-content > .report-table,
+    .report-card-content > .report-summary,
+    .report-card-content > .report-grading,
+    .report-card-content > .report-footer,
+    .report-card-content > .report-generation-info {
+        display: none !important;
+    }
+    
+    /* Make the wrapper mobile-friendly */
+    .report-card-wrapper {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    .report-card-content {
+        padding: 0;
+    }
+}
+
+/* Print: always use desktop layout */
+/*
+@media print {
+    .report-mobile-view { display: none !important; }
+    .report-card-content > .report-header,
+    .report-card-content > .report-info,
+    .report-card-content > .report-table,
+    .report-card-content > .report-summary,
+    .report-card-content > .report-grading,
+    .report-card-content > .report-footer,
+    .report-card-content > .report-generation-info {
+        display: block !important;
+    }
+}  */
+
 </style>
