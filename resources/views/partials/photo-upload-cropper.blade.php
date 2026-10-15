@@ -1,29 +1,24 @@
 {{--
     Reusable Photo Upload + Crop Component
-
-    Usage:
-    @include('partials.photo-upload-cropper', [
-        'name' => 'photo',                    // form field name
-        'currentPhoto' => $user->photo_url ?? null,  // existing photo (for edit)
-        'removeName' => 'remove_photo',       // hidden input for removal flag
-        'userId' => 'student',                // unique ID prefix
-        'aspectRatio' => 1,                   // 1 = square, 4/3 = landscape
-        'maxSize' => 2,                       // max file size in MB
-        'helpText' => 'JPG, PNG, or WEBP. Max 2MB.',
-    ])
 --}}
 
 @php
     $name = $name ?? 'photo';
     $currentPhoto = $currentPhoto ?? null;
     $removeName = $removeName ?? 'remove_photo';
-    $userId = $userId ?? 'user';
+    $userId = $userId ?? 'user-' . uniqid();   // ← guarantee uniqueness
     $aspectRatio = $aspectRatio ?? 1;
     $maxSize = $maxSize ?? 2;
-    $helpText = $helpText ?? 'JPG, PNG, or WEBP. Max ' . $maxSize . 'MB.';
+    $helpText = $helpText ?? 'JPG, PNG, or WEBP. Max ' . $maxSize . 'MB. The image will be cropped to a square.';
 @endphp
 
-<div class="photo-crop-component" id="{{ $userId }}-component">
+<div class="photo-crop-component" 
+     id="{{ $userId }}-component"
+     data-photo-cropper
+     data-user-id="{{ $userId }}"
+     data-aspect-ratio="{{ $aspectRatio }}"
+     data-max-size="{{ $maxSize }}">
+    
     <!-- Preview Circle -->
     <div class="text-center">
         <div class="photo-crop-preview" id="{{ $userId }}-preview">
@@ -59,7 +54,7 @@
             <button type="button" 
                     class="btn btn-sm btn-outline-danger {{ $currentPhoto ? '' : 'd-none' }}" 
                     id="{{ $userId }}-removeBtn" 
-                    onclick="removePhoto_{{ $userId }}()">
+                    onclick="removePhoto('{{ $userId }}')">
                 <i class="bi bi-x-circle"></i> Remove
             </button>
         </div>
@@ -78,8 +73,9 @@
                     <i class="bi bi-crop text-primary"></i> 
                     Crop Photo
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" 
-                        onclick="cancelCrop_{{ $userId }}()"></button>
+                <button type="button" class="btn-close" 
+                        data-bs-dismiss="modal" 
+                        onclick="cancelCrop('{{ $userId }}')"></button>
             </div>
             <div class="modal-body p-0">
                 <div class="crop-container">
@@ -88,36 +84,35 @@
                 </div>
             </div>
             <div class="modal-footer flex-column">
-                <!-- Cropper controls -->
                 <div class="crop-controls w-100 mb-2">
                     <div class="d-flex justify-content-center gap-2 flex-wrap">
                         <button type="button" class="btn btn-sm btn-outline-secondary" 
-                                onclick="rotateCrop_{{ $userId }}(-90)" title="Rotate Left">
+                                onclick="rotateCrop('{{ $userId }}', -90)" title="Rotate Left">
                             <i class="bi bi-arrow-counterclockwise"></i>
                         </button>
                         <button type="button" class="btn btn-sm btn-outline-secondary" 
-                                onclick="rotateCrop_{{ $userId }}(90)" title="Rotate Right">
+                                onclick="rotateCrop('{{ $userId }}', 90)" title="Rotate Right">
                             <i class="bi bi-arrow-clockwise"></i>
                         </button>
                         <button type="button" class="btn btn-sm btn-outline-secondary" 
-                                onclick="flipCrop_{{ $userId }}('h')" title="Flip Horizontal">
+                                onclick="flipCrop('{{ $userId }}', 'h')" title="Flip Horizontal">
                             <i class="bi bi-arrow-left-right"></i>
                         </button>
                         <button type="button" class="btn btn-sm btn-outline-secondary" 
-                                onclick="flipCrop_{{ $userId }}('v')" title="Flip Vertical">
+                                onclick="flipCrop('{{ $userId }}', 'v')" title="Flip Vertical">
                             <i class="bi bi-arrow-down-up"></i>
                         </button>
                         <button type="button" class="btn btn-sm btn-outline-secondary" 
-                                onclick="resetCrop_{{ $userId }}()" title="Reset">
+                                onclick="resetCrop('{{ $userId }}')" title="Reset">
                             <i class="bi bi-arrow-repeat"></i> Reset
                         </button>
                         <div class="btn-group" role="group">
                             <button type="button" class="btn btn-sm btn-outline-secondary" 
-                                    onclick="setZoom_{{ $userId }}(0.1)" title="Zoom In">
+                                    onclick="setZoom('{{ $userId }}', 0.1)" title="Zoom In">
                                 <i class="bi bi-zoom-in"></i>
                             </button>
                             <button type="button" class="btn btn-sm btn-outline-secondary" 
-                                    onclick="setZoom_{{ $userId }}(-0.1)" title="Zoom Out">
+                                    onclick="setZoom('{{ $userId }}', -0.1)" title="Zoom Out">
                                 <i class="bi bi-zoom-out"></i>
                             </button>
                         </div>
@@ -132,11 +127,12 @@
                 
                 <div class="d-flex gap-2 w-100">
                     <button type="button" class="btn btn-secondary flex-fill" 
-                            data-bs-dismiss="modal" onclick="cancelCrop_{{ $userId }}()">
+                            data-bs-dismiss="modal" 
+                            onclick="cancelCrop('{{ $userId }}')">
                         Cancel
                     </button>
                     <button type="button" class="btn btn-primary flex-fill" 
-                            onclick="applyCrop_{{ $userId }}()">
+                            onclick="applyCrop('{{ $userId }}')">
                         <i class="bi bi-check-circle"></i> Apply Crop
                     </button>
                 </div>
@@ -242,202 +238,226 @@
 }
 </style>
 @endpush
+@endonce
 
+@once
 @push('scripts')
 <script>
-// Namespaced cropper instance (safe for multiple components on one page)
-window.CropperInstances = window.CropperInstances || {};
+// Global cropper registry
+window.CropperRegistry = window.CropperRegistry || {};
 
-// Wait until DOM is ready
-(function() {
-    const userId = '{{ $userId }}';
-    const aspectRatio = {{ $aspectRatio }};
-    const maxSizeMB = {{ $maxSize }};
+/**
+ * Initialize a crop component for a specific user ID
+ */
+function initPhotoCropper(userId, aspectRatio, maxSizeMB) {
+    // Prevent double-init
+    if (window.CropperRegistry[userId]) return;
+    
     const maxSizeBytes = maxSizeMB * 1024 * 1024;
-
-    const componentId = userId + '-component';
+    
     const fileInput = document.getElementById(userId + '-fileInput');
     const previewImg = document.getElementById(userId + '-previewImg');
     const placeholder = document.getElementById(userId + '-placeholder');
     const removeBtn = document.getElementById(userId + '-removeBtn');
     const removeFlag = document.getElementById(userId + '-removeFlag');
-    const cropModal = document.getElementById(userId + '-cropModal');
+    const cropModalEl = document.getElementById(userId + '-cropModal');
     const cropImage = document.getElementById(userId + '-cropImage');
-
+    
+    if (!fileInput || !cropModalEl || !cropImage) {
+        console.warn('Crop component elements not found for:', userId);
+        return;
+    }
+    
     let cropper = null;
-    let bsModal = null;
-
-    // Init modal
-    if (cropModal) {
-        bsModal = new bootstrap.Modal(cropModal);
-    }
-
+    const bsModal = new bootstrap.Modal(cropModalEl);
+    
+    // Store instance
+    window.CropperRegistry[userId] = {
+        getCropper: () => cropper,
+        setCropper: (c) => { cropper = c; },
+        bsModal: bsModal,
+        fileInput: fileInput,
+        previewImg: previewImg,
+        placeholder: placeholder,
+        removeBtn: removeBtn,
+        removeFlag: removeFlag,
+        cropImage: cropImage,
+    };
+    
     // File input change → open crop modal
-    if (fileInput) {
-        fileInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            // Validate size
-            if (file.size > maxSizeBytes) {
-                alert('File is too large. Maximum size is ' + maxSizeMB + 'MB.');
-                fileInput.value = '';
-                return;
-            }
-
-            // Validate type
-            if (!file.type.startsWith('image/')) {
-                alert('Please select an image file.');
-                fileInput.value = '';
-                return;
-            }
-
-            // Load image into crop modal
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                cropImage.src = event.target.result;
-                
-                // Show modal
-                bsModal.show();
-                
-                // Initialize cropper once the image is loaded
-                cropImage.onload = function() {
-                    if (cropper) {
-                        cropper.destroy();
-                    }
-                    
-                    cropper = new Cropper(cropImage, {
-                        aspectRatio: aspectRatio,
-                        viewMode: 1,
-                        dragMode: 'move',
-                        autoCropArea: 0.9,
-                        restore: false,
-                        guides: false,
-                        center: true,
-                        highlight: false,
-                        cropBoxMovable: true,
-                        cropBoxResizable: true,
-                        toggleDragModeOnDblclick: false,
-                        responsive: true,
-                        background: true,
-                        checkOrientation: true,
-                        modal: true,
-                    });
-                    
-                    window.CropperInstances[userId] = cropper;
-                };
-            };
-            reader.readAsDataURL(file);
-        });
-    }
-
-    // Rotate
-    window['rotateCrop_' + userId] = function(deg) {
-        if (cropper) cropper.rotate(deg);
-    };
-
-    // Flip
-    window['flipCrop_' + userId] = function(direction) {
-        if (!cropper) return;
-        const scaleX = cropper.getData().scaleX || 1;
-        const scaleY = cropper.getData().scaleY || 1;
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
         
-        if (direction === 'h') {
-            cropper.scaleX(-scaleX);
-        } else {
-            cropper.scaleY(-scaleY);
+        // Validate size
+        if (file.size > maxSizeBytes) {
+            alert('File is too large. Maximum size is ' + maxSizeMB + 'MB.');
+            fileInput.value = '';
+            return;
         }
-    };
-
-    // Reset
-    window['resetCrop_' + userId] = function() {
-        if (cropper) cropper.reset();
-    };
-
-    // Zoom
-    window['setZoom_' + userId] = function(ratio) {
-        if (cropper) cropper.zoom(ratio);
-    };
-
-    // Cancel
-    window['cancelCrop_' + userId] = function() {
-        if (cropper) {
-            cropper.destroy();
-            cropper = null;
+        
+        // Validate type
+        if (!file.type.startsWith('image/')) {
+            alert('Please select an image file.');
+            fileInput.value = '';
+            return;
         }
-        fileInput.value = '';
-        cropImage.src = '';
-    };
-
-    // Apply crop
-    window['applyCrop_' + userId] = function() {
-        if (!cropper) return;
-
-        // Get cropped canvas
-        const canvas = cropper.getCroppedCanvas({
-            width: 500,
-            height: 500,
-            imageSmoothingEnabled: true,
-            imageSmoothingQuality: 'high',
-        });
-
-        // Convert to blob and replace the file input
-        canvas.toBlob(function(blob) {
-            // Create a new File object
-            const fileName = 'cropped_' + Date.now() + '.jpg';
-            const croppedFile = new File([blob], fileName, {
-                type: 'image/jpeg',
-                lastModified: Date.now(),
-            });
-
-            // Create DataTransfer to update the file input
-            const dt = new DataTransfer();
-            dt.items.add(croppedFile);
-            fileInput.files = dt.files;
-
-            // Update preview
-            const previewUrl = URL.createObjectURL(blob);
-            previewImg.src = previewUrl;
-            previewImg.style.display = 'block';
-            if (placeholder) placeholder.style.display = 'none';
-            if (removeBtn) removeBtn.classList.remove('d-none');
+        
+        // Load image into crop modal
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            cropImage.src = event.target.result;
+            bsModal.show();
             
-            // Reset remove flag
-            if (removeFlag) removeFlag.value = '0';
+            cropImage.onload = function() {
+                if (cropper) cropper.destroy();
+                
+                cropper = new Cropper(cropImage, {
+                    aspectRatio: aspectRatio,
+                    viewMode: 1,
+                    dragMode: 'move',
+                    autoCropArea: 0.9,
+                    restore: false,
+                    guides: false,
+                    center: true,
+                    highlight: false,
+                    cropBoxMovable: true,
+                    cropBoxResizable: true,
+                    toggleDragModeOnDblclick: false,
+                    responsive: true,
+                    background: true,
+                    checkOrientation: true,
+                    modal: true,
+                });
+                
+                window.CropperRegistry[userId].setCropper(cropper);
+            };
+        };
+        reader.readAsDataURL(file);
+    });
+}
 
-            // Cleanup
-            cropper.destroy();
-            cropper = null;
-            bsModal.hide();
-            cropImage.src = '';
-        }, 'image/jpeg', 0.92);
-    };
+/* ============================================ */
+/* GLOBAL FUNCTIONS (called from onclick)      */
+/* ============================================ */
 
-    // Remove photo
-    window['removePhoto_' + userId] = function() {
-        if (!confirm('Remove this photo?')) return;
+function rotateCrop(userId, deg) {
+    const reg = window.CropperRegistry[userId];
+    if (reg && reg.getCropper()) reg.getCropper().rotate(deg);
+}
 
-        fileInput.value = '';
-        removeFlag.value = '1';
+function flipCrop(userId, direction) {
+    const reg = window.CropperRegistry[userId];
+    if (!reg || !reg.getCropper()) return;
+    const cropper = reg.getCropper();
+    const data = cropper.getData();
+    const scaleX = data.scaleX || 1;
+    const scaleY = data.scaleY || 1;
+    
+    if (direction === 'h') {
+        cropper.scaleX(-scaleX);
+    } else {
+        cropper.scaleY(-scaleY);
+    }
+}
+
+function resetCrop(userId) {
+    const reg = window.CropperRegistry[userId];
+    if (reg && reg.getCropper()) reg.getCropper().reset();
+}
+
+function setZoom(userId, ratio) {
+    const reg = window.CropperRegistry[userId];
+    if (reg && reg.getCropper()) reg.getCropper().zoom(ratio);
+}
+
+function cancelCrop(userId) {
+    const reg = window.CropperRegistry[userId];
+    if (!reg) return;
+    
+    if (reg.getCropper()) {
+        reg.getCropper().destroy();
+        reg.setCropper(null);
+    }
+    reg.fileInput.value = '';
+    reg.cropImage.src = '';
+}
+
+function applyCrop(userId) {
+    const reg = window.CropperRegistry[userId];
+    if (!reg || !reg.getCropper()) return;
+    
+    const cropper = reg.getCropper();
+    
+    // Get cropped canvas
+    const canvas = cropper.getCroppedCanvas({
+        width: 500,
+        height: 500,
+        imageSmoothingEnabled: true,
+        imageSmoothingQuality: 'high',
+    });
+    
+    canvas.toBlob(function(blob) {
+        const fileName = 'cropped_' + Date.now() + '.jpg';
+        const croppedFile = new File([blob], fileName, {
+            type: 'image/jpeg',
+            lastModified: Date.now(),
+        });
         
-        previewImg.src = '';
-        previewImg.style.display = 'none';
+        // Update file input
+        const dt = new DataTransfer();
+        dt.items.add(croppedFile);
+        reg.fileInput.files = dt.files;
         
-        if (placeholder) {
-            placeholder.style.display = 'block';
-        } else {
-            // Recreate placeholder
-            const preview = document.getElementById(userId + '-preview');
-            const ph = document.createElement('div');
-            ph.className = 'photo-crop-placeholder';
-            ph.id = userId + '-placeholder';
-            ph.innerHTML = '<i class="bi bi-camera"></i><span>Add Photo</span>';
-            preview.insertBefore(ph, previewImg);
+        // Update preview
+        const previewUrl = URL.createObjectURL(blob);
+        reg.previewImg.src = previewUrl;
+        reg.previewImg.style.display = 'block';
+        if (reg.placeholder) reg.placeholder.style.display = 'none';
+        if (reg.removeBtn) reg.removeBtn.classList.remove('d-none');
+        if (reg.removeFlag) reg.removeFlag.value = '0';
+        
+        // Cleanup
+        cropper.destroy();
+        reg.setCropper(null);
+        reg.bsModal.hide();
+        reg.cropImage.src = '';
+    }, 'image/jpeg', 0.92);
+}
+
+function removePhoto(userId) {
+    if (!confirm('Remove this photo?')) return;
+    
+    const reg = window.CropperRegistry[userId];
+    if (!reg) return;
+    
+    reg.fileInput.value = '';
+    if (reg.removeFlag) reg.removeFlag.value = '1';
+    
+    reg.previewImg.src = '';
+    reg.previewImg.style.display = 'none';
+    
+    if (reg.placeholder) {
+        reg.placeholder.style.display = 'block';
+    }
+    
+    if (reg.removeBtn) reg.removeBtn.classList.add('d-none');
+}
+
+/* ============================================ */
+/* AUTO-INIT ON DOM READY                      */
+/* ============================================ */
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('[data-photo-cropper]').forEach(function(el) {
+        const userId = el.dataset.userId;
+        const aspectRatio = parseFloat(el.dataset.aspectRatio) || 1;
+        const maxSize = parseFloat(el.dataset.maxSize) || 2;
+        
+        if (userId) {
+            initPhotoCropper(userId, aspectRatio, maxSize);
         }
-        
-        removeBtn.classList.add('d-none');
-    };
-})();
+    });
+});
 </script>
 @endpush
 @endonce

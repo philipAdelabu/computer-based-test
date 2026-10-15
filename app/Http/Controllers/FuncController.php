@@ -38,6 +38,18 @@ class FuncController extends Controller
             if (file_exists($publicPath)) {
                 @unlink($publicPath);
             }
+
+        }
+
+          public static function deleteImage($imagePath)
+        {
+            if (!$imagePath) return;
+
+            $publicPath = public_path($imagePath);
+            if (file_exists($publicPath)) {
+                @unlink($publicPath);
+            }
+            
         }
 
              /**

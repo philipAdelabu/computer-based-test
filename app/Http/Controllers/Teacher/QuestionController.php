@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Teacher;
 
 use App\Http\Controllers\Controller;
+use App\Http\Contollers\FuncController;
 use App\Models\Subject;
 use App\Models\Question;
 use App\Models\ClassModel;
@@ -176,10 +177,8 @@ class QuestionController extends Controller
         if ($request->hasFile('image')) {
             // Delete old image from public folder
             if ($question->image_path) {
-                $oldPath = public_path('uploads/questions/' . basename($question->image_path));
-                if (file_exists($oldPath)) {
-                    @unlink($oldPath);
-                }
+                $this->deleteImage('uploads/questions/' . basename($question->image_path));
+             
             }
             
             // Upload new image
@@ -208,10 +207,7 @@ class QuestionController extends Controller
         
         // Delete image from public folder
         if ($question->image_path) {
-            $oldPath = public_path('uploads/questions/' . basename($question->image_path));
-            if (file_exists($oldPath)) {
-                @unlink($oldPath);
-            }
+            $this->deleteImage('uploads/questions/' . basename($question->image_path));
         }
         
         $question->delete();
@@ -225,22 +221,13 @@ class QuestionController extends Controller
     /**
      * Upload image to public/uploads/questions folder
      */
-    private function uploadImage($file)
-    {
-        // Ensure directory exists
-        $uploadPath = public_path('uploads/questions');
-        if (!file_exists($uploadPath)) {
-            mkdir($uploadPath, 0755, true);
+     private function uploadImage($file, $folder = 'questions')
+     {
+            return  FuncController::uploadImage($file, $folder);
         }
-        
-        // Generate unique filename
-        $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-        
-        // Move file to public folder
-        $file->move($uploadPath, $filename);
-        
-        // Return relative path for storage in DB
-        return 'uploads/questions/' . $filename;
+
+    private function deleteImage($imagePath){
+         FuncController::deleteIamge($imagePath);
     }
 
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\FuncController;
 use App\Models\Subject;
 use App\Models\Question;
 use App\Models\ClassModel;
@@ -164,14 +165,11 @@ class QuestionController extends Controller
         if ($request->hasFile('image')) {
             // Delete old image from public folder
             if ($question->image_path) {
-                $oldPath = public_path('uploads/questions/' . basename($question->image_path));
-                if (file_exists($oldPath)) {
-                    @unlink($oldPath);
-                }
+                $this->deleteImage('uploads/questions/' . basename($question->image_path));
             }
             
             // Upload new image
-            $question->image_path = $this->uploadImage($request->file('image'));
+            $question->image_path = $this->uploadImage($request->file('image'), 'questions');
         }
 
         $question->update([
@@ -190,6 +188,7 @@ class QuestionController extends Controller
       /**
      * Upload image to public/uploads/questions folder
      */
+    /*
     private function uploadImage($file)
     {
         // Ensure directory exists
@@ -206,6 +205,15 @@ class QuestionController extends Controller
         
         // Return relative path for storage in DB
         return 'uploads/questions/' . $filename;
+    }  */
+
+       private function uploadImage($file, $folder = 'questions')
+    {
+        return  FuncController::uploadImage($file, $folder);
+    }
+
+    private function deleteImage($imagePath){
+         FuncController::deleteIamge($imagePath);
     }
 
     // =====================================================

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\FuncController;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -86,14 +87,9 @@ class SettingController extends Controller
      */
     private function uploadLogo($file)
     {
-        $uploadPath = public_path('uploads/settings');
-        if (!file_exists($uploadPath)) {
-            mkdir($uploadPath, 0755, true);
-        }
-
-        $filename = 'logo_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-        $file->move($uploadPath, $filename);
-
-        return 'uploads/settings/' . $filename;
+      
+        return FuncController::uploadImage($file, 'settings');
     }
+
+
 }
