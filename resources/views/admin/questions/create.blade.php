@@ -44,76 +44,97 @@
                             @enderror
                         </div>
                     </div>
-                    
-                       <div class="mb-3">
-                            <label class="form-label fw-semibold">
-                                Question <span class="text-danger">*</span>
-                            </label>
-                            <textarea name="question_text" 
-                                    id="questionTextEditor" 
-                                    class="form-control rich-editor @error('question_text') is-invalid @enderror"
-                                    rows="6">{{ old('question_text') }}</textarea>
-                            @error('question_text')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                            <small class="text-muted">
-                                <i class="bi bi-info-circle"></i>
-                                Use the toolbar to format text, add lists, tables, formulas, or insert images.
-                            </small>
-                        </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Question Image (Optional)</label>
-                        <input type="file" name="image" class="form-control @error('image') is-invalid @enderror" accept="image/*">
-                        <small class="text-muted">Supported formats: JPG, PNG, GIF. Max size: 2MB</small>
-                        @error('image')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-                    
-                    <div class="row mb-3">
-                        <div class="col-md-12">
-                            <label class="form-label fw-semibold">Options <span class="text-danger">*</span></label>
-                            <div id="options-container">
-                                @php
-                                    $options = old('options', ['', '', '', '']);
-                                @endphp
-                                @foreach($options as $index => $option)
-                                    <div class="input-group mb-2">
-                                        <span class="input-group-text">{{ chr(65 + $index) }}</span>
-                                        <input type="text" name="options[]" class="form-control @error('options.*') is-invalid @enderror" 
-                                               placeholder="Option {{ chr(65 + $index) }}" value="{{ $option }}" required>
-                                    </div>
-                                @endforeach
+
+                        <!-- Add this right before the Question Text field -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Question Type <span class="text-danger">*</span></label>
+                            <div class="d-flex gap-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="question_type" id="typeObjective" value="objective" 
+                                        {{ old('question_type', 'objective') == 'objective' ? 'checked' : '' }} onchange="toggleQuestionType()">
+                                    <label class="form-check-label" for="typeObjective">
+                                        <i class="bi bi-ui-checks text-primary"></i> Objective (Multiple Choice)
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="question_type" id="typeTheory" value="theory" 
+                                        {{ old('question_type') == 'theory' ? 'checked' : '' }} onchange="toggleQuestionType()">
+                                    <label class="form-check-label" for="typeTheory">
+                                        <i class="bi bi-pencil-square text-success"></i> Theory (Written Answer)
+                                    </label>
+                                </div>
                             </div>
-                            <button type="button" class="btn btn-sm btn-outline-primary mt-2" id="add-option">
-                                <i class="bi bi-plus-circle"></i> Add Option
-                            </button>
-                            @error('options.*')
-                                <div class="invalid-feedback d-block">{{ $message }}</div>
-                            @enderror
                         </div>
-                    </div>
-                    
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Correct Answer <span class="text-danger">*</span></label>
-                            <input type="text" name="correct_answer" class="form-control @error('correct_answer') is-invalid @enderror" 
-                                   placeholder="Enter the correct answer" value="{{ old('correct_answer') }}" required>
-                            @error('correct_answer')
+                     
+                        <div class="mb-3">
+                                <label class="form-label fw-semibold">
+                                    Question <span class="text-danger">*</span>
+                                </label>
+                                <textarea name="question_text" 
+                                        id="questionTextEditor" 
+                                        class="form-control rich-editor @error('question_text') is-invalid @enderror"
+                                        rows="6">{{ old('question_text') }}</textarea>
+                                @error('question_text')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <small class="text-muted">
+                                    <i class="bi bi-info-circle"></i>
+                                    Use the toolbar to format text, add lists, tables, formulas, or insert images.
+                                </small>
+                            </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Question Image (Optional)</label>
+                            <input type="file" name="image" class="form-control @error('image') is-invalid @enderror" accept="image/*">
+                            <small class="text-muted">Supported formats: JPG, PNG, GIF. Max size: 2MB</small>
+                            @error('image')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Score <span class="text-danger">*</span></label>
-                            <input type="number" name="score" class="form-control @error('score') is-invalid @enderror" 
-                                   placeholder="Points for this question" value="{{ old('score', 1) }}" min="1" required>
-                            @error('score')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
+                        <div id="objectiveFields">
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label class="form-label fw-semibold">Options <span class="text-danger">*</span></label>
+                                <div id="options-container">
+                                    @php
+                                        $options = old('options', ['', '', '', '']);
+                                    @endphp
+                                    @foreach($options as $index => $option)
+                                        <div class="input-group mb-2">
+                                            <span class="input-group-text">{{ chr(65 + $index) }}</span>
+                                            <input type="text" name="options[]" class="form-control @error('options.*') is-invalid @enderror" 
+                                                placeholder="Option {{ chr(65 + $index) }}" value="{{ $option }}" required>
+                                        </div>
+                                    @endforeach
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-primary mt-2" id="add-option">
+                                    <i class="bi bi-plus-circle"></i> Add Option
+                                </button>
+                                @error('options.*')
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Correct Answer <span class="text-danger">*</span></label>
+                                <input type="text" name="correct_answer" class="form-control @error('correct_answer') is-invalid @enderror" 
+                                    placeholder="Enter the correct answer" value="{{ old('correct_answer') }}" required>
+                                @error('correct_answer')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Score <span class="text-danger">*</span></label>
+                                <input type="number" name="score" class="form-control @error('score') is-invalid @enderror" 
+                                    placeholder="Points for this question" value="{{ old('score', 1) }}" min="1" required>
+                                @error('score')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
                         </div>
                     </div>
-                    
                     <div class="text-center mt-4">
                         <button type="submit" class="btn btn-primary px-5">
                             <i class="bi bi-save"></i> Save Question
@@ -162,6 +183,25 @@ $(document).ready(function() {
     });
 });
 </script>
+
+    <script>
+    function toggleQuestionType() {
+        const isTheory = document.getElementById('typeTheory').checked;
+        const objectiveFields = document.getElementById('objectiveFields');
+        const optionsInputs = objectiveFields.querySelectorAll('input');
+        
+        if (isTheory) {
+            objectiveFields.style.display = 'none';
+            optionsInputs.forEach(input => input.removeAttribute('required'));
+        } else {
+            objectiveFields.style.display = 'block';
+            optionsInputs.forEach(input => input.setAttribute('required', 'required'));
+        }
+    }
+
+    // Run on page load
+    document.addEventListener('DOMContentLoaded', toggleQuestionType);
+    </script>
 @endpush
 
 @include('partials.rich-editor')

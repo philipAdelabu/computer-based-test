@@ -256,24 +256,43 @@
                         @endif
 
                         <div id="options-container">
-                            @foreach($currentQuestion->options as $index => $option)
-                                @php
-                                    $letter = chr(65 + $index);
-                                    $isSelected = isset($answers[$currentQuestion->id]) && $answers[$currentQuestion->id] === $option;
-                                @endphp
-                                <div class="option-item {{ $isSelected ? 'selected' : '' }}" 
-                                     data-question="{{ $currentQuestion->id }}"
-                                     data-option="{{ $option }}">
-                                    <input class="form-check-input" type="radio" 
-                                           name="answer" 
-                                           value="{{ $option }}" 
-                                           id="option{{ $loop->index }}"
-                                           {{ $isSelected ? 'checked' : '' }}>
-                                    <label for="option{{ $loop->index }}">
-                                        <strong>{{ $letter }}.</strong> {{ $option }}
-                                    </label>
-                                </div>
-                            @endforeach
+                               @if($currentQuestion->is_theory)
+                                    {{-- THEORY QUESTION: Show Textarea --}}
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold text-primary">
+                                            <i class="bi bi-pencil-square"></i> Type your answer below:
+                                        </label>
+                                        <textarea name="theory_answer" 
+                                                id="theoryAnswerInput" 
+                                                class="form-control" 
+                                                rows="8" 
+                                                placeholder="Type your detailed answer here..."
+                                                style="font-size: 1rem; line-height: 1.6;">{{ $answers[$currentQuestion->id] ?? '' }}</textarea>
+                                        <small class="text-muted mt-2 d-block">
+                                            <i class="bi bi-info-circle"></i> Your answer will be saved automatically as you type.
+                                        </small>
+                                        <span id="autosaveIndicator" style="display:none; color:green;"><i class="bi bi-check2"></i> Saved</span>
+                                    </div>
+                                @else
+                                    @foreach($currentQuestion->options as $index => $option)
+                                        @php
+                                            $letter = chr(65 + $index);
+                                            $isSelected = isset($answers[$currentQuestion->id]) && $answers[$currentQuestion->id] === $option;
+                                        @endphp
+                                        <div class="option-item {{ $isSelected ? 'selected' : '' }}" 
+                                            data-question="{{ $currentQuestion->id }}"
+                                            data-option="{{ $option }}">
+                                            <input class="form-check-input" type="radio" 
+                                                name="answer" 
+                                                value="{{ $option }}" 
+                                                id="option{{ $loop->index }}"
+                                                {{ $isSelected ? 'checked' : '' }}>
+                                            <label for="option{{ $loop->index }}">
+                                                <strong>{{ $letter }}.</strong> {{ $option }}
+                                            </label>
+                                        </div>
+                                    @endforeach
+                             @endif
                         </div>
                     </div>
 
@@ -610,5 +629,52 @@ $(document).ready(function() {
     
     @endif
 });
+
+
+   @if($currentQuestion->is_theory)
+    let typingTimer;
+    const theoryInput = document.getElementById('theoryAnswerInput');
+
+    // Auto-save after 2 seconds of inactivity
+    theoryInput.addEventListener('input', function() {
+        clearTimeout(typingTimer);
+        typingTimer = setTimeout(() => {
+            const answer = this.value;
+           
+            $.ajax({
+                url: '{{ route("student.exam.save-answer", $attempt->id) }}',
+                method: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    question_id: {{ $currentQuestion->id }},
+                    answer: answer
+                },
+                success: function() {
+                    // Optional: Show a small "Saved" indicator
+                    $('#autosaveIndicator').fadeIn().delay(1000).fadeOut();
+                }
+            });
+        }, 2000);
+    });
+
+    // Save immediately before navigating away
+    window.addEventListener('beforeunload', function() {
+        const answer = theoryInput.value;
+        if (answer.trim() !== '') {
+            $.ajax({
+                url: '{{ route("student.exam.save-answer", $attempt->id) }}',
+                method: 'POST',
+                async: false,
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    question_id: {{ $currentQuestion->id }},
+                    answer: answer
+                }
+            });
+        }
+    });
+    @endif
+
+
 </script>
 @endpush

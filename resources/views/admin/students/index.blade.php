@@ -24,6 +24,7 @@
                     <tr>
                         <th>#</th>
                         <th>Name</th>
+                        <th>Gender</th>
                         <th>Email</th>
                         <th>Admission #</th>
                         <th>Class</th>
@@ -57,6 +58,16 @@
                                         @endif
                                     </div>
                                 </div>
+                            </td>
+                            <td>
+                                @if($student->gender == 'Male')
+                                    <span class="badge bg-info">Male</span>
+                                @elseif($student->gender == 'Female')
+                                    <span class="badge bg-pink" style="background:#e91e63;color:white;">Female</span>
+                                @else
+                                    <span class="text-muted">—</span>
+                                @endif
+                            
                             </td>
                             <td>{{ $student->user->email }}</td>
                             <td>{{ $student->admission_number }}</td>

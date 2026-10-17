@@ -32,6 +32,10 @@ class SettingController extends Controller
             'landing_page_title' => 'nullable|string|max:255',
             'landing_page_description' => 'nullable|string|max:500',
             'footer_text' => 'nullable|string|max:255',
+            'theme_primary' => 'nullable|string|max:20',
+            'theme_secondary' => 'nullable|string|max:20',
+            'theme_report_header' => 'nullable|string|max:20',
+            'theme_report_text' => 'nullable|string|max:20',
         ]);
 
         try {
@@ -43,6 +47,12 @@ class SettingController extends Controller
                     Setting::set($key, $request->input($key));
                 }
             }
+
+              foreach (['theme_primary', 'theme_secondary', 'theme_report_header', 'theme_report_text'] as $key) {
+            if ($request->has($key)) {
+                Setting::set($key, $request->input($key));
+            }
+           }
 
             // Handle logo upload
             if ($request->hasFile('school_logo')) {

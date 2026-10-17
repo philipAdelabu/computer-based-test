@@ -1,327 +1,456 @@
-<!-- resources/views/partials/report-card-body.blade.php -->
+{{--
+    Comprehensive Report Card Body
+    Includes:
+    - School header with logo, name, contact
+    - Student info table with photo
+    - Result analysis
+    - Cognitive ability table (all class subjects, dashes for unattempted)
+    - Affective traits & psychomotor skills
+    - Attendance
+    - Comments & signatures
+    - Vacation/resumption dates
+--}}
+
+@php
+    $logoUrl = \App\Helpers\SettingHelper::schoolLogo();
+    $schoolName = \App\Helpers\SettingHelper::schoolName();
+    $schoolEmail = \App\Helpers\SettingHelper::schoolEmail();
+    $schoolPhone = \App\Helpers\SettingHelper::schoolPhone();
+    $schoolAddress = \App\Helpers\SettingHelper::schoolAddress();
+    $schoolMotto = \App\Helpers\SettingHelper::schoolMotto();
+
+    $student = $reportCard->student;
+    $user = $student->user;
+
+    // Fallback trait defaults (used if not in DB)
+    $defaultAffective = [
+        'Punctuality' => 4,
+        'Mental Alertness' => 4,
+        'Respect' => 4,
+        'Neatness' => 4,
+        'Politeness' => 4,
+        'Honesty' => 4,
+        'Peer Relationship' => 4,
+        'Willingness To Learn' => 4,
+        'Teamwork' => 4,
+    ];
+
+    $defaultPsychomotor = [
+        'Verbal Skills' => 4,
+        'Sports & Games' => 4,
+        'Artistic Skills' => 4,
+        'Music' => 3,
+        'Dance' => 3,
+        'Entrepreneurship' => 4,
+        'Chess' => 3,
+    ];
+
+    $affective = !empty($reportCard->affective_traits) 
+        ? $reportCard->affective_traits 
+        : $defaultAffective;
+
+    $psychomotor = !empty($reportCard->psychomotor_skills) 
+        ? $reportCard->psychomotor_skills 
+        : $defaultPsychomotor;
+
+    // Session year display
+    $sessionDisplay = $reportCard->session 
+        ?? ($reportCard->academic_year . '/' . ($reportCard->academic_year + 1));
+
+    // Age: use DB field or compute from DOB
+    $ageDisplay = $reportCard->age 
+        ?? ($student->date_of_birth ? $student->date_of_birth->age : null);
+
+    // Class teacher name fallback
+    $classTeacherName = $reportCard->class_teacher_name 
+        ?? ($reportCard->class->classTeacher->name ?? null);
+@endphp
+
 <div class="report-card-content">
-    
-    <!-- HEADER -->
-    <div class="report-header">
-        @php $logoUrl = \App\Helpers\SettingHelper::schoolLogo(); @endphp
-        @if($logoUrl)
-            <div style="margin-bottom: 4px;">
-                <img src="{{ $logoUrl }}" alt="Logo" style="max-height: 40px; max-width: 40px; object-fit: contain;">
-            </div>
-        @endif
-        <div class="report-school-name">{{ \App\Helpers\SettingHelper::schoolName() }}</div>
-        @if(\App\Helpers\SettingHelper::schoolMotto())
-            <div style="font-size: 9px; color: #666; font-style: italic; margin-top: 1px;">
-                {{ \App\Helpers\SettingHelper::schoolMotto() }}
-            </div>
-        @endif
-        <div class="report-title">STUDENT REPORT CARD</div>
-        <div class="report-term">
-            {{ $reportCard->term }} — {{ $reportCard->academic_year }} Academic Session
-        </div>
-    </div>
-    
-    <!-- STUDENT INFO -->
-    <div class="report-info">
-        <table class="info-table">
-            <tr>
-                <td class="info-label">Name:</td>
-                <td class="info-value"><strong>{{ $reportCard->student->user->name }}</strong></td>
-                <td class="info-label">Admission No:</td>
-                <td class="info-value">{{ $reportCard->student->admission_number }}</td>
-            </tr>
-            <tr>
-                <td class="info-label">Class:</td>
-                <td class="info-value">{{ $reportCard->class->name }}</td>
-                <td class="info-label">Position:</td>
-                <td class="info-value">
-                    <strong>#{{ $reportCard->position ?? 'N/A' }}</strong>
-                    of {{ $reportCard->total_students ?? 'N/A' }}
-                </td>
-            </tr>
-        </table>
-    </div>
-    
-    <!-- SUBJECT SCORES TABLE -->
-    <table class="report-table">
-        <thead>
-            <tr>
-                <th style="width: 4%;">#</th>
-                <th style="width: 30%;">Subject</th>
-                <th style="width: 11%;">Test</th>
-                <th style="width: 11%;">Exam</th>
-                <th style="width: 11%;">Total</th>
-                <th style="width: 9%;">%</th>
-                <th style="width: 9%;">Grade</th>
-                <th style="width: 15%;">Remark</th>
-            </tr>
-        </thead>
-        <tbody>
-            @php $counter = 1; @endphp
-            @foreach($reportCard->subject_scores as $score)
-                <tr>
-                    <td class="text-center">{{ $counter++ }}</td>
-                    <td><strong>{{ $score['subject'] ?? 'N/A' }}</strong></td>
-                    <td class="text-center">
-                        {{ $score['test_score'] ?? 0 }}
-                        <span class="text-muted">/{{ $score['test_max'] ?? 0 }}</span>
-                    </td>
-                    <td class="text-center">
-                        {{ $score['exam_score'] ?? 0 }}
-                        <span class="text-muted">/{{ $score['exam_max'] ?? 0 }}</span>
-                    </td>
-                    <td class="text-center">
-                        <strong>{{ $score['total'] ?? 0 }}</strong>
-                        <span class="text-muted">/{{ $score['max'] ?? 0 }}</span>
-                    </td>
-                    <td class="text-center">{{ $score['percentage'] ?? 0 }}%</td>
-                    <td class="text-center">
-                        <span class="grade grade-{{ strtolower($score['grade'] ?? 'f') }}">
-                            {{ $score['grade'] ?? 'N/A' }}
-                        </span>
-                    </td>
-                    <td>{{ $score['remark'] ?? 'N/A' }}</td>
-                </tr>
-            @endforeach
-        </tbody>
-        <tfoot>
-            <tr class="report-total">
-                <td colspan="2" class="text-end"><strong>TOTAL</strong></td>
-                <td class="text-center">
-                    <strong>{{ $reportCard->total_test_score }}</strong>
-                    <span class="text-muted">/{{ $reportCard->total_test_max }}</span>
-                </td>
-                <td class="text-center">
-                    <strong>{{ $reportCard->total_exam_score }}</strong>
-                    <span class="text-muted">/{{ $reportCard->total_exam_max }}</span>
-                </td>
-                <td class="text-center">
-                    <strong>{{ $reportCard->grand_total }}</strong>
-                    <span class="text-muted">/{{ $reportCard->grand_max }}</span>
-                </td>
-                <td class="text-center"><strong>{{ $reportCard->overall_percentage }}%</strong></td>
-                <td class="text-center">
-                    <span class="grade grade-{{ strtolower($reportCard->grade) }}">
-                        {{ $reportCard->grade }}
-                    </span>
-                </td>
-                <td><strong>{{ $reportCard->remarks }}</strong></td>
-            </tr>
-        </tfoot>
-    </table>
-    
-    <!-- SUMMARY ROW -->
-    <div class="report-summary">
-        <div class="summary-box">
-            <div class="summary-label">Total Score</div>
-            <div class="summary-value">{{ $reportCard->grand_total }}/{{ $reportCard->grand_max }}</div>
-        </div>
-        <div class="summary-box">
-            <div class="summary-label">Percentage</div>
-            <div class="summary-value">{{ $reportCard->overall_percentage }}%</div>
-        </div>
-        <div class="summary-box">
-            <div class="summary-label">Grade</div>
-            <div class="summary-value">{{ $reportCard->grade }}</div>
-        </div>
-        <div class="summary-box">
-            <div class="summary-label">Position</div>
-            <div class="summary-value">
-                #{{ $reportCard->position ?? 'N/A' }}/{{ $reportCard->total_students ?? 'N/A' }}
-            </div>
-        </div>
-        <div class="summary-box">
-            <div class="summary-label">Remarks</div>
-            <div class="summary-value summary-remark">{{ $reportCard->remarks }}</div>
-        </div>
-    </div>
-    
-    <!-- GRADING KEY -->
-    <div class="report-grading">
-        <span class="grading-title">Grading:</span>
-        @php
-            $gradingScale = \App\Models\GradingScale::getDefault();
-        @endphp
-        @if($gradingScale)
-            @foreach($gradingScale->items as $item)
-                <span class="grading-item">
-                    <strong>{{ $item->grade }}</strong> 
-                    {{ number_format($item->min_score, 0) }}-{{ number_format($item->max_score, 0) }}
-                    @if($item->remark)
-                        ({{ $item->remark }})
-                    @endif
-                </span>
-            @endforeach
-        @else
-            <span class="grading-item text-muted">No grading scale configured</span>
-        @endif
-    </div>
-    
-    <!-- FOOTER -->
-    <div class="report-footer">
-        <div class="footer-left">
-            <div class="signature-line">
-                <div class="signature-label">Class Teacher's Signature</div>
-                <div class="signature-space"></div>
-            </div>
-        </div>
-        <div class="footer-right">
-            <div class="signature-line">
-                <div class="signature-label">Principal's Signature</div>
-                <div class="signature-space"></div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="report-generation-info">
-        Generated on {{ $reportCard->generated_date ? $reportCard->generated_date->format('F d, Y') : $reportCard->created_at->format('F d, Y') }}
-        @if($reportCard->generator)
-            by {{ $reportCard->generator->name }}
-        @endif
-    </div>
 
+    <!-- ================================================ -->
+    <!-- HEADER BANNER                                    -->
+    <!-- ================================================ -->
+    <div class="rc-header-banner">
+        <div class="rc-header-logo">
+            @if($logoUrl)
+                <img src="{{ $logoUrl }}" alt="Logo">
+            @else
+                <div class="rc-logo-placeholder">
+                    <div>SCHOOL</div>
+                    <div>LOGO</div>
+                </div>
+            @endif
+        </div>
 
-    <!-- ============ MOBILE CARD VIEW (only shows on small screens) ============ -->
-<div class="report-mobile-view d-md-none">
-    <!-- Header -->
-    <div class="mobile-report-header">
-        @php $logoUrl = \App\Helpers\SettingHelper::schoolLogo(); @endphp
-        @if($logoUrl)
-            <img src="{{ $logoUrl }}" alt="Logo" class="mobile-logo">
-        @endif
-        <div class="mobile-school-name">{{ \App\Helpers\SettingHelper::schoolName() }}</div>
-        <div class="mobile-report-title">STUDENT REPORT CARD</div>
-        <div class="mobile-report-term">
-            {{ $reportCard->term }} — {{ $reportCard->academic_year }}
-        </div>
-    </div>
-    
-    <!-- Student Info -->
-    <div class="mobile-info-box">
-        <div class="mobile-info-row">
-            <span class="mobile-info-label">Name</span>
-            <span class="mobile-info-value">{{ $reportCard->student->user->name }}</span>
-        </div>
-        <div class="mobile-info-row">
-            <span class="mobile-info-label">Admission</span>
-            <span class="mobile-info-value">{{ $reportCard->student->admission_number }}</span>
-        </div>
-        <div class="mobile-info-row">
-            <span class="mobile-info-label">Class</span>
-            <span class="mobile-info-value">{{ $reportCard->class->name }}</span>
-        </div>
-        <div class="mobile-info-row">
-            <span class="mobile-info-label">Position</span>
-            <span class="mobile-info-value">#{{ $reportCard->position ?? 'N/A' }} of {{ $reportCard->total_students ?? 'N/A' }}</span>
-        </div>
-    </div>
-    
-    <!-- Subject Cards -->
-    <div class="mobile-subjects">
-        @php $counter = 1; @endphp
-        @foreach($reportCard->subject_scores as $score)
-            <div class="mobile-subject-card">
-                <div class="mobile-subject-header">
-                    <span class="mobile-subject-num">{{ $counter++ }}</span>
-                    <span class="mobile-subject-name">{{ $score['subject'] ?? 'N/A' }}</span>
-                    <span class="grade grade-{{ strtolower($score['grade'] ?? 'f') }}">
-                        {{ $score['grade'] ?? 'N/A' }}
-                    </span>
-                </div>
-                
-                <div class="mobile-subject-scores">
-                    <div class="mobile-score-box">
-                        <div class="mobile-score-label">Test</div>
-                        <div class="mobile-score-value text-info">
-                            {{ $score['test_score'] ?? 0 }}<small>/{{ $score['test_max'] ?? 0 }}</small>
-                        </div>
-                    </div>
-                    <div class="mobile-score-box">
-                        <div class="mobile-score-label">Exam</div>
-                        <div class="mobile-score-value text-primary">
-                            {{ $score['exam_score'] ?? 0 }}<small>/{{ $score['exam_max'] ?? 0 }}</small>
-                        </div>
-                    </div>
-                    <div class="mobile-score-box">
-                        <div class="mobile-score-label">Total</div>
-                        <div class="mobile-score-value">
-                            {{ $score['total'] ?? 0 }}<small>/{{ $score['max'] ?? 0 }}</small>
-                        </div>
-                    </div>
-                    <div class="mobile-score-box">
-                        <div class="mobile-score-label">%</div>
-                        <div class="mobile-score-value">{{ $score['percentage'] ?? 0 }}%</div>
-                    </div>
-                </div>
-                
-                <div class="mobile-subject-remark">
-                    <i class="bi bi-chat-left-text"></i> {{ $score['remark'] ?? 'N/A' }}
-                </div>
+        <div class="rc-header-text">
+            <div class="rc-school-name">{{ strtoupper($schoolName) }}</div>
+            @if($schoolAddress)
+                <div class="rc-school-contact">{{ $schoolAddress }}</div>
+            @endif
+            <div class="rc-school-contact-row">
+                @if($schoolEmail)
+                    <span>Email: {{ $schoolEmail }}</span>
+                @endif
+                @if($schoolEmail && $schoolPhone)
+                    <span class="rc-sep">|</span>
+                @endif
+                @if($schoolPhone)
+                    <span>Tel: {{ $schoolPhone }}</span>
+                @endif
             </div>
-        @endforeach
-    </div>
-    
-    <!-- Grand Total -->
-    <div class="mobile-grand-total">
-        <div class="mobile-grand-row">
-            <span>Test Total</span>
-            <strong class="text-info">{{ $reportCard->total_test_score }}/{{ $reportCard->total_test_max }}</strong>
+            @if($schoolMotto)
+                <div class="rc-school-motto">"{{ $schoolMotto }}"</div>
+            @endif
         </div>
-        <div class="mobile-grand-row">
-            <span>Exam Total</span>
-            <strong class="text-primary">{{ $reportCard->total_exam_score }}/{{ $reportCard->total_exam_max }}</strong>
-        </div>
-        <div class="mobile-grand-row mobile-grand-highlight">
-            <span>Grand Total</span>
-            <strong>{{ $reportCard->grand_total }}/{{ $reportCard->grand_max }}</strong>
-        </div>
-        <div class="mobile-grand-row">
-            <span>Percentage</span>
-            <strong>{{ $reportCard->overall_percentage }}%</strong>
-        </div>
-        <div class="mobile-grand-row">
-            <span>Grade</span>
-            <span class="grade grade-{{ strtolower($reportCard->grade) }}">
-                {{ $reportCard->grade }}
-            </span>
-        </div>
-        <div class="mobile-grand-row">
-            <span>Remarks</span>
-            <strong>{{ $reportCard->remarks }}</strong>
-        </div>
-    </div>
-    
-    <!-- Grading Key -->
-    <div class="mobile-grading">
-        <div class="mobile-grading-title">Grading System</div>
-        <div class="mobile-grading-grid">
-            @php $gradingScale = \App\Models\GradingScale::getDefault(); @endphp
-            @if($gradingScale)
-                @foreach($gradingScale->items as $item)
-                    <span>
-                        <strong>{{ $item->grade }}</strong> 
-                        {{ number_format($item->min_score, 0) }}-{{ number_format($item->max_score, 0) }}
-                    </span>
-                @endforeach
+
+        <div class="rc-header-photo">
+            @if($user->has_photo)
+                <img src="{{ $user->photo_url }}" alt="{{ $user->name }}">
+            @else
+                <div class="rc-photo-placeholder">
+                    <i class="bi bi-person-fill"></i>
+                </div>
             @endif
         </div>
     </div>
-    
-    <!-- Signatures -->
-    <div class="mobile-signatures">
-        <div>
-            <div class="mobile-signature-line"></div>
-            <small>Class Teacher's Signature</small>
+
+    <!-- ================================================ -->
+    <!-- STUDENT INFO TABLE                               -->
+    <!-- ================================================ -->
+    <table class="rc-info-table">
+        <tr>
+            <td class="rc-info-label">NAME:</td>
+            <td class="rc-info-value">{{ strtoupper($user->name) }}</td>
+            <td class="rc-info-label">SEX/GENDER:</td>
+            <td class="rc-info-value"> {{ strtoupper($reportCard->gender ?? $student->gender ?? 'N/A') }}</td>
+            <td class="rc-info-label">AGE:</td>
+            <td class="rc-info-value">{{ $ageDisplay ?? 'N/A' }}</td>
+        </tr>
+        <tr>
+            <td class="rc-info-label">STUDENT CLASS:</td>
+            <td class="rc-info-value">{{ strtoupper($reportCard->class->name ?? 'N/A') }}</td>
+            <td class="rc-info-label">HOUSE:</td>
+            <td class="rc-info-value">{{ strtoupper($reportCard->house ?? 'N/A') }}</td>
+            <td class="rc-info-label">ADMISSION NUMBER:</td>
+            <td class="rc-info-value">{{ $student->admission_number ?? 'N/A' }}</td>
+        </tr>
+        <tr>
+            <td class="rc-info-label">NO. OF STUDENTS IN CLASS:</td>
+            <td class="rc-info-value">{{ $reportCard->no_in_class ?? $reportCard->total_students ?? 'N/A' }}</td>
+            <td class="rc-info-label">TERM:</td>
+            <td class="rc-info-value">{{ strtoupper($reportCard->term) }}</td>
+            <td class="rc-info-label">YEAR/SESSION:</td>
+            <td class="rc-info-value">{{ $sessionDisplay }}</td>
+        </tr>
+    </table>
+
+    <!-- ================================================ -->
+    <!-- RESULT ANALYSIS                                  -->
+    <!-- ================================================ -->
+    <div class="rc-section-title">RESULT ANALYSIS</div>
+    <div class="rc-analysis-row">
+        <div class="rc-analysis-box">
+            <div class="rc-analysis-label">Maximum Class Score:</div>
+            <div class="rc-analysis-value">
+                {{ $reportCard->max_class_score !== null ? number_format($reportCard->max_class_score, 2) : '—' }}
+            </div>
         </div>
-        <div>
-            <div class="mobile-signature-line"></div>
-            <small>Principal's Signature</small>
+        <div class="rc-analysis-box">
+            <div class="rc-analysis-label">Minimum Class Score:</div>
+            <div class="rc-analysis-value">
+                {{ $reportCard->min_class_score !== null ? number_format($reportCard->min_class_score, 2) : '—' }}
+            </div>
+        </div>
+        <div class="rc-analysis-box">
+            <div class="rc-analysis-label">Marks Obtainable:</div>
+            <div class="rc-analysis-value">
+                {{ $reportCard->marks_obtainable ?? $reportCard->grand_max ?? '—' }}
+            </div>
+        </div>
+        <div class="rc-analysis-box">
+            <div class="rc-analysis-label">Total Score:</div>
+            <div class="rc-analysis-value">{{ number_format($reportCard->grand_total, 2) }}</div>
+        </div>
+        <div class="rc-analysis-box">
+            <div class="rc-analysis-label">Overall Percentage:</div>
+            <div class="rc-analysis-value">{{ number_format($reportCard->overall_percentage, 2) }}%</div>
         </div>
     </div>
-    
-    <div class="mobile-footer-note">
-        Generated on {{ $reportCard->generated_date ? $reportCard->generated_date->format('F d, Y') : $reportCard->created_at->format('F d, Y') }}
+
+    <!-- ================================================ -->
+    <!-- COGNITIVE ABILITY (SUBJECT SCORES)               -->
+    <!-- ================================================ -->
+    <div class="rc-section-title">COGNITIVE ABILITY</div>
+    <table class="rc-scores-table">
+        <thead>
+            <tr>
+                <th rowspan="2" class="rc-th-subject">SUBJECT</th>
+                <th colspan="2" class="rc-th-ca">CA</th>
+                <th colspan="2" class="rc-th-exam">EXAM</th>
+                <th rowspan="2" class="rc-th-small">TOTAL<br>100</th>
+                <th rowspan="2" class="rc-th-small">2<sup>nd</sup><br>TERM</th>
+                <th rowspan="2" class="rc-th-small">1<sup>st</sup><br>TERM</th>
+                <th rowspan="2" class="rc-th-small">SESSION<br>AVG.</th>
+                <th rowspan="2" class="rc-th-grade">GRADE</th>
+                <th rowspan="2" class="rc-th-remark">REMARK</th>
+            </tr>
+            <tr>
+                <th class="rc-th-small">SCORE</th>
+                <th class="rc-th-small">40</th>
+                <th class="rc-th-small">SCORE</th>
+                <th class="rc-th-small">60</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse($reportCard->subject_scores as $score)
+                @php
+                    $attempted = $score['attempted'] ?? false;
+                    $testAttempted = $score['test_attempted'] ?? false;
+                    $examAttempted = $score['exam_attempted'] ?? false;
+
+                    // Convert to a 40/60 scale
+                    $caScore40 = null;
+                    $examScore60 = null;
+                    $total100 = null;
+
+                    if ($attempted) {
+                        $testPct = ($score['test_max'] ?? 0) > 0 && $score['test_score'] !== null
+                            ? (($score['test_score'] ?? 0) / $score['test_max']) * 100
+                            : 0;
+                        $examPct = ($score['exam_max'] ?? 0) > 0 && $score['exam_score'] !== null
+                            ? (($score['exam_score'] ?? 0) / $score['exam_max']) * 100
+                            : 0;
+
+                        $caScore40 = round(($testPct / 100) * 40, 1);
+                        $examScore60 = round(($examPct / 100) * 60, 1);
+                        $total100 = round($caScore40 + $examScore60, 1);
+                    }
+
+                    // Term scores (if provided by service)
+                    $termScores = $score['term_scores'] ?? [];
+                    $firstTerm = $termScores['first'] ?? null;
+                    $secondTerm = $termScores['second'] ?? null;
+                    $sessionAvg = $score['session_avg'] ?? $total100;
+                @endphp
+                <tr class="{{ !$attempted ? 'rc-row-unattempted' : '' }}">
+                    <td class="rc-td-subject">{{ strtoupper($score['subject'] ?? 'N/A') }}</td>
+
+                    @if($attempted)
+                        {{-- Test Score + Max --}}
+                        <td class="rc-td-num">{{ $caScore40 }}</td>
+                        <td class="rc-td-num">{{ $caScore40 }}</td>
+
+                        {{-- Exam Score + Max --}}
+                        <td class="rc-td-num">{{ $examScore60 }}</td>
+                        <td class="rc-td-num">{{ $total100 }}</td>
+
+                        {{-- Total 100 --}}
+                        <td class="rc-td-num"><strong>{{ $total100 }}</strong></td>
+
+                        {{-- Previous terms --}}
+                        <td class="rc-td-num">
+                            {{ $secondTerm !== null ? number_format($secondTerm, 1) : '—' }}
+                        </td>
+                        <td class="rc-td-num">
+                            {{ $firstTerm !== null ? number_format($firstTerm, 1) : '—' }}
+                        </td>
+
+                        {{-- Session Average --}}
+                        <td class="rc-td-num">
+                            {{ $sessionAvg !== null ? number_format($sessionAvg, 1) : '—' }}
+                        </td>
+
+                        {{-- Grade --}}
+                        <td class="rc-td-grade">{{ $score['grade'] ?? '—' }}</td>
+
+                        {{-- Remark --}}
+                        <td class="rc-td-remark">
+                            {{ strtoupper($score['remark'] ?? '—') }}
+                        </td>
+                    @else
+                        {{-- Unattempted — dashes across the board --}}
+                        <td class="rc-td-num rc-td-dash">—</td>
+                        <td class="rc-td-num rc-td-dash">—</td>
+                        <td class="rc-td-num rc-td-dash">—</td>
+                        <td class="rc-td-num rc-td-dash">—</td>
+                        <td class="rc-td-num rc-td-dash">—</td>
+                        <td class="rc-td-num rc-td-dash">
+                            {{ $secondTerm !== null ? number_format($secondTerm, 1) : '—' }}
+                        </td>
+                        <td class="rc-td-num rc-td-dash">
+                            {{ $firstTerm !== null ? number_format($firstTerm, 1) : '—' }}
+                        </td>
+                        <td class="rc-td-num rc-td-dash">
+                            {{ $sessionAvg !== null ? number_format($sessionAvg, 1) : '—' }}
+                        </td>
+                        <td class="rc-td-grade rc-td-dash">—</td>
+                        <td class="rc-td-remark rc-td-dash">NOT ATTEMPTED</td>
+                    @endif
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="11" class="text-center text-muted py-4">
+                        <em>No subjects have been set up for this class yet.</em>
+                    </td>
+                </tr>
+            @endforelse
+        </tbody>
+    </table>
+
+    <!-- ================================================ -->
+    <!-- AFFECTIVE TRAITS & PSYCHOMOTOR SKILLS            -->
+    <!-- ================================================ -->
+    <div class="rc-traits-wrapper">
+        <!-- AFFECTIVE TRAITS -->
+        <div class="rc-traits-col">
+            <div class="rc-traits-header rc-traits-header-affective">AFFECTIVE TRAITS</div>
+            <table class="rc-traits-table">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>5</th>
+                        <th>4</th>
+                        <th>3</th>
+                        <th>2</th>
+                        <th>1</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($affective as $trait => $rating)
+                        <tr>
+                            <td class="rc-trait-name">{{ $trait }}</td>
+                            @for($i = 5; $i >= 1; $i--)
+                                <td class="rc-trait-cell">
+                                    @if((int) $rating === $i)
+                                        <span class="rc-trait-check">✓</span>
+                                    @else
+                                        <span class="rc-trait-box"></span>
+                                    @endif
+                                </td>
+                            @endfor
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+
+        <!-- PSYCHOMOTOR SKILLS -->
+        <div class="rc-traits-col">
+            <div class="rc-traits-header rc-traits-header-psychomotor">PSYCHOMOTOR SKILLS</div>
+            <table class="rc-traits-table">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>5</th>
+                        <th>4</th>
+                        <th>3</th>
+                        <th>2</th>
+                        <th>1</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($psychomotor as $skill => $rating)
+                        <tr>
+                            <td class="rc-trait-name">{{ $skill }}</td>
+                            @for($i = 5; $i >= 1; $i--)
+                                <td class="rc-trait-cell">
+                                    @if((int) $rating === $i)
+                                        <span class="rc-trait-check">✓</span>
+                                    @else
+                                        <span class="rc-trait-box"></span>
+                                    @endif
+                                </td>
+                            @endfor
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
     </div>
-</div>
-    
+
+    <!-- ================================================ -->
+    <!-- ATTENDANCE ANALYSIS                              -->
+    <!-- ================================================ -->
+    <div class="rc-attendance-wrapper">
+        <table class="rc-attendance-table">
+            <tr>
+                <td class="rc-attendance-label" colspan="2">Attendance Analysis:</td>
+            </tr>
+            <tr>
+                <td>Times School Opened:</td>
+                <td class="rc-attendance-value">{{ $reportCard->times_school_opened ?? '—' }}</td>
+            </tr>
+            <tr>
+                <td>Times Present:</td>
+                <td class="rc-attendance-value">{{ $reportCard->times_present ?? '—' }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- ================================================ -->
+    <!-- OVERALL COMMENTS / REMARKS                       -->
+    <!-- ================================================ -->
+    <div class="rc-section-title">OVERALL COMMENTS / REMARKS</div>
+    <table class="rc-comments-table">
+        <!-- Class Teacher's Remark -->
+        <tr>
+            <td class="rc-comments-label">Class Teacher's Remark</td>
+            <td class="rc-comments-cell">
+                <div class="rc-comment-row">
+                    <strong>Name:</strong> 
+                    {{ $classTeacherName ?? '—' }}
+                </div>
+                <div class="rc-comment-row">
+                    <strong>Comment:</strong> 
+                    {{ $reportCard->class_teacher_comment ?? '—' }}
+                </div>
+            </td>
+            <td class="rc-comments-sign">
+                <div class="rc-signature-label">Signature:</div>
+                <div class="rc-signature-space"></div>
+            </td>
+        </tr>
+
+        <!-- Principal's Remark -->
+        <tr>
+            <td class="rc-comments-label">Principal's Remark</td>
+            <td class="rc-comments-cell">
+                <div class="rc-comment-row">
+                    <strong>Name:</strong> 
+                    {{ $reportCard->principal_name ?? '—' }}
+                </div>
+                <div class="rc-comment-row">
+                    <strong>Comment:</strong> 
+                    {{ $reportCard->principal_comment ?? '—' }}
+                </div>
+            </td>
+            <td class="rc-comments-sign">
+                <div class="rc-signature-label">Signature:</div>
+                <div class="rc-signature-space"></div>
+            </td>
+        </tr>
+
+        <!-- Vacation & Resumption -->
+        <tr>
+            <td class="rc-comments-label">VACATION DATE:</td>
+            <td class="rc-comments-cell">
+                <strong>
+                    {{ $reportCard->vacation_date ? strtoupper($reportCard->vacation_date->format('jS F, Y')) : '—' }}
+                </strong>
+            </td>
+            <td class="rc-comments-sign rc-comments-sign-label">
+                <div class="rc-signature-label">RESUMPTION DATE:</div>
+            </td>
+        </tr>
+        <tr>
+            <td class="rc-comments-label"></td>
+            <td class="rc-comments-cell" colspan="2">
+                <strong>
+                    {{ $reportCard->resumption_date ? strtoupper($reportCard->resumption_date->format('jS F, Y')) : '—' }}
+                </strong>
+            </td>
+        </tr>
+    </table>
+
 </div>

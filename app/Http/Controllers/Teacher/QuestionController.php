@@ -117,6 +117,7 @@ class QuestionController extends Controller
     {
         $validated = $request->validate([
             'subject_id' => 'required|exists:subjects,id',
+            'question_type' => 'required|in:objective,theory',
             'question_text' => 'required|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'options' => 'required|array|min:2',
@@ -138,6 +139,7 @@ class QuestionController extends Controller
 
         Question::create([
             'subject_id' => $validated['subject_id'],
+             'question_type' => $validated['question_type'],
             'question_text' => $validated['question_text'],
             'image_path' => $imagePath,
             'options' => $validated['options'],
@@ -160,6 +162,7 @@ class QuestionController extends Controller
         
         $validated = $request->validate([
             'subject_id' => 'required|exists:subjects,id',
+            'question_type' => 'required|in:objective,theory',
             'question_text' => 'required|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'options' => 'required|array|min:2',
@@ -187,6 +190,7 @@ class QuestionController extends Controller
 
         $question->update([
             'subject_id' => $validated['subject_id'],
+             'question_type' => $validated['question_type'],
             'question_text' => $validated['question_text'],
             'options' => $validated['options'],
             'correct_answer' => $validated['correct_answer'],

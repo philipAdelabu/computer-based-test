@@ -1,511 +1,359 @@
-<!-- resources/views/partials/report-card-styles.blade.php -->
 <style>
-/* ============ SCREEN STYLES ============ */
+/* ============================================ */
+/* CORE REPORT CARD STYLES                      */
+/* ============================================ */
 .report-card-wrapper {
-    max-width: 900px;
+    max-width: 1000px;
     margin: 0 auto;
     box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.1);
+    background: white;
 }
+
 .report-card-content {
-    padding: 20px 25px;
-    font-family: 'Poppins', sans-serif;
+    padding: 15px 20px;
+    font-family: 'Poppins', Arial, sans-serif;
     color: #1a1a1a;
     background: white;
-}
-.report-header {
-    text-align: center;
-    border-bottom: 2px solid #1a1a1a;
-    padding-bottom: 8px;
-    margin-bottom: 12px;
-}
-.report-school-name {
-    font-size: 18px;
-    font-weight: 700;
-    color: #1e40af;
-    letter-spacing: 0.5px;
-}
-.report-title {
-    font-size: 14px;
-    font-weight: 700;
-    letter-spacing: 2px;
-    margin-top: 2px;
-}
-.report-term {
-    font-size: 11px;
-    color: #555;
-    margin-top: 2px;
-    font-style: italic;
-}
-.report-info { margin-bottom: 10px; }
-.info-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 11px;
-}
-.info-table tr td { padding: 3px 5px; vertical-align: middle; }
-.info-label { width: 12%; color: #555; font-weight: 500; }
-.info-value { width: 38%; }
-.report-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 10px;
-    margin-bottom: 8px;
-}
-.report-table thead th {
-    background: #1e40af;
-    color: white;
-    padding: 5px 4px;
-    text-align: left;
-    font-weight: 600;
-    font-size: 10px;
-    border: 1px solid #1e40af;
-}
-.report-table tbody td {
-    padding: 3px 4px;
-    border: 1px solid #d0d5dd;
-    vertical-align: middle;
-}
-.report-table tbody tr:nth-child(even) { background: #f8f9fc; }
-.report-table tbody td .text-muted { font-size: 8px; color: #888 !important; }
-.report-table tfoot td {
-    padding: 5px 4px;
-    border: 1px solid #1e40af;
-    background: #e7f0ff;
-    font-size: 10px;
-}
-.report-total strong { color: #1e40af; }
-.grade {
-    display: inline-block;
-    padding: 1px 6px;
-    border-radius: 3px;
-    font-weight: 700;
-    font-size: 9px;
-    min-width: 20px;
-    text-align: center;
-}
-.grade-a { background: #198754; color: white; }
-.grade-b { background: #0d6efd; color: white; }
-.grade-c { background: #0dcaf0; color: white; }
-.grade-d { background: #ffc107; color: #000; }
-.grade-e { background: #fd7e14; color: white; }
-.grade-f { background: #dc3545; color: white; }
-.report-summary { display: flex; gap: 6px; margin-bottom: 8px; }
-.summary-box {
-    flex: 1;
-    text-align: center;
-    padding: 5px 3px;
-    background: #f8f9fc;
-    border: 1px solid #d0d5dd;
-    border-radius: 4px;
-}
-.summary-label {
-    font-size: 8px;
-    text-transform: uppercase;
-    color: #666;
-    letter-spacing: 0.5px;
-    margin-bottom: 1px;
-}
-.summary-value { font-size: 13px; font-weight: 700; color: #1e40af; }
-.summary-remark { font-size: 10px !important; }
-.report-grading {
-    text-align: center;
-    font-size: 9px;
-    padding: 5px 8px;
-    background: #f0f4ff;
-    border-radius: 4px;
-    border: 1px solid #d0d5dd;
-    margin-bottom: 12px;
-    line-height: 1.5;
-}
-.grading-title { font-weight: 700; color: #1e40af; margin-right: 6px; }
-.grading-item { margin-right: 8px; color: #444; white-space: nowrap; }
-.report-footer {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 15px;
-    padding-top: 8px;
-}
-.footer-left, .footer-right { width: 40%; }
-.signature-line { text-align: center; }
-.signature-space {
-    border-bottom: 1px solid #333;
-    height: 25px;
-    margin-bottom: 3px;
-}
-.signature-label { font-size: 9px; color: #555; font-weight: 500; }
-.report-generation-info {
-    text-align: center;
-    font-size: 8px;
-    color: #999;
-    margin-top: 10px;
-    padding-top: 5px;
-    border-top: 1px dashed #ddd;
-}
-@media print {
-    body * { visibility: hidden; }
-    .report-card-content, .report-card-content * { visibility: visible; }
-    .report-card-content {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        padding: 8mm;
-        box-shadow: none !important;
-    }
-    .navbar, .sidebar, .no-print, .btn, .card-header { display: none !important; }
-    .report-card-wrapper {
-        box-shadow: none !important;
-        max-width: 100% !important;
-        margin: 0 !important;
-        border: none !important;
-    }
-    .col-lg-12 {
-        max-width: 100% !important;
-        flex: 0 0 100% !important;
-        padding: 0 !important;
-    }
-    .card, .card-body {
-        border: none !important;
-        box-shadow: none !important;
-        padding: 0 !important;
-        margin: 0 !important;
-    }
-    @page { size: A4; margin: 8mm; }
-    .report-table, .report-summary, .report-footer { page-break-inside: avoid; }
-    .report-card-content { font-size: 10px; }
-    .report-table { font-size: 9px; }
-    .report-table thead th { font-size: 9px; padding: 4px 3px; }
-    .report-table tbody td { padding: 2px 3px; }
-    .report-school-name { font-size: 16px; }
-    .report-title { font-size: 12px; }
-    .report-term { font-size: 10px; }
-    .info-table { font-size: 10px; }
-    .summary-value { font-size: 11px; }
-    .report-grading { font-size: 8px; }
-
-    /* Hide mobile view on print */
-     .report-mobile-view { display: none !important; }
-    .report-card-content > .report-header,
-    .report-card-content > .report-info,
-    .report-card-content > .report-table,
-    .report-card-content > .report-summary,
-    .report-card-content > .report-grading,
-    .report-card-content > .report-footer,
-    .report-card-content > .report-generation-info {
-        display: block !important;
-    }
-}
-
- /* ============================================ */
-/* MOBILE REPORT CARD VIEW                      */
-/* ============================================ */
-.report-mobile-view {
-    padding: 12px;
-    font-family: 'Poppins', sans-serif;
-    color: #1a1a1a;
-    background: white;
-    font-size: 13px;
-}
-
-/* Header */
-.mobile-report-header {
-    text-align: center;
-    padding-bottom: 12px;
-    border-bottom: 2px solid #1e40af;
-    margin-bottom: 12px;
-}
-.mobile-logo {
-    max-height: 50px;
-    max-width: 50px;
-    object-fit: contain;
-    margin-bottom: 6px;
-}
-.mobile-school-name {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: #1e40af;
+    font-size: 10px; /* Base font size */
     line-height: 1.3;
 }
-.mobile-report-title {
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 2px;
-    margin-top: 4px;
-}
-.mobile-report-term {
-    font-size: 0.75rem;
-    color: #666;
-    font-style: italic;
-    margin-top: 2px;
-}
 
-/* Info Box */
-.mobile-info-box {
-    background: #f8f9fc;
-    border-radius: 8px;
-    padding: 12px;
-    margin-bottom: 14px;
-    border: 1px solid #e3e6f0;
+/* ============ HEADER BANNER ============ */
+.rc-header-banner {
+    display: grid;
+    grid-template-columns: 90px 1fr 80px;
+    gap: 15px;
+    align-items: center;
+    background: var(--report-header-color, #8b1a1a);
+    color: var(--report-text-color, #ffffff);
+    padding: 10px 15px;
+    margin-bottom: 8px;
+    border-radius: 4px;
 }
-.mobile-info-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 5px 0;
-    border-bottom: 1px dashed #e3e6f0;
-    font-size: 0.85rem;
+.rc-header-logo img {
+    max-width: 80px;
+    max-height: 80px;
+    object-fit: contain;
+    background: white;
+    border-radius: 50%;
+    padding: 3px;
+    border: 2px solid white;
 }
-.mobile-info-row:last-child { border-bottom: none; }
-.mobile-info-label {
-    color: #666;
-    font-weight: 500;
-}
-.mobile-info-value {
-    font-weight: 600;
-    text-align: right;
-    max-width: 60%;
-    word-break: break-word;
-}
-
-/* Subject Cards */
-.mobile-subjects {
+.rc-logo-placeholder {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: white;
+    color: var(--report-header-color, #8b1a1a);
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    margin-bottom: 14px;
-}
-.mobile-subject-card {
-    background: white;
-    border: 1px solid #e3e6f0;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-}
-.mobile-subject-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: linear-gradient(135deg, #1e40af, #4e73df);
-    color: white;
-    padding: 8px 12px;
-    font-weight: 600;
-    font-size: 0.9rem;
-}
-.mobile-subject-num {
-    background: rgba(255,255,255,0.25);
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.75rem;
-    flex-shrink: 0;
+    font-weight: 700;
+    font-size: 8px;
+    border: 2px solid white;
+    line-height: 1.1;
 }
-.mobile-subject-name {
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+.rc-header-text { text-align: center; }
+.rc-school-name {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+    line-height: 1.1;
+}
+.rc-school-contact { font-size: 10px; font-weight: 500; }
+.rc-school-contact-row { font-size: 10px; font-weight: 500; }
+.rc-sep { margin: 0 5px; opacity: 0.7; }
+.rc-school-motto { font-size: 9px; font-style: italic; opacity: 0.9; margin-top: 2px; }
+
+.rc-header-photo img,
+.rc-photo-placeholder {
+    width: 75px;
+    height: 75px;
+    object-fit: cover;
+    border: 2px solid white;
+    border-radius: 3px;
+    background: #f0f0f0;
+}
+.rc-photo-placeholder {
+    display: flex; align-items: center; justify-content: center;
+    color: #999; font-size: 1.5rem;
 }
 
-/* Score Grid */
-.mobile-subject-scores {
+/* ============ STUDENT INFO TABLE ============ */
+.rc-info-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 8px;
+    border: 1px solid #ccc;
+    font-size: 9px;
+}
+.rc-info-table td {
+    border: 1px solid #ccc;
+    padding: 3px 6px;
+    vertical-align: middle;
+}
+.rc-info-label {
+    background: #f5f5f5;
+    font-weight: 700;
+    width: 14%;
+    color: #333;
+    font-size: 8px;
+}
+.rc-info-value { width: 19%; font-weight: 600; }
+
+/* ============ SECTION TITLES ============ */
+.rc-section-title {
+    background: var(--report-header-color, #8b1a1a);
+    color: var(--report-text-color, #ffffff);
+    padding: 3px 8px;
+    font-weight: 700;
+    font-size: 10px;
+    letter-spacing: 0.5px;
+    margin: 8px 0 0;
+    border-radius: 2px 2px 0 0;
+}
+
+/* ============ RESULT ANALYSIS ============ */
+.rc-analysis-row {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 6px;
-    padding: 10px;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 5px;
+    padding: 6px 0;
+    border: 1px solid #ccc;
+    border-top: none;
+    background: #fafafa;
 }
-.mobile-score-box {
+.rc-analysis-box {
     text-align: center;
-    padding: 6px 4px;
-    background: #f8f9fc;
-    border-radius: 6px;
-    border: 1px solid #e9eef5;
+    border-right: 1px dashed #ddd;
+    padding: 0 3px;
 }
-.mobile-score-label {
-    font-size: 0.65rem;
+.rc-analysis-box:last-child { border-right: none; }
+.rc-analysis-label {
+    font-size: 7px;
     text-transform: uppercase;
-    color: #888;
+    color: #666;
     letter-spacing: 0.3px;
     margin-bottom: 2px;
+    font-weight: 600;
 }
-.mobile-score-value {
+.rc-analysis-value {
+    font-size: 11px;
     font-weight: 700;
-    font-size: 0.9rem;
-    color: #1e40af;
-    line-height: 1.2;
-}
-.mobile-score-value small {
-    font-size: 0.7rem;
-    color: #999;
-    font-weight: 400;
+    color: var(--report-header-color, #8b1a1a);
 }
 
-/* Subject Remark */
-.mobile-subject-remark {
-    padding: 8px 12px;
-    background: #f0f4ff;
-    border-top: 1px solid #e3e6f0;
-    font-size: 0.78rem;
-    color: #555;
+/* ============ SCORES TABLE ============ */
+.rc-scores-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #ccc;
+    font-size: 8.5px;
 }
-.mobile-subject-remark i {
-    color: #4e73df;
-    margin-right: 4px;
+.rc-scores-table th {
+    background: var(--report-header-color, #8b1a1a);
+    color: var(--report-text-color, #ffffff);
+    padding: 3px 2px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 8px;
+    border: 1px solid rgba(0,0,0,0.2);
+    line-height: 1.1;
 }
+.rc-th-subject { text-align: left !important; padding-left: 6px !important; }
+.rc-th-ca, .rc-th-exam { background: var(--report-header-color, #8b1a1a); filter: brightness(1.1); }
+.rc-th-grade, .rc-th-remark { background: rgba(0,0,0,0.2); }
 
-/* Grand Total */
-.mobile-grand-total {
-    background: #f8f9fc;
-    border-radius: 8px;
-    padding: 10px 14px;
-    margin-bottom: 14px;
-    border: 1px solid #e3e6f0;
+.rc-scores-table td {
+    border: 1px solid #ddd;
+    padding: 2px 3px;
+    font-size: 9px;
 }
-.mobile-grand-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 7px 0;
-    font-size: 0.85rem;
-    border-bottom: 1px dashed #e3e6f0;
-}
-.mobile-grand-row:last-child { border-bottom: none; }
-.mobile-grand-row span:first-child {
-    color: #666;
-    font-weight: 500;
-}
-.mobile-grand-highlight {
-    background: #e7f0ff;
-    margin: 4px -14px;
-    padding: 10px 14px;
-    border-bottom: none !important;
-    border-top: 2px solid #1e40af;
-    font-size: 0.95rem;
-}
-.mobile-grand-highlight span:first-child {
-    color: #1e40af;
+.rc-td-subject {
     font-weight: 700;
+    padding-left: 6px !important;
+    background: #fafafa;
+    font-size: 8.5px;
 }
-.mobile-grand-highlight strong {
-    color: #1e40af;
-    font-size: 1.05rem;
-}
-
-/* Grading */
-.mobile-grading {
-    background: #f0f4ff;
-    border-radius: 8px;
-    padding: 10px;
-    margin-bottom: 14px;
-    border: 1px solid #e3e6f0;
-}
-.mobile-grading-title {
+.rc-td-num { text-align: center; font-weight: 500; }
+.rc-td-grade {
+    text-align: center;
     font-weight: 700;
-    color: #1e40af;
-    font-size: 0.8rem;
+    color: var(--report-header-color, #8b1a1a);
+    font-size: 9px;
+}
+.rc-td-remark {
+    text-align: center;
+    font-weight: 600;
+    font-size: 8px;
+    color: var(--report-header-color, #8b1a1a);
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    text-align: center;
-    margin-bottom: 8px;
-}
-.mobile-grading-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 6px;
-    font-size: 0.75rem;
-    text-align: center;
-}
-.mobile-grading-grid span {
-    padding: 4px 6px;
-    background: white;
-    border-radius: 5px;
-    color: #444;
-}
-.mobile-grading-grid strong {
-    color: #1e40af;
-    margin-right: 3px;
 }
 
-/* Signatures */
-.mobile-signatures {
+/* ============ UNATTEMPTED ROWS ============ */
+.rc-row-unattempted { background: #fafafa !important; opacity: 0.7; }
+.rc-row-unattempted .rc-td-subject { color: #666; font-style: italic; }
+.rc-td-dash { color: #b0b0b0 !important; font-style: italic; }
+.rc-td-remark.rc-td-dash { color: #b0b0b0 !important; text-transform: none; font-weight: 400; }
+
+/* ============ TRAITS (2 Columns) ============ */
+.rc-traits-wrapper {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 15px;
-    margin-top: 18px;
-    margin-bottom: 10px;
+    gap: 8px;
+    margin-top: 8px;
 }
-.mobile-signature-line {
-    border-bottom: 1px solid #333;
-    height: 30px;
-    margin-bottom: 4px;
-}
-.mobile-signatures small {
-    font-size: 0.68rem;
-    color: #555;
-    display: block;
-    text-align: center;
-}
-
-/* Footer */
-.mobile-footer-note {
-    text-align: center;
-    font-size: 0.7rem;
-    color: #999;
-    padding-top: 8px;
-    border-top: 1px dashed #ddd;
-}
-
-/* Grade badges for mobile */
-.mobile-subject-card .grade {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 4px;
+.rc-traits-col { border: 1px solid #ccc; }
+.rc-traits-header {
+    padding: 3px 8px;
+    background: var(--report-header-color, #8b1a1a);
+    color: var(--report-text-color, #ffffff);
     font-weight: 700;
-    font-size: 0.75rem;
-    min-width: 28px;
-    text-align: center;
+    font-size: 9px;
 }
+.rc-traits-table { width: 100%; border-collapse: collapse; font-size: 8.5px; }
+.rc-traits-table th {
+    background: #f5f5f5; padding: 2px;
+    text-align: center; font-weight: 600; font-size: 8px;
+    border: 1px solid #ddd; width: 9%;
+}
+.rc-traits-table th:first-child { width: 55%; text-align: left; padding-left: 6px; }
+.rc-trait-name { padding: 2px 6px; border: 1px solid #ddd; font-size: 8.5px; }
+.rc-trait-cell { text-align: center; border: 1px solid #ddd; padding: 2px 0; }
+.rc-trait-check { color: var(--report-header-color, #8b1a1a); font-weight: 900; font-size: 11px; }
+.rc-trait-box { display: inline-block; width: 7px; height: 7px; border: 1px solid #ccc; }
 
-/* Hide mobile view on tablets and up, hide desktop view on mobile */
-@media (min-width: 768px) {
-    .report-mobile-view { display: none !important; }
+/* ============ ATTENDANCE ============ */
+.rc-attendance-wrapper { display: flex; justify-content: flex-end; margin-top: 8px; }
+.rc-attendance-table {
+    border-collapse: collapse; border: 1px solid #ccc;
+    font-size: 9px; min-width: 250px;
 }
-@media (max-width: 767.98px) {
-    .report-card-content > .report-header,
-    .report-card-content > .report-info,
-    .report-card-content > .report-table,
-    .report-card-content > .report-summary,
-    .report-card-content > .report-grading,
-    .report-card-content > .report-footer,
-    .report-card-content > .report-generation-info {
-        display: none !important;
+.rc-attendance-table td { border: 1px solid #ccc; padding: 3px 8px; }
+.rc-attendance-label {
+    background: var(--report-header-color, #8b1a1a);
+    color: var(--report-text-color, #ffffff);
+    font-weight: 700; font-size: 9px;
+}
+.rc-attendance-value { text-align: right; font-weight: 700; color: var(--report-header-color, #8b1a1a); min-width: 50px; }
+
+/* ============ COMMENTS ============ */
+.rc-comments-table {
+    width: 100%; border-collapse: collapse;
+    margin-top: 3px; border: 1px solid #ccc; font-size: 9px;
+}
+.rc-comments-table td { border: 1px solid #ccc; padding: 4px 6px; vertical-align: middle; }
+.rc-comments-label {
+    background: #f5f5f5; font-weight: 700; width: 15%; font-size: 8.5px;
+}
+.rc-comments-cell { width: 65%; }
+.rc-comments-sign { width: 20%; text-align: center; }
+.rc-comment-row { margin-bottom: 2px; line-height: 1.3; }
+.rc-signature-label { font-size: 7px; color: #666; font-weight: 600; }
+.rc-signature-space { height: 20px; border-bottom: 1px solid #999; }
+
+
+/* ============================================ */
+/* THE MAGIC: PRINT-TO-1-PAGE RULES             */
+/* ============================================ */
+@media print {
+    /* Hide everything else */
+    .navbar, .sidebar, .no-print, .btn, .card-header, .page-header { 
+        display: none !important; 
     }
     
-    /* Make the wrapper mobile-friendly */
-    .report-card-wrapper {
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        border-radius: 12px;
-        overflow: hidden;
+    /* Reset page setup */
+    @page {
+        size: A4 portrait;
+        margin: 8mm 10mm; /* Tight margins to fit everything */
     }
-    .report-card-content {
+    
+    body, html {
+        width: 100%;
+        height: 100%;
+        margin: 0;
         padding: 0;
+        background: white;
+    }
+
+    /* Flatten the layout so it uses the full page */
+    .main-content {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    .container-fluid, .row, .col-lg-12, .card, .card-body {
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    /* Ensure the report card fills the page */
+    .report-card-wrapper {
+        max-width: 100% !important;
+        width: 100% !important;
+        box-shadow: none !important;
+    }
+    
+    .report-card-content {
+        padding: 0 !important;
+        font-size: 9px !important; /* Force smaller base font for print */
+    }
+
+    /* Scale down specific tables for print */
+    .rc-scores-table { font-size: 8px !important; }
+    .rc-scores-table th { font-size: 7.5px !important; padding: 2px 1px !important; }
+    .rc-scores-table td { font-size: 8px !important; padding: 1px 2px !important; }
+    .rc-td-subject { font-size: 8px !important; }
+    
+    .rc-traits-table { font-size: 7.5px !important; }
+    .rc-trait-name, .rc-trait-cell { padding: 1px !important; }
+    
+    .rc-info-table { font-size: 8px !important; margin-bottom: 4px !important; }
+    .rc-info-table td { padding: 2px 4px !important; }
+    
+    .rc-analysis-row { padding: 4px 0 !important; margin-bottom: 0 !important; }
+    .rc-section-title { padding: 2px 6px !important; margin-top: 6px !important; }
+    .rc-header-banner { padding: 8px !important; margin-bottom: 5px !important; }
+    .rc-school-name { font-size: 16px !important; }
+    .rc-header-logo img, .rc-logo-placeholder { width: 60px !important; height: 60px !important; }
+    .rc-header-photo img, .rc-photo-placeholder { width: 60px !important; height: 60px !important; }
+
+    /* Colors MUST be printed */
+    .rc-header-banner, .rc-section-title, .rc-scores-table th, 
+    .rc-traits-header, .rc-attendance-label, .rc-info-label,
+    .rc-td-grade, .rc-trait-check {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+    /* Prevent page breaks inside important blocks */
+    .rc-scores-table, .rc-traits-wrapper, .rc-comments-table, .rc-header-banner {
+        page-break-inside: avoid;
     }
 }
 
-/* Print: always use desktop layout */
-/*
-@media print {
-    .report-mobile-view { display: none !important; }
-    .report-card-content > .report-header,
-    .report-card-content > .report-info,
-    .report-card-content > .report-table,
-    .report-card-content > .report-summary,
-    .report-card-content > .report-grading,
-    .report-card-content > .report-footer,
-    .report-card-content > .report-generation-info {
-        display: block !important;
+/* ============================================ */
+/* MOBILE ZOOMABLE VIEW (No longer squished)    */
+/* ============================================ */
+@media (max-width: 767.98px) {
+    .report-card-wrapper {
+        overflow-x: auto; /* Allows horizontal scroll */
+        -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
+        padding-bottom: 10px;
     }
-}  */
-
+    
+    .report-card-content {
+        width: 800px; /* Force desktop width on mobile */
+        min-width: 800px;
+        transform-origin: top left;
+    }
+    
+    /* Hide the mobile-specific card view, we are using the actual card now */
+    .report-mobile-view { display: none !important; }
+}
 </style>

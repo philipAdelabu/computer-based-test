@@ -1,17 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
+    @php
+        use App\Models\Setting;
+        $primaryColor = Setting::get('theme_primary', '#4e73df');
+        $secondaryColor = Setting::get('theme_secondary', '#1cc88a');
+        $reportHeaderColor = Setting::get('theme_report_header', '#8b1a1a');
+        $reportTextColor = Setting::get('theme_report_text', '#ffffff');
+    @endphp
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    <meta name="theme-color" content="#4e73df">
+    <meta name="theme-color" content="{{ $primaryColor }}">
     <title>@yield('title', 'CBT System')</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+    
     <style>
         :root {
-            --primary-color: #4e73df;
-            --secondary-color: #1cc88a;
+            --primary-color: {{ $primaryColor }};
+            --secondary-color: {{ $secondaryColor }};
+             --report-header-color: {{ $reportHeaderColor }};
+            --report-text-color: {{ $reportTextColor }};
+            --primary-dark: color-mix(in srgb, var(--primary-color), black 20%);
             --danger-color: #e74a3b;
             --warning-color: #f6c23e;
             --info-color: #36b9cc;
@@ -37,7 +51,7 @@
         
         /* ============ NAVBAR ============ */
         .navbar {
-            background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
             box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
             position: fixed;
             top: 0;
@@ -176,7 +190,7 @@
             padding: 0.5rem 1rem;
         }
         .btn-primary {
-            background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
             border: none;
         }
         .btn-primary:hover {
@@ -350,6 +364,7 @@
 <link rel="stylesheet" href="{{ asset('css/cropper.css') }}">
 <script src="{{ asset('js/cropper.js') }}"></script>
 
+  
 </head>
 <body>
     <!-- NAVBAR -->

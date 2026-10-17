@@ -168,6 +168,11 @@ Route::get('/students/by-class/{classId}', [AdminController::class, 'getStudents
     Route::put('/grading/{id}', [GradingScaleController::class, 'update'])->name('grading.update');
     Route::delete('/grading/{id}', [GradingScaleController::class, 'delete'])->name('grading.delete');
     Route::post('/grading/{id}/set-default', [GradingScaleController::class, 'setDefault'])->name('grading.set-default');
+    
+    Route::get('/report-cards/{id}/edit', [AdminReportCardController::class, 'edit'])->name('report-cards.edit');
+    Route::put('/report-cards/{id}', [AdminReportCardController::class, 'update'])->name('report-cards.update');
+    Route::post('/report-cards/{id}/auto-fill', [AdminReportCardController::class, 'autoFill'])->name('report-cards.auto-fill');
+    Route::post('/report-cards/bulk-auto-fill', [AdminReportCardController::class, 'bulkAutoFill'])->name('report-cards.bulk-auto-fill');
 
 
     });

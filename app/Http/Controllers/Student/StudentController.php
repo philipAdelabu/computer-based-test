@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Exam;
 use App\Models\ExamAttempt;
 use App\Models\Student;
+use App\Models\reportCards;
+use App\Models\GradingScale;
 use App\Models\Result;
 use App\Models\ReportCard;
 use Illuminate\Http\Request;
@@ -464,92 +466,109 @@ public function exams(Request $request)
      * SUBMIT EXAM - When student clicks submit or time runs out
      */
     // app/Http/Controllers/Student/StudentController.php
-public function submitExam($attemptId)
-{
-    $attempt = ExamAttempt::with(['exam.questions'])->findOrFail($attemptId);
-    $student = Auth::user()->student;
-    
-    if ($attempt->student_id !== $student->id) {
-        abort(403, 'Unauthorized access to this exam attempt.');
-    }
-    
-    if ($attempt->status === 'submitted') {
-        return redirect()->route('student.exam.result', $attempt->id)
-            ->with('info', 'This exam has already been submitted.');
-    }
-    
-    // ============ SINGLE SOURCE OF TRUTH FOR SCORE CALCULATION ============
-    $answers = $attempt->answers ?? [];
-    $questions = $attempt->exam->questions;
-    
-    $score = 0;
-    $correctCount = 0;
-    $wrongCount = 0;
-    $unansweredCount = 0;
-    $answeredCount = 0;
-    
-    foreach ($questions as $question) {
-        if (isset($answers[$question->id]) && !empty(trim($answers[$question->id]))) {
-            $answeredCount++;
-            
-            // Strict comparison — trim both sides and compare case-insensitively if needed
-            $studentAnswer = trim($answers[$question->id]);
-            $correctAnswer = trim($question->correct_answer);
-            
-            if ($studentAnswer === $correctAnswer) {
-                $score += $question->score;
-                $correctCount++;
-            } else {
-                $wrongCount++;
-            }
-        } else {
-            $unansweredCount++;
+    public function submitExam($attemptId)
+    {
+        $attempt = ExamAttempt::with(['exam.questions'])->findOrFail($attemptId);
+        $student = Auth::user()->student;
+        
+        if ($attempt->student_id !== $student->id) {
+            abort(403, 'Unauthorized access to this exam attempt.');
         }
+        
+        if ($attempt->status === 'submitted') {
+            return redirect()->route('student.exam.result', $attempt->id)
+                ->with('info', 'This exam has already been submitted.');
+        }
+        
+        // ============ SINGLE SOURCE OF TRUTH FOR SCORE CALCULATION ============
+        $answers = $attempt->answers ?? [];
+        $questions = $attempt->exam->questions;
+        
+        $score = 0;
+        $correctCount = 0;
+        $wrongCount = 0;
+        $unansweredCount = 0;
+        $answeredCount = 0;
+        $hasTheoryQuestions = false; // NEW FLAG
+
+        foreach ($questions as $question) {
+            // Check if the question is Theory
+            if ($question->is_theory) {
+                $hasTheoryQuestions = true;
+                // We do NOT auto-grade theory questions.
+                // The teacher will grade them manually later.
+                continue; 
+            }
+            
+            if (isset($answers[$question->id]) && !empty(trim($answers[$question->id]))) {
+                $answeredCount++;
+                
+                // Strict comparison — trim both sides
+                $studentAnswer = trim($answers[$question->id]);
+                $correctAnswer = trim($question->correct_answer);
+                
+                if ($studentAnswer === $correctAnswer) {
+                    $score += $question->score;
+                    $correctCount++;
+                } else {
+                    $wrongCount++;
+                }
+            } else {
+                $unansweredCount++;
+            }
+        }
+        
+        // Note: If the exam has theory questions, the auto-computed percentage 
+        // is only based on the objective portion. The teacher will adjust it later.
+        $totalScore = $attempt->exam->total_score;
+        $percentage = $totalScore > 0 ? ($score / $totalScore) * 100 : 0;
+        
+        // Update attempt with ALL calculated values
+        $attempt->update([
+            'completed_at' => now(),
+            'score' => $score,
+            'total_questions_answered' => $answeredCount,
+            'status' => 'submitted',
+        ]);
+        
+        // Delete any existing result first (to prevent duplicates)
+        Result::where('student_id', $student->id)
+            ->where('exam_id', $attempt->exam->id)
+            ->delete();
+        
+        // Set remarks based on whether there are theory questions pending
+        $remarks = $hasTheoryQuestions 
+            ? 'Pending Theory Grading' 
+            : $this->calculateRemarks($percentage);
+        
+        // Create fresh result
+        $result = Result::create([
+            'student_id' => $student->id,
+            'subject_id' => $attempt->exam->subject_id,
+            'exam_id' => $attempt->exam->id,
+            'assessment_type' => 'CBT Exam',
+            'score' => $score,
+            'max_score' => $totalScore, 
+            'percentage' => round($percentage, 2),
+            'grade' => $this->calculateGrade($percentage),
+            'remarks' => $remarks,
+            'assessment_date' => now(),
+        ]);
+        
+        \Log::info('Exam submitted', [
+            'attempt_id' => $attempt->id,
+            'score' => $score,
+            'total_score' => $totalScore,
+            'percentage' => $percentage,
+            'correct' => $correctCount,
+            'wrong' => $wrongCount,
+            'unanswered' => $unansweredCount,
+            'has_theory' => $hasTheoryQuestions,
+        ]);
+        
+        return redirect()->route('student.exam.result', $attempt->id)
+            ->with('success', 'Exam submitted successfully!');
     }
-    
-    $totalScore = $attempt->exam->total_score;
-    $percentage = $totalScore > 0 ? ($score / $totalScore) * 100 : 0;
-    
-    // Update attempt with ALL calculated values
-    $attempt->update([
-        'completed_at' => now(),
-        'score' => $score,
-        'total_questions_answered' => $answeredCount,
-        'status' => 'submitted',
-    ]);
-    
-    // Delete any existing result first (to prevent duplicates)
-    Result::where('student_id', $student->id)
-          ->where('exam_id', $attempt->exam->id)
-          ->delete();
-    
-    // Create fresh result
-    $result = Result::create([
-        'student_id' => $student->id,
-        'subject_id' => $attempt->exam->subject_id,
-        'exam_id' => $attempt->exam->id,
-        'assessment_type' => 'CBT Exam',
-        'score' => $score,
-        'max_score' => $totalScore,
-        'percentage' => round($percentage, 2),
-        'grade' => $this->calculateGrade($percentage),
-        'remarks' => $this->calculateRemarks($percentage),
-        'assessment_date' => now(),
-    ]);
-    
-    \Log::info('Exam submitted', [
-        'attempt_id' => $attempt->id,
-        'score' => $score,
-        'total_score' => $totalScore,
-        'percentage' => $percentage,
-        'correct' => $correctCount,
-        'wrong' => $wrongCount,
-        'unanswered' => $unansweredCount,
-    ]);
-    
-    return redirect()->route('student.exam.result', $attempt->id)
-        ->with('success', 'Exam submitted successfully!');
-}
 
     /**
      * EXAM RESULT - Show exam result
@@ -715,4 +734,6 @@ public function results(Request $request)
         if ($percentage >= 40) return 'Poor';
         return 'Very Poor';
     }
+
+    
 }

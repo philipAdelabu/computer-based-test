@@ -11,6 +11,10 @@
 @section('content')
 <div class="row">
     <div class="col-lg-12">
+         <div class="alert alert-info d-md-none no-print mb-3">
+            <i class="bi bi-arrows-move"></i> 
+            Swipe left or right to view the full report card. Pinch to zoom.
+        </div>
         <div class="card report-card-wrapper">
             <div class="card-header bg-white no-print">
                 <div class="d-flex justify-content-between align-items-center">

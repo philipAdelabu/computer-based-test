@@ -12,6 +12,7 @@ class Question extends Model
     protected $fillable = [
         'subject_id',
         'question_text',
+        'question_type', // NEW
         'image_path',
         'options',
         'correct_answer',
@@ -21,6 +22,7 @@ class Question extends Model
 
     protected $casts = [
         'options' => 'array',
+        'question_type' => 'string',
     ];
 
     public function subject()
@@ -33,6 +35,11 @@ class Question extends Model
         return $this->belongsToMany(Exam::class, 'exam_questions')
                     ->withPivot('question_order')
                     ->orderBy('pivot_question_order');
+    }
+
+    public function getIsTheoryAttribute()
+    {
+        return $this->question_type === 'theory';
     }
 
 

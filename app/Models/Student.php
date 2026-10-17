@@ -14,6 +14,7 @@ class Student extends Model
         'class_id', // Make sure this matches your migration
         'admission_number',
         'date_of_birth',
+        'gender',              // NEW
         'guardian_name',
         'guardian_phone',
         'status',

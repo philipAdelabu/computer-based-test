@@ -93,6 +93,16 @@
                             @enderror
                         </div>
                     </div>
+
+                     <div class="col-md-4">
+                        <label class="form-label fw-semibold">Gender</label>
+                        <select name="gender" class="form-select @error('gender') is-invalid @enderror">
+                            <option value="">-- Select Gender --</option>
+                            <option value="Male" {{ old('gender') == 'Male' ? 'selected' : '' }}>Male</option>
+                            <option value="Female" {{ old('gender') == 'Female' ? 'selected' : '' }}>Female</option>
+                        </select>
+                        @error('gender')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
                     
                     <div class="row mb-3">
                         <div class="col-md-6">

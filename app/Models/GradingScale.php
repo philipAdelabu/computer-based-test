@@ -47,8 +47,8 @@ class GradingScale extends Model
                     ->where('is_active', true)
                     ->first();
             }
-
-            return $scale;
+            
+            return $scale; 
         });
     }
 
@@ -98,7 +98,8 @@ class GradingScale extends Model
 
     /**
      * Clear cache on save
-     */
+    */
+
     protected static function booted()
     {
         static::saved(function () {

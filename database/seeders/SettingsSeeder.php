@@ -82,6 +82,41 @@ class SettingsSeeder extends Seeder
                 'label' => 'Footer Text',
                 'description' => 'Text shown in the footer',
             ],
+
+            // Add these to the array inside database/seeders/SettingsSeeder.php
+
+                [
+                    'key' => 'theme_primary',
+                    'value' => '#4e73df',
+                    'type' => 'color',
+                    'group' => 'theme',
+                    'label' => 'Primary Color',
+                    'description' => 'Main brand color (buttons, navbar, links)',
+                ],
+                [
+                    'key' => 'theme_secondary',
+                    'value' => '#1cc88a',
+                    'type' => 'color',
+                    'group' => 'theme',
+                    'label' => 'Secondary Color',
+                    'description' => 'Accent color (success, secondary buttons)',
+                ],
+                [
+                    'key' => 'theme_report_header',
+                    'value' => '#8b1a1a',
+                    'type' => 'color',
+                    'group' => 'theme',
+                    'label' => 'Report Card Header Color',
+                    'description' => 'The dark red banner color on the report card',
+                ],
+                [
+                    'key' => 'theme_report_text',
+                    'value' => '#ffffff',
+                    'type' => 'color',
+                    'group' => 'theme',
+                    'label' => 'Report Card Header Text',
+                    'description' => 'Text color inside the report card header',
+                ],
         ];
 
         foreach ($settings as $setting) {

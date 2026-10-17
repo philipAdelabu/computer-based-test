@@ -9,34 +9,57 @@ class ReportCard extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'student_id',
-        'class_id',
-        'term',
-        'academic_year',
-        'subject_scores',
-        'subject_breakdown',
-        'total_score',
-        'average_score',
-        'grade',
-        'remarks',
-        'position',
-        'total_students',
-        'total_test_score',
-        'total_test_max',
-        'total_exam_score',
-        'total_exam_max',
-        'grand_total',
-        'grand_max',
-        'generated_date',
-        'generated_by',
-    ];
+   // app/Models/ReportCard.php
+protected $fillable = [
+    'student_id',
+    'class_id',
+    'term',
+    'academic_year',
+    'session',                    // NEW
+    'gender',                     // NEW
+    'age',                        // NEW
+    'house',                      // NEW
+    'no_in_class',                // NEW
+    'subject_scores',
+    'subject_breakdown',
+    'total_score',
+    'average_score',
+    'grade',
+    'remarks',
+    'position',
+    'total_students',
+    'total_test_score',
+    'total_test_max',
+    'total_exam_score',
+    'total_exam_max',
+    'grand_total',
+    'grand_max',
+    'max_class_score',            // NEW
+    'min_class_score',            // NEW
+    'marks_obtainable',           // NEW
+    'times_school_opened',        // NEW
+    'times_present',              // NEW
+    'affective_traits',           // NEW
+    'psychomotor_skills',         // NEW
+    'class_teacher_comment',      // NEW
+    'class_teacher_name',         // NEW
+    'principal_comment',          // NEW
+    'principal_name',             // NEW
+    'vacation_date',              // NEW
+    'resumption_date',            // NEW
+    'generated_date',
+    'generated_by',
+];
 
-    protected $casts = [
-        'subject_scores' => 'array',
-        'subject_breakdown' => 'array',
-        'generated_date' => 'date',
-    ];
+protected $casts = [
+    'subject_scores' => 'array',
+    'subject_breakdown' => 'array',
+    'affective_traits' => 'array',      // NEW
+    'psychomotor_skills' => 'array',    // NEW
+    'generated_date' => 'date',
+    'vacation_date' => 'date',          // NEW
+    'resumption_date' => 'date',        // NEW
+  ];
 
     public function student()
     {

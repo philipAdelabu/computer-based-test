@@ -173,6 +173,85 @@
         </div>
     </div>
 
+    <!-- Theme Colors Card -->
+<div class="card mb-4">
+    <div class="card-header bg-white">
+        <h6 class="mb-0">
+            <i class="bi bi-palette text-primary"></i> Application Theme Colors
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-info small">
+            <i class="bi bi-info-circle"></i> Changing these colors will update the entire application, including the dashboard, buttons, and the report card design.
+        </div>
+        
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label fw-semibold">Primary Color (Navbar, Buttons)</label>
+                <div class="input-group">
+                    <input type="color" name="theme_primary" class="form-control form-control-color" 
+                           value="{{ old('theme_primary', \App\Models\Setting::get('theme_primary', '#4e73df')) }}">
+                    <input type="text" class="form-control" 
+                           value="{{ old('theme_primary', \App\Models\Setting::get('theme_primary', '#4e73df')) }}" readonly>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label fw-semibold">Secondary Color (Accents, Success)</label>
+                <div class="input-group">
+                    <input type="color" name="theme_secondary" class="form-control form-control-color" 
+                           value="{{ old('theme_secondary', \App\Models\Setting::get('theme_secondary', '#1cc88a')) }}">
+                    <input type="text" class="form-control" 
+                           value="{{ old('theme_secondary', \App\Models\Setting::get('theme_secondary', '#1cc88a')) }}" readonly>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label fw-semibold">Report Card Header Color</label>
+                <div class="input-group">
+                    <input type="color" name="theme_report_header" class="form-control form-control-color" 
+                           value="{{ old('theme_report_header', \App\Models\Setting::get('theme_report_header', '#8b1a1a')) }}">
+                    <input type="text" class="form-control" 
+                           value="{{ old('theme_report_header', \App\Models\Setting::get('theme_report_header', '#8b1a1a')) }}" readonly>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label fw-semibold">Report Card Header Text</label>
+                <div class="input-group">
+                    <input type="color" name="theme_report_text" class="form-control form-control-color" 
+                           value="{{ old('theme_report_text', \App\Models\Setting::get('theme_report_text', '#ffffff')) }}">
+                    <input type="text" class="form-control" 
+                           value="{{ old('theme_report_text', \App\Models\Setting::get('theme_report_text', '#ffffff')) }}" readonly>
+                </div>
+            </div>
+        </div>
+
+        <!-- Presets -->
+        <div class="mt-4 pt-3 border-top">
+            <label class="form-label fw-semibold d-block mb-2">Quick Presets</label>
+            <div class="d-flex flex-wrap gap-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary preset-btn" 
+                        data-primary="#4e73df" data-secondary="#1cc88a" data-header="#8b1a1a" data-text="#ffffff">
+                    Default Blue & Maroon
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary preset-btn" 
+                        data-primary="#1a5c38" data-secondary="#f6c23e" data-header="#1a5c38" data-text="#ffffff">
+                    Forest Green
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary preset-btn" 
+                        data-primary="#6b46c1" data-secondary="#f6e05e" data-header="#44337a" data-text="#ffffff">
+                    Royal Purple
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary preset-btn" 
+                        data-primary="#0f172a" data-secondary="#3b82f6" data-header="#0f172a" data-text="#ffffff">
+                    Modern Slate
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
     <!-- Submit Buttons -->
     <div class="card">
         <div class="card-body text-center">
@@ -267,4 +346,29 @@ $(document).ready(function() {
     });
 });
 </script>
+
+<script>
+document.querySelectorAll('.preset-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelector('input[name="theme_primary"]').value = this.dataset.primary;
+        document.querySelector('input[name="theme_secondary"]').value = this.dataset.secondary;
+        document.querySelector('input[name="theme_report_header"]').value = this.dataset.header;
+        document.querySelector('input[name="theme_report_text"]').value = this.dataset.text;
+        
+        // Update the text next to the pickers
+        this.closest('.card-body').querySelectorAll('input[type="text"]').forEach((input, index) => {
+            const colorInput = input.previousElementSibling;
+            input.value = colorInput.value;
+        });
+    });
+});
+
+// Sync text inputs with color pickers
+document.querySelectorAll('input[type="color"]').forEach(colorInput => {
+    colorInput.addEventListener('input', function() {
+        this.nextElementSibling.value = this.value;
+    });
+});
+</script>
+
 @endpush

@@ -226,6 +226,7 @@ public function getStudentsByClass($classId)
             'admission_number' => 'required|unique:students',
             'class_id' => 'required|exists:classes,id',
             'date_of_birth' => 'nullable|date',
+            'gender' => 'nullable|in:Male,Female', 
             'guardian_name' => 'nullable|string',
             'guardian_phone' => 'nullable|string',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',  // NEW
@@ -250,6 +251,7 @@ public function getStudentsByClass($classId)
             'admission_number' => $validated['admission_number'],
             'class_id' => $validated['class_id'],
             'date_of_birth' => $validated['date_of_birth'] ?? null,
+            'gender' => $validated['gender'] ?? null,
             'guardian_name' => $validated['guardian_name'] ?? null,
             'guardian_phone' => $validated['guardian_phone'] ?? null,
         ]);
@@ -292,6 +294,7 @@ public function getStudentsByClass($classId)
             'email' => 'required|email|unique:users,email,' . $student->user_id,
             'class_id' => 'required|exists:classes,id',
             'date_of_birth' => 'nullable|date',
+            'gender' => 'nullable|in:Male,Female', 
             'guardian_name' => 'nullable|string',
             'guardian_phone' => 'nullable|string',
             'status' => 'required|in:active,graduated,suspended',
@@ -326,6 +329,7 @@ public function getStudentsByClass($classId)
         $student->update([
             'class_id' => $validated['class_id'],
             'date_of_birth' => $validated['date_of_birth'] ?? null,
+             'gender' => $validated['gender'] ?? null, 
             'guardian_name' => $validated['guardian_name'] ?? null,
             'guardian_phone' => $validated['guardian_phone'] ?? null,
             'status' => $validated['status'],

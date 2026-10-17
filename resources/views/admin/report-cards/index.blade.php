@@ -10,10 +10,85 @@
 @section('page-title', 'Report Cards')
 
 @section('content')
+ 
+  <!-- resources/views/admin/report-cards/index.blade.php -->
+
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#generateModal">
-        <i class="bi bi-plus-circle"></i> Generate Report Cards
-    </button>
+    <div>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#generateModal">
+            <i class="bi bi-plus-circle"></i> Generate Report Cards
+        </button>
+        <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#bulkAutoFillModal">
+            <i class="bi bi-magic"></i> Bulk Auto-Fill
+        </button>
+    </div>
+</div>
+
+<!-- Bulk Auto-Fill Modal -->
+<div class="modal fade" id="bulkAutoFillModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="{{ route('admin.report-cards.bulk-auto-fill') }}" method="POST">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-magic"></i> Bulk Auto-Fill Report Cards
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info small">
+                        <i class="bi bi-info-circle"></i>
+                        This will auto-fill affective traits, psychomotor skills, and comments
+                        for all report cards matching the criteria.
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Class</label>
+                        <select name="class_id" class="form-select" required>
+                            <option value="">-- Select Class --</option>
+                            @foreach($classes as $class)
+                                <option value="{{ $class->id }}">{{ $class->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label">Term</label>
+                            <select name="term" class="form-select" required>
+                                <option value="First Term">First Term</option>
+                                <option value="Second Term">Second Term</option>
+                                <option value="Third Term">Third Term</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Year</label>
+                            <input type="number" name="academic_year" class="form-control" 
+                                   value="{{ date('Y') }}" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-check">
+                        <input type="checkbox" name="overwrite" value="1" class="form-check-input" id="bulkOverwrite">
+                        <label class="form-check-label" for="bulkOverwrite">
+                            <strong>Overwrite existing data</strong>
+                            <br>
+                            <small class="text-muted">
+                                Unchecked = only fill empty fields (safe)
+                            </small>
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-lightning-charge"></i> Auto-Fill
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 <!-- Filters -->
