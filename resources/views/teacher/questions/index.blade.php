@@ -270,12 +270,20 @@
                                 </td>
                                 <td>
                                     <div class="small">
-                                        @foreach($question->options as $index => $option)
-                                            <div>
-                                                <strong>{{ chr(65 + $index) }}.</strong> 
-                                                {{ Str::limit($option, 25) }}
-                                            </div>
-                                        @endforeach
+                                        @if($question->question_type == 'theory')
+                                            <em class="text-muted">Theory question</em>
+                                        @else
+                                             @if($question->options && is_array($question->options))
+                                            @foreach($question->options as $index => $option)
+                                                <div>
+                                                    <strong>{{ chr(65 + $index) }}.</strong> 
+                                                    {{ Str::limit($option, 25) }}
+                                                </div>
+                                            @endforeach
+                                           @else
+                                            <em class="text-muted">No options available</em>
+                                            @endif
+                                        @endif
                                     </div>
                                 </td>
                                 <td>

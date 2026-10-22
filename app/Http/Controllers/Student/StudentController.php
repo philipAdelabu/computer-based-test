@@ -483,27 +483,34 @@ public function exams(Request $request)
         // ============ SINGLE SOURCE OF TRUTH FOR SCORE CALCULATION ============
         $answers = $attempt->answers ?? [];
         $questions = $attempt->exam->questions;
-        
+
         $score = 0;
         $correctCount = 0;
         $wrongCount = 0;
         $unansweredCount = 0;
         $answeredCount = 0;
-        $hasTheoryQuestions = false; // NEW FLAG
+        $theoryCount = 0; // NEW
+        $hasTheoryQuestions = false; 
 
         foreach ($questions as $question) {
-            // Check if the question is Theory
+            // 1. Handle Theory Questions
             if ($question->is_theory) {
                 $hasTheoryQuestions = true;
-                // We do NOT auto-grade theory questions.
-                // The teacher will grade them manually later.
+                $theoryCount++;
+                
+                // Check if student typed an answer
+                if (isset($answers[$question->id]) && !empty(trim($answers[$question->id]))) {
+                    $answeredCount++; 
+                }
+                
+                // DO NOT grade theory, DO NOT count as wrong/correct
                 continue; 
             }
             
+            // 2. Handle Objective Questions
             if (isset($answers[$question->id]) && !empty(trim($answers[$question->id]))) {
                 $answeredCount++;
                 
-                // Strict comparison — trim both sides
                 $studentAnswer = trim($answers[$question->id]);
                 $correctAnswer = trim($question->correct_answer);
                 
@@ -517,31 +524,29 @@ public function exams(Request $request)
                 $unansweredCount++;
             }
         }
-        
-        // Note: If the exam has theory questions, the auto-computed percentage 
-        // is only based on the objective portion. The teacher will adjust it later.
+
+        // Note: If there are theory questions, this percentage ONLY reflects the objective part.
         $totalScore = $attempt->exam->total_score;
         $percentage = $totalScore > 0 ? ($score / $totalScore) * 100 : 0;
-        
-        // Update attempt with ALL calculated values
+
+        // Update attempt
         $attempt->update([
             'completed_at' => now(),
             'score' => $score,
             'total_questions_answered' => $answeredCount,
             'status' => 'submitted',
         ]);
-        
-        // Delete any existing result first (to prevent duplicates)
+
+        // Delete existing result
         Result::where('student_id', $student->id)
             ->where('exam_id', $attempt->exam->id)
             ->delete();
-        
-        // Set remarks based on whether there are theory questions pending
+
+        // Set remarks
         $remarks = $hasTheoryQuestions 
             ? 'Pending Theory Grading' 
             : $this->calculateRemarks($percentage);
-        
-        // Create fresh result
+
         $result = Result::create([
             'student_id' => $student->id,
             'subject_id' => $attempt->exam->subject_id,
@@ -550,11 +555,12 @@ public function exams(Request $request)
             'score' => $score,
             'max_score' => $totalScore, 
             'percentage' => round($percentage, 2),
-            'grade' => $this->calculateGrade($percentage),
+            // If there are theory questions, we don't assign a final grade yet
+            'grade' => $hasTheoryQuestions ? 'Pending' : $this->calculateGrade($percentage), 
             'remarks' => $remarks,
             'assessment_date' => now(),
         ]);
-        
+          
         \Log::info('Exam submitted', [
             'attempt_id' => $attempt->id,
             'score' => $score,

@@ -100,40 +100,89 @@ class QuestionController extends Controller
     // =====================================================
     // STORE
     // =====================================================
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'subject_id' => 'required|exists:subjects,id',
-            'question_type' => 'required|in:objective,theory',
-            'question_text' => 'required|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
-            'options' => 'required|array|min:2',
-            'options.*' => 'required|string',
-            'correct_answer' => 'required|string',
-            'score' => 'required|integer|min:1',
-            'difficulty' => 'required|in:easy,medium,hard',
+   public function store(Request $request)
+{
+    // ============ FIX: Strip theory-only nulls BEFORE validation ============
+    if ($request->input('question_type') === 'theory') {
+        $request->merge([
+            'options' => null,
+            'correct_answer' => null,
         ]);
+    }
+    
+    $validated = $request->validate([
+        'subject_id' => 'required|exists:subjects,id',
+        'question_type' => 'required|in:objective,theory',
+        'question_text' => 'required|string',
+        'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+        'option_images.*' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048', // NEW
+        'options' => 'nullable|array|min:2',
+        'options.*' => 'nullable|string',
+        'correct_answer' => 'nullable|string',
+        'score' => 'required|integer|min:1',
+        'difficulty' => 'required|in:easy,medium,hard',
+    ]);
 
-        // Handle image upload to public folder
-        $imagePath = null;
-        if ($request->hasFile('image')) {
-            $imagePath = $this->uploadImage($request->file('image'));
+    // ============ FIX: Additional safety check ============
+    if ($validated['question_type'] === 'objective') {
+        // Ensure objective questions have valid options
+        if (empty($validated['options']) || count(array_filter($validated['options'] ?? [])) < 2) {
+            return back()
+                ->with('error', 'Objective questions must have at least 2 non-empty options.')
+                ->withInput();
+        }
+        if (empty($validated['correct_answer'])) {
+            return back()
+                ->with('error', 'Objective questions must have a correct answer.')
+                ->withInput();
+        }
+    }
+
+    $imagePath = null;
+    if ($request->hasFile('image')) {
+        $imagePath = $this->uploadImage($request->file('image'));
+    }
+
+        // NEW: Handle Option Images
+        $optionImages = null;
+        $finalOptions = $validated['options'] ?? [];
+        $finalCorrectAnswer = $validated['correct_answer'] ?? null;
+
+        if ($validated['question_type'] === 'objective' && $request->hasFile('option_images')) {
+            $optionImages = [];
+            
+            foreach ($request->file('option_images') as $index => $file) {
+                if ($file && $file->isValid()) {
+                    // Save the image
+                    $path = $file->store('uploads/options', 'public');
+                    // Since we use the public disk, we adjust the path for asset()
+                    $optionImages[$index] = 'storage/' . $path; 
+                    
+                    // If this option is the correct answer, we need to store the image path as the correct answer
+                    // Or we can store the index. Let's store the index as a string, e.g., "0", "1"
+                    // Actually, the cleanest way is to save the image path as the correct answer if it's selected.
+                    if (isset($validated['correct_option_index']) && $validated['correct_option_index'] == $index) {
+                        $finalCorrectAnswer = $optionImages[$index];
+                    }
+                }
+            }
         }
 
-        Question::create([
-            'subject_id' => $validated['subject_id'],
-            'question_type' => $validated['question_type'],
-            'question_text' => $validated['question_text'],
-            'image_path' => $imagePath,
-            'options' => $validated['options'],
-            'correct_answer' => $validated['correct_answer'],
-            'score' => $validated['score'],
-            'difficulty' => $validated['difficulty'],
-        ]);
+    Question::create([
+        'subject_id' => $validated['subject_id'],
+        'question_type' => $validated['question_type'],
+        'question_text' => $validated['question_text'],
+        'image_path' => $imagePath,
+        'options' => $validated['question_type'] === 'objective' ? array_values(array_filter($finalOptions)) : null,
+        'option_images' => $optionImages, // NEW
+        'correct_answer' => $validated['question_type'] === 'objective' ? $finalCorrectAnswer : null,
+        'score' => $validated['score'],
+        'difficulty' => $validated['difficulty'],
+    ]);
 
-        return redirect()->route('admin.questions')
-            ->with('success', 'Question created successfully.');
-    }
+    return redirect()->route('admin.questions')
+        ->with('success', 'Question created successfully.');
+}
 
     // =====================================================
     // EDIT
@@ -150,19 +199,43 @@ class QuestionController extends Controller
     // =====================================================
     public function update(Request $request, $id)
     {
+
+    
         $question = Question::findOrFail($id);
+        
+         if ($request->input('question_type') === 'theory') {
+        $request->merge([
+            'options' => null,
+            'correct_answer' => null,
+        ]);
+      }
 
         $validated = $request->validate([
-            'subject_id' => 'required|exists:subjects,id',
-            'question_type' => 'required|in:objective,theory',
-            'question_text' => 'required|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
-            'options' => 'required|array|min:2',
-            'options.*' => 'required|string',
-            'correct_answer' => 'required|string',
-            'score' => 'required|integer|min:1',
-            'difficulty' => 'required|in:easy,medium,hard',
-        ]);
+        'subject_id' => 'required|exists:subjects,id',
+        'question_type' => 'required|in:objective,theory',
+        'question_text' => 'required|string',
+        'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+        'option_images.*' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048', // NEW
+        'options' => 'nullable|array|min:2',
+        'options.*' => 'nullable|string',
+        'correct_answer' => 'nullable|string',
+        'score' => 'required|integer|min:1',
+        'difficulty' => 'required|in:easy,medium,hard',
+    ]);
+
+    // ============ FIX: Additional safety check for Objective ============
+    if ($validated['question_type'] === 'objective') {
+        if (empty($validated['options']) || count(array_filter($validated['options'] ?? [])) < 2) {
+            return back()
+                ->with('error', 'Objective questions must have at least 2 non-empty options.')
+                ->withInput();
+        }
+        if (empty($validated['correct_answer'])) {
+            return back()
+                ->with('error', 'Objective questions must have a correct answer.')
+                ->withInput();
+        }
+    }
 
         // Handle image upload
         if ($request->hasFile('image')) {
@@ -175,41 +248,54 @@ class QuestionController extends Controller
             $question->image_path = $this->uploadImage($request->file('image'), 'questions');
         }
 
-        $question->update([
-            'subject_id' => $validated['subject_id'],
-            'question_type' => $validated['question_type'],
-            'question_text' => $validated['question_text'],
-            'options' => $validated['options'],
-            'correct_answer' => $validated['correct_answer'],
-            'score' => $validated['score'],
-            'difficulty' => $validated['difficulty'],
-        ]);
+
+    $imagePath = null;
+    if ($request->hasFile('image')) {
+        $imagePath = $this->uploadImage($request->file('image'));
+    }
+
+        // NEW: Handle Option Images
+        $optionImages = null;
+        $finalOptions = $validated['options'] ?? [];
+        $finalCorrectAnswer = $validated['correct_answer'] ?? null;
+
+        if ($validated['question_type'] === 'objective' && $request->hasFile('option_images')) {
+            $optionImages = [];
+            
+            foreach ($request->file('option_images') as $index => $file) {
+                if ($file && $file->isValid()) {
+                    // Save the image
+                    $path = $file->store('uploads/options', 'public');
+                    // Since we use the public disk, we adjust the path for asset()
+                    $optionImages[$index] = 'storage/' . $path; 
+                    
+                    // If this option is the correct answer, we need to store the image path as the correct answer
+                    // Or we can store the index. Let's store the index as a string, e.g., "0", "1"
+                    // Actually, the cleanest way is to save the image path as the correct answer if it's selected.
+                    if (isset($validated['correct_option_index']) && $validated['correct_option_index'] == $index) {
+                        $finalCorrectAnswer = $optionImages[$index];
+                    }
+                }
+            }
+        }
+
+          // ============ Update the Question ============
+            $question->update([
+                'subject_id' => $validated['subject_id'],
+                'question_type' => $validated['question_type'],
+                'question_text' => $validated['question_text'],
+                'options' => $validated['question_type'] === 'objective' ? array_values(array_filter($finalOptions)) : null,
+                'option_images' => $optionImages, // NEW
+                'correct_answer' => $validated['question_type'] === 'objective' ? $finalCorrectAnswer : null,
+                'score' => $validated['score'],
+                'difficulty' => $validated['difficulty'],
+            ]);
 
         return redirect()->route('admin.questions')
             ->with('success', 'Question updated successfully.');
     }
 
-      /**
-     * Upload image to public/uploads/questions folder
-     */
-    /*
-    private function uploadImage($file)
-    {
-        // Ensure directory exists
-        $uploadPath = public_path('uploads/questions');
-        if (!file_exists($uploadPath)) {
-            mkdir($uploadPath, 0755, true);
-        }
-        
-        // Generate unique filename
-        $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-        
-        // Move file to public folder
-        $file->move($uploadPath, $filename);
-        
-        // Return relative path for storage in DB
-        return 'uploads/questions/' . $filename;
-    }  */
+    
 
        private function uploadImage($file, $folder = 'questions')
     {
@@ -217,7 +303,7 @@ class QuestionController extends Controller
     }
 
     private function deleteImage($imagePath){
-         FuncController::deleteIamge($imagePath);
+         FuncController::deleteImage($imagePath);
     }
 
     // =====================================================

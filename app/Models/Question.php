@@ -15,6 +15,7 @@ class Question extends Model
         'question_type', // NEW
         'image_path',
         'options',
+        'option_images',
         'correct_answer',
         'score',
         'difficulty',
@@ -23,6 +24,7 @@ class Question extends Model
     protected $casts = [
         'options' => 'array',
         'question_type' => 'string',
+        'option_images', 'array',
     ];
 
     public function subject()

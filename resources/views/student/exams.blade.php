@@ -528,17 +528,22 @@
                 <tbody>
                     @forelse($completedExams as $attempt)
                         @php
+                        
+                            // 1. Calculate basic percentage
                             $percentage = $attempt->exam->total_score > 0 
                                 ? ($attempt->score / $attempt->exam->total_score) * 100 
                                 : 0;
                             
-                            $benchmark = $attempt->exam->benchmark ?? $attempt->exam->passing_score ?? 50;
-                            $passed = $percentage >= $benchmark;
-                            
-                            // Convert to max marks scale
-                            $scaledScore = $attempt->exam->total_score > 0 
-                                ? round(($attempt->score / $attempt->exam->total_score) * $attempt->exam->max_marks, 1)
-                                : 0;
+                            // 2. Check if the exam has ANY theory questions (Bypass relationship to avoid orderBy error)
+                            $hasTheory = \App\Models\Question::join('exam_questions', 'questions.id', '=', 'exam_questions.question_id')
+                                ->where('exam_questions.exam_id', $attempt->exam->id)
+                                ->where('questions.question_type', 'theory')
+                                ->exists();
+
+                            // 3. Determine Pass/Fail
+                            $isPending = $hasTheory; 
+                            $passed = $isPending ? null : ($percentage >= ($attempt->exam->passing_score ?? 50));
+ 
                         @endphp
                         <tr>
                             <td>
@@ -569,14 +574,18 @@
                                 <strong>{{ $attempt->score }}</strong>/{{ $attempt->exam->total_score }}
                                 <br>
                                 <small class="text-muted">
-                                    ({{ $scaledScore }}/{{ $attempt->exam->max_marks }} marks)
+                                    ({{ round(($attempt->score / $attempt->exam->total_score) * $attempt->exam->max_marks, 1) }}/{{ $attempt->exam->max_marks }} marks)
                                 </small>
                             </td>
                             <td>
                                 <span class="fw-bold">{{ number_format($percentage, 1) }}%</span>
                             </td>
                             <td>
-                                @if($passed)
+                                @if($isPending)
+                                    <span class="badge bg-warning text-dark">
+                                        <i class="bi bi-clock-history"></i> Pending
+                                    </span>
+                                @elseif($passed)
                                     <span class="badge bg-success">
                                         <i class="bi bi-check-circle"></i> Passed
                                     </span>
@@ -595,7 +604,7 @@
                             </td>
                             <td>
                                 <a href="{{ route('student.exam.result', $attempt->id) }}" 
-                                   class="btn btn-sm btn-primary">
+                                class="btn btn-sm btn-primary">
                                     <i class="bi bi-eye"></i> View
                                 </a>
                             </td>

@@ -279,16 +279,27 @@
                                             $letter = chr(65 + $index);
                                             $isSelected = isset($answers[$currentQuestion->id]) && $answers[$currentQuestion->id] === $option;
                                         @endphp
-                                        <div class="option-item {{ $isSelected ? 'selected' : '' }}" 
-                                            data-question="{{ $currentQuestion->id }}"
-                                            data-option="{{ $option }}">
+                                         @php
+                                            $optionImage = $currentQuestion->option_images[$index] ?? null;
+                                            $optionValue = $optionImage ? $optionImage : $option;
+                                            $isSelected = isset($answers[$currentQuestion->id]) && $answers[$currentQuestion->id] == $optionValue;
+                                        @endphp
+
+                                        <div class="form-check mb-3 p-3 border rounded option-item {{ $isSelected ? 'selected' : '' }}">
                                             <input class="form-check-input" type="radio" 
                                                 name="answer" 
-                                                value="{{ $option }}" 
+                                                value="{{ $optionValue }}" 
                                                 id="option{{ $loop->index }}"
                                                 {{ $isSelected ? 'checked' : '' }}>
-                                            <label for="option{{ $loop->index }}">
-                                                <strong>{{ $letter }}.</strong> {{ $option }}
+                                            
+                                            <label class="form-check-label w-100 d-flex align-items-center" for="option{{ $loop->index }}">
+                                                <span class="fw-bold me-2">{{ $letter }}.</span>
+                                                
+                                                @if($optionImage)
+                                                    <img src="{{ asset($optionImage) }}" alt="Option {{ $letter }}" style="max-height: 150px; object-fit: contain;" class="rounded border p-1">
+                                                @else
+                                                    {{ $option }}
+                                                @endif
                                             </label>
                                         </div>
                                     @endforeach

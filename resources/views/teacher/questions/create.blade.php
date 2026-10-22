@@ -91,26 +91,64 @@
 
                          <div id="objectiveFields">
                         
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Options <span class="text-danger">*</span></label>
+                         <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label class="form-label fw-semibold mb-0">Options <span class="text-danger">*</span></label>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="toggleImageOptions" onchange="toggleOptionMode()">
+                                    <label class="form-check-label small" for="toggleImageOptions">Use Images for Options</label>
+                                </div>
+                            </div>
+                            
                             <div id="options-container">
                                 @php
-                                    $options = old('options', ['', '', '', '']);
+                                    $options = old('options', $question->options ?? ['', '', '', '']);
+                                    if (!is_array($options)) $options = [];
+                                    while (count($options) < 4) $options[] = '';
+                                    
+                                    $optionImages = old('option_images', $question->option_images ?? []);
                                 @endphp
+                                
                                 @foreach($options as $index => $option)
-                                    <div class="input-group mb-2">
+                                    <div class="input-group mb-2 option-row">
                                         <span class="input-group-text">{{ chr(65 + $index) }}</span>
-                                        <input type="text" name="options[]" class="form-control @error('options.*') is-invalid @enderror" 
-                                            placeholder="Option {{ chr(65 + $index) }}" value="{{ $option }}" required>
+                                        
+                                        <!-- Text Input -->
+                                        <input type="text" name="options[]" class="form-control option-text-input @error('options.*') is-invalid @enderror" 
+                                            placeholder="Option {{ chr(65 + $index) }}" value="{{ $option }}">
+                                        
+                                        <!-- Image Input (Hidden by default) -->
+                                        <input type="file" name="option_images[{{ $index }}]" class="form-control option-image-input d-none" accept="image/*">
+                                        
+                                        @if(isset($optionImages[$index]))
+                                            <span class="input-group-text bg-success text-white" title="Image uploaded">✓</span>
+                                        @endif
+                                        
+                                        @if($index >= 4)
+                                            <button type="button" class="btn btn-outline-danger remove-option"><i class="bi bi-x"></i></button>
+                                        @endif
                                     </div>
                                 @endforeach
                             </div>
                             <button type="button" class="btn btn-sm btn-outline-primary mt-2" id="add-option">
                                 <i class="bi bi-plus-circle"></i> Add Option
                             </button>
-                            @error('options.*')
-                                <div class="invalid-feedback d-block">{{ $message }}</div>
-                            @enderror
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Correct Answer <span class="text-danger">*</span></label>
+                                
+                                <!-- Select for Text mode -->
+                                <select name="correct_answer" id="correctAnswerSelect" class="form-select" required>
+                                    <option value="">-- Select Correct Option --</option>
+                                    {{-- The options will be populated by JS or PHP if not using images --}}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Score <span class="text-danger">*</span></label>
+                                <input type="number" name="score" class="form-control" value="{{ old('score', $question->score ?? 1) }}" min="1" required>
+                            </div>
                         </div>
                         
                         <div class="row mb-3">
@@ -226,6 +264,31 @@ $(document).ready(function() {
 
     // Run on page load
     document.addEventListener('DOMContentLoaded', toggleQuestionType);
+
+     function toggleOptionMode() {
+        const useImages = document.getElementById('toggleImageOptions').checked;
+        const textInputs = document.querySelectorAll('.option-text-input');
+        const imageInputs = document.querySelectorAll('.option-image-input');
+        
+        if (useImages) {
+            textInputs.forEach(input => { input.classList.add('d-none'); input.disabled = true; });
+            imageInputs.forEach(input => { input.classList.remove('d-none'); input.disabled = false; });
+        } else {
+            textInputs.forEach(input => { input.classList.remove('d-none'); input.disabled = false; });
+            imageInputs.forEach(input => { input.classList.add('d-none'); input.disabled = true; });
+        }
+    }
+
+    // Run on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        // If editing and option_images exist, auto-toggle
+        const hasImages = {{ count($optionImages ?? []) > 0 ? 'true' : 'false' }};
+        if (hasImages) {
+            document.getElementById('toggleImageOptions').checked = true;
+            toggleOptionMode();
+        }
+    });
+    
     </script>
 
 @endpush
