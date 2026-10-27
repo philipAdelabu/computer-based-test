@@ -159,7 +159,9 @@
                         @if($classData['subjects']->count() > 0)
                             <div class="row g-3">
                                 @foreach($classData['subjects'] as $subjectData)
-                                    @php $subject = $subjectData['subject']; @endphp
+                                    @php $subject = $subjectData['subject'];
+                                      if($subject->teacher_id != $teacherId) continue;
+                                    @endphp
                                     <div class="col-md-4 col-lg-3">
                                         <a href="{{ route('teacher.questions', ['subject_id' => $subject->id]) }}"
                                            class="subject-card text-decoration-none">

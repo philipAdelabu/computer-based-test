@@ -24,7 +24,7 @@ class Question extends Model
     protected $casts = [
         'options' => 'array',
         'question_type' => 'string',
-        'option_images', 'array',
+        'option_images'=> 'array',
     ];
 
     public function subject()

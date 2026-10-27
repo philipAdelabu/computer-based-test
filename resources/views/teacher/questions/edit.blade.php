@@ -90,40 +90,65 @@
                     
                     <!-- ============ OBJECTIVE FIELDS (Options & Correct Answer) ============ -->
                     <div id="objectiveFields" class="mb-3">
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Options <span class="text-danger">*</span></label>
-                            <div id="options-container">
-                                @php
-                                  // Safely handle old input or existing options
-                                        $options = old('options', $question->options);
-                                        
-                                        // If options is null (like for Theory questions), or not an array, make it an empty array
-                                        if (!is_array($options)) {
-                                            $options = [];
-                                        }
-                                        
-                                        // Ensure we always have at least 4 slots for the form
-                                        while (count($options) < 4) {
-                                            $options[] = '';
-                                        }
-
-                                     // Set the count for JavaScript safely
-                                    $optionCount = count($options);
-                                @endphp
-                                
-                                @foreach($options as $index => $option)
-                                    <div class="input-group mb-2">
-                                        <span class="input-group-text">{{ chr(65 + $index) }}</span>
-                                        <input type="text" name="options[]" class="form-control @error('options.*') is-invalid @enderror option-input" 
-                                               placeholder="Option {{ chr(65 + $index) }}" value="{{ $option }}">
-                                        @if($index >= 4)
-                                            <button type="button" class="btn btn-outline-danger remove-option">
-                                                <i class="bi bi-x"></i>
-                                            </button>
-                                        @endif
+                         <div class="mb-3" id="objectiveOptionsWrapper">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <label class="form-label fw-semibold mb-0">Options <span class="text-danger">*</span></label>
+                                     <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="toggleImageOptions" 
+                                            onchange="toggleOptionMode()" 
+                                            {{ $question->option_images && count($question->option_images) > 0 ? 'checked' : '' }}>
+                                        <label class="form-check-label small" for="toggleImageOptions">Use Images for Options</label>
                                     </div>
-                                @endforeach
-                            </div>
+                                </div>
+                          <div class="mb-3">
+                        
+                             <div id="options-container">
+                                    @php
+                                        $options = old('options', $question->options ?? ['', '', '', '']);
+                                        if(!is_array($options)) $options = [];
+                                        while (count($options) < 4) $options[] = '';
+                                        
+                                        $optionImages = old('option_images', $question->option_images ?? []);
+                                    @endphp
+                                    
+                                    @foreach($options as $index => $option)
+                                        @php
+                                            $existingImage = $optionImages[$index] ?? null;
+                                        @endphp
+                                        <div class="option-row mb-2">
+                                            <div class="input-group">
+                                                <span class="input-group-text">{{ chr(65 + $index) }}</span>
+                                                
+                                                <!-- Text Input -->
+                                                <input type="text" name="options[]" class="form-control option-text-input @error('options.*') is-invalid @enderror" 
+                                                    placeholder="Option {{ chr(65 + $index) }}" value="{{ $option }}">
+                                                
+                                                <!-- Image Input (Hidden by default) -->
+                                                <input type="file" name="option_images[{{ $index }}]" class="form-control option-image-input d-none" accept="image/*">
+                                                
+                                                @if($index >= 4)
+                                                    <button type="button" class="btn btn-outline-danger remove-option"><i class="bi bi-x"></i></button>
+                                                @endif
+                                            </div>
+                                            
+                                            <!-- Display the existing image (if any) -->
+                                            @if($existingImage)
+                                                <div class="mt-2 ms-5 d-flex align-items-center gap-3 p-2 border rounded bg-light option-existing-image">
+                                                    <img src="{{ asset($existingImage) }}" alt="Option {{ chr(65 + $index) }}" 
+                                                        class="rounded border" style="height: 50px; width: 50px; object-fit: cover;">
+                                                    <small class="text-muted">Current Image</small>
+                                                    
+                                                    <div class="form-check ms-auto mb-0">
+                                                        <input class="form-check-input" type="checkbox" name="remove_images[{{ $index }}]" value="1" id="remove_img_{{ $index }}">
+                                                        <label class="form-check-label text-danger small" for="remove_img_{{ $index }}">
+                                                            Remove Image
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            @endif
+                                        </div>
+                                    @endforeach
+                                </div>
                             <button type="button" class="btn btn-sm btn-outline-primary mt-2" id="add-option">
                                 <i class="bi bi-plus-circle"></i> Add Option
                             </button>
@@ -132,24 +157,37 @@
                             @enderror
                         </div>
                         
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">Correct Answer <span class="text-danger">*</span></label>
-                                <input type="text" name="correct_answer" class="form-control @error('correct_answer') is-invalid @enderror" 
-                                       placeholder="Enter the correct answer" value="{{ old('correct_answer', $question->correct_answer) }}">
-                                @error('correct_answer')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                          <!-- ============ CORRECT ANSWER SECTION ============ -->
+                            <div class="row mb-3" id="objectiveCorrectAnswerWrapper">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Correct Answer <span class="text-danger">*</span></label>
+                                    <select name="correct_answer" id="correctAnswerSelect" class="form-select" required>
+                                        <option value="">-- Select Correct Option --</option>
+                                        @if(is_array($options))
+                                            @foreach($options as $index => $opt)
+                                                @php
+                                                    // If editing an image question, the value stored in DB is the image path
+                                                    $val = $optionImages[$index] ?? $opt;
+                                                @endphp
+                                                <option value="{{ $val }}" {{ old('correct_answer', $question->correct_answer ?? '') == $val ? 'selected' : '' }}>
+                                                    Option {{ chr(65 + $index) }}
+                                                </option>
+                                            @endforeach
+                                        @endif
+                                    </select>
+                                </div>
+                              
                             </div>
-                            <div class="col-md-6">
-                                 <label class="form-label fw-semibold">Score <span class="text-danger">*</span></label>
-                                <input type="number" name="score" id="scoreObjectiveInput" class="form-control" 
-                                    value="{{ old('score', $question->score) }}" min="1" required>
-                                @error('score')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                            </div>
+                            <div class="col-md-6" id="scoreWrapper">
+                                    <label class="form-label fw-semibold">Score <span class="text-danger">*</span></label>
+                                    <input type="number" name="score" class="form-control" value="{{ old('score', $question->score ?? 1) }}" min="1" required>
+                                </div>
                         </div>
                     </div>
+                  </div>
 
                     <!-- ============ THEORY SCORE FIELD (Only shows for Theory) ============ -->
-                     <div class="mb-3" id="theoryScoreField" style="display: none;">
+                    <div class="mb-3" id="theoryScoreField" style="display: none;">
                         <label class="form-label fw-semibold">Score / Marks <span class="text-danger">*</span></label>
                         <input type="number" name="score" id="scoreTheoryInput" class="form-control" 
                             value="{{ old('score', $question->score) }}" min="1">
@@ -222,7 +260,7 @@ $(document).ready(function() {
     // Run on page load to set initial state
     toggleQuestionType();
 
-   let optionCount = {{ $optionCount }};
+   let optionCount = {{ is_array(old('options', $question->options)) ? count(old('options', $question->options)) : 4 }};
 
     $('#add-option').on('click', function() {
         if (optionCount >= 6) {
@@ -253,5 +291,81 @@ $(document).ready(function() {
         optionCount--;
     });
 });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Check if the question has option images
+        const hasImages = {{ $question->option_images && count($question->option_images) > 0 ? 'true' : 'false' }};
+        
+        if (hasImages) {
+            document.getElementById('toggleImageOptions').checked = true;
+            toggleOptionMode(); // Trigger the toggle function
+        }
+        
+        toggleQuestionType(); // Initialize question type
+        refreshDropdown();    // Initialize dropdown
+    });
+
+    function toggleOptionMode() {
+    const useImages = document.getElementById('toggleImageOptions').checked;
+    const textInputs = document.querySelectorAll('.option-text-input');
+    const imageInputs = document.querySelectorAll('.option-image-input');
+    const existingPreviews = document.querySelectorAll('.option-existing-image');
+    
+    if (useImages) {
+        // Hide text inputs, show image inputs and previews
+        textInputs.forEach(input => { input.classList.add('d-none'); input.disabled = true; });
+        imageInputs.forEach(input => { input.classList.remove('d-none'); input.disabled = false; });
+        existingPreviews.forEach(preview => preview.classList.remove('d-none'));
+    } else {
+        // Show text inputs, hide image inputs and previews
+        textInputs.forEach(input => { input.classList.remove('d-none'); input.disabled = false; });
+        imageInputs.forEach(input => { input.classList.add('d-none'); input.disabled = true; });
+        existingPreviews.forEach(preview => preview.classList.add('d-none'));
+    }
+    refreshDropdown();
+    }
+
+    // 2. Ensure the toggle state is loaded correctly on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        const useImages = document.getElementById('toggleImageOptions').checked;
+        if (useImages) {
+            toggleOptionMode();
+        }
+    });
+
+       // 3. Refresh Dropdown (The missing link)
+    function refreshDropdown() {
+        const select = document.getElementById('correctAnswerSelect');
+        if (!select) return;
+        
+        const isImageMode = document.getElementById('toggleImageOptions').checked;
+        const textInputs = document.querySelectorAll('.option-text-input');
+        const currentValue = select.value;
+        
+        select.innerHTML = '<option value="">-- Select Correct Option --</option>';
+        
+        textInputs.forEach((input, index) => {
+            const text = input.value.trim();
+            const letter = String.fromCharCode(65 + index);
+            
+            let display = text ? `${letter}. ${text}` : `${letter}. (Empty)`;
+            if (isImageMode) display = `${letter}. (Image Option)`;
+            
+            const opt = document.createElement('option');
+            // If image mode, the value needs to match the option index for the controller to match the image
+             opt.value = index; 
+            opt.textContent = display;
+            
+            if (opt.value === currentValue) opt.selected = true;
+            select.appendChild(opt);
+        });
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        refreshDropdown();
+    });
+
+
 </script>
 @endpush

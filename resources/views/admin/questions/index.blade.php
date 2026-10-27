@@ -280,6 +280,14 @@
                                                             {{ Str::limit($option, 25) }}
                                                         </div>
                                                     @endforeach
+                                                @elseif($question->option_images && is_array($question->option_images))
+                                                   @foreach($question->option_images as $index => $path)
+                                                        <div>
+                                                            <strong>{{ chr(65 + $index) }}.</strong> 
+                                                           <img src="{{ asset($path) }}" alt="Option {{ chr(65 + $index) }}" 
+                                                             class="rounded border" style="height: 30px; width: 30px; object-fit: cover;">
+                                                        </div>
+                                                    @endforeach
                                                 @else
                                                 <em class="text-muted">No options available</em>
                                                 @endif
