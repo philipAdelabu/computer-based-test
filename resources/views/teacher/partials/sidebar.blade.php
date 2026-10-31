@@ -36,4 +36,18 @@
             <i class="bi bi-clipboard-check-fill"></i> Upload Scores
         </a>
    </li>
+    <li class="nav-item">
+        <a class="nav-link {{ request()->routeIs('teacher.report-cards.bulk-remark*') ? 'active' : '' }}" 
+        href="{{ route('teacher.report-cards.bulk-remark') }}">
+            <i class="bi bi-chat-left-text-fill"></i> Bulk Remarks
+        </a>
+    </li>
+
+    <li class="nav-item">
+        <a class="nav-link {{ request()->routeIs('teacher.report-cards.bulk-traits*') ? 'active' : '' }}" 
+        href="{{ route('teacher.report-cards.bulk-traits') }}">
+            <i class="bi bi-list-check"></i> Bulk Traits
+        </a>
+    </li>
+
 </ul>

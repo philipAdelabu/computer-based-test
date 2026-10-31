@@ -163,6 +163,7 @@ class QuestionController extends Controller
 
    
     $imagePath = null;
+    $optionImages = null;
     if ($request->hasFile('image')) {
         $imagePath = $this->uploadImage($request->file('image'), 'questions');
     }
@@ -766,7 +767,7 @@ class QuestionController extends Controller
     {
         try {
             $questions = Question::where('subject_id', $subjectId)
-                                ->get(['id', 'question_text', 'score', 'difficulty']);
+                                ->get(['id', 'question_text', 'score', 'difficulty', 'question_type']);
             
             return response()->json($questions);
             

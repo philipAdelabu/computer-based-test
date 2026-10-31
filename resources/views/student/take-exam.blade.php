@@ -258,34 +258,65 @@
                         <div id="options-container">
                                @if($currentQuestion->is_theory)
                                     {{-- THEORY QUESTION: Show Textarea --}}
-                                    <div class="mb-3">
-                                        <label class="form-label fw-semibold text-primary">
-                                            <i class="bi bi-pencil-square"></i> Type your answer below:
-                                        </label>
-                                        <textarea name="theory_answer" 
-                                                id="theoryAnswerInput" 
-                                                class="form-control" 
-                                                rows="8" 
-                                                placeholder="Type your detailed answer here..."
-                                                style="font-size: 1rem; line-height: 1.6;">{{ $answers[$currentQuestion->id] ?? '' }}</textarea>
-                                        <small class="text-muted mt-2 d-block">
-                                            <i class="bi bi-info-circle"></i> Your answer will be saved automatically as you type.
-                                        </small>
-                                        <span id="autosaveIndicator" style="display:none; color:green;"><i class="bi bi-check2"></i> Saved</span>
-                                    </div>
+                                   <!-- ============ THEORY EXAM INTERFACE ============ -->
+                                        <!-- We use a slightly different layout for Theory -->
+                                        <div class="row">
+                                            <div class="col-lg-10 mx-auto">
+                                                <div class="card">
+                                                    <div class="card-header bg-warning text-dark">
+                                                        <h5 class="mb-0"><i class="bi bi-pencil-square"></i> Theory Examination</h5>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        @foreach($questions as $index => $question)
+                                                            <div class="mb-5 pb-4 border-bottom">
+                                                                <h6 class="fw-bold mb-3">
+                                                                    <span class="badge bg-dark me-2">Q{{ $index + 1 }}</span>
+                                                                    {!! \Purifier::clean($question->question_text) !!}
+                                                                    <span class="text-muted ms-2">({{ $question->score }} marks)</span>
+                                                                </h6>
+
+                                                                @if($question->has_image)
+                                                                    <div class="mb-3">
+                                                                        <img src="{{ $question->image_url }}" class="img-fluid rounded" style="max-height: 250px;">
+                                                                    </div>
+                                                                @endif
+
+                                                                <div class="mt-3">
+                                                                    <label class="form-label text-muted small">Your Answer:</label>
+                                                                    <textarea name="theory_answers[{{ $question->id }}]" 
+                                                                            class="form-control theory-textarea" 
+                                                                            rows="4" 
+                                                                            placeholder="Type your answer here...">{{ $answers[$question->id] ?? '' }}</textarea>
+                                                                </div>
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
+                                                    <div class="card-footer bg-white text-center">
+                                                        <button type="button" class="btn btn-success btn-lg px-5" data-bs-toggle="modal" data-bs-target="#submitModal">
+                                                            <i class="bi bi-check-circle"></i> Submit Theory Exam
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                 @else
-                                    @foreach($currentQuestion->options as $index => $option)
+                                     @foreach($currentQuestion->options as $index => $option)
                                         @php
                                             $letter = chr(65 + $index);
-                                            $isSelected = isset($answers[$currentQuestion->id]) && $answers[$currentQuestion->id] === $option;
-                                        @endphp
-                                         @php
+                                            
+                                            // Check if there is an image uploaded for this specific option
                                             $optionImage = $currentQuestion->option_images[$index] ?? null;
+                                            
+                                            // The value submitted is either the image path or the text
                                             $optionValue = $optionImage ? $optionImage : $option;
+                                            
+                                            // Check if this option is currently selected
                                             $isSelected = isset($answers[$currentQuestion->id]) && $answers[$currentQuestion->id] == $optionValue;
                                         @endphp
-
-                                        <div class="form-check mb-3 p-3 border rounded option-item {{ $isSelected ? 'selected' : '' }}">
+                                        
+                                        <div class="form-check mb-3 p-3 border rounded option-item {{ $isSelected ? 'selected' : '' }}" 
+                                            data-question="{{ $currentQuestion->id }}"
+                                            data-option="{{ $optionValue }}">
                                             <input class="form-check-input" type="radio" 
                                                 name="answer" 
                                                 value="{{ $optionValue }}" 
@@ -293,12 +324,18 @@
                                                 {{ $isSelected ? 'checked' : '' }}>
                                             
                                             <label class="form-check-label w-100 d-flex align-items-center" for="option{{ $loop->index }}">
-                                                <span class="fw-bold me-2">{{ $letter }}.</span>
+                                                <span class="fw-bold me-3 fs-5">{{ $letter }}.</span>
                                                 
                                                 @if($optionImage)
-                                                    <img src="{{ asset($optionImage) }}" alt="Option {{ $letter }}" style="max-height: 150px; object-fit: contain;" class="rounded border p-1">
+                                                    <!-- Show the Image -->
+                                                    <div class="p-2 bg-white rounded border">
+                                                        <img src="{{ asset($optionImage) }}" 
+                                                            alt="Option {{ $letter }}" 
+                                                            style="max-height: 150px; max-width: 100%; object-fit: contain;">
+                                                    </div>
                                                 @else
-                                                    {{ $option }}
+                                                    <!-- Show the Text -->
+                                                    <span>{{ $option }}</span>
                                                 @endif
                                             </label>
                                         </div>

@@ -218,10 +218,6 @@ Route::middleware(['auth', CheckRole::class . ':teacher'])->prefix('teacher')->n
     Route::get('/exams/questions/{subjectId}', [ExamController::class, 'getQuestions'])->name('exams.questions');
     Route::get('/exams/students/{examId}', [ExamController::class, 'getStudents'])->name('exams.students');
 
-    Route::get('/report-cards', [ReportCardController::class, 'index'])->name('report-cards.index');
-    Route::post('/report-cards/generate', [ReportCardController::class, 'generate'])->name('report-cards.generate');
-    Route::get('/report-cards/{id}', [ReportCardController::class, 'show'])->name('report-cards.show');
-    Route::post('/report-cards/class-report', [ReportCardController::class, 'classReport'])->name('report-cards.class-report');
 // ============ SCORE MANAGEMENT ============
     Route::get('/scores', [ScoreController::class, 'index'])->name('scores');
     Route::get('/scores/create', [ScoreController::class, 'create'])->name('scores.create');
@@ -246,7 +242,26 @@ Route::middleware(['auth', CheckRole::class . ':teacher'])->prefix('teacher')->n
     Route::post('/students/{studentId}/reactivate-assessments', 
         [TeacherStudentAccessController::class, 'reactivate'])
         ->name('students.reactivate-assessments');
+    
+    
+    Route::get('/report-cards', [ReportCardController::class, 'index'])->name('report-cards.index');
+    Route::post('/report-cards/generate', [ReportCardController::class, 'generate'])->name('report-cards.generate');
+    // Bulk Remarks
+    Route::get('/report-cards/bulk-remark', [ReportCardController::class, 'bulkRemarkForm'])->name('report-cards.bulk-remark');
+    Route::post('/report-cards/bulk-remark', [ReportCardController::class, 'bulkRemarkStore'])->name('report-cards.bulk-remark.store');
+    Route::post('/report-cards/class-report', [ReportCardController::class, 'classReport'])->name('report-cards.class-report');
+    Route::get('/report-cards/bulk-traits', [ReportCardController::class, 'bulkTraitsForm'])->name('report-cards.bulk-traits');
+    Route::post('/report-cards/bulk-traits', [ReportCardController::class, 'bulkTraitsStore'])->name('report-cards.bulk-traits.store');
+      // NEW: Traits Edit Routes
+    Route::get('/report-cards/{id}/traits', [ReportCardController::class, 'editTraits'])->name('report-cards.traits.edit');
+    Route::put('/report-cards/{id}/traits', [ReportCardController::class, 'updateTraits'])->name('report-cards.traits.update');
+   
+         // Class Teacher Remarks
+    Route::get('/report-cards/{id}/remark', [ReportCardController::class, 'editClassTeacherRemark'])->name('report-cards.remark.edit');
+    Route::put('/report-cards/{id}/remark', [ReportCardController::class, 'updateClassTeacherRemark'])->name('report-cards.remark.update');
+     Route::get('/report-cards/{id}', [ReportCardController::class, 'show'])->name('report-cards.show');
 
+    
 });
 
 // Student Routes

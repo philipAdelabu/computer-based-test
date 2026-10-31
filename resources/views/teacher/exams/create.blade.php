@@ -32,6 +32,27 @@
             <div class="invalid-feedback">{{ $message }}</div>
         @enderror
     </div>
+
+       <!-- NEW: Exam Mode Selection -->
+    <div class="col-md-3">
+        <label class="form-label fw-semibold">Exam Mode <span class="text-danger">*</span></label> 
+        <select name="exam_mode" class="form-select" required id="examMode" >
+            <option value="objective">Objective (CBT)</option>
+            <option value="theory">Theory (Manual Grading)</option>
+        </select>
+    </div>
+
+    <div class="col-md-4">
+    <label class="form-label fw-semibold">Shuffle Questions?</label>
+    <div class="form-check form-switch mt-2">
+        <input class="form-check-input" type="checkbox" name="shuffle_questions" value="1" 
+               id="shuffleQuestions" {{ old('shuffle_questions') ? 'checked' : '' }}>
+        <label class="form-check-label" for="shuffleQuestions">
+            Randomize question order for each student
+        </label>
+    </div>
+</div>
+
     <div class="col-md-3">
         <label class="form-label fw-semibold">Max Marks <span class="text-danger">*</span></label>
         <input type="number" name="max_marks" id="maxMarks" class="form-control @error('max_marks') is-invalid @enderror" 
@@ -328,7 +349,14 @@
 
 @push('scripts')
 <script>
+
+
+
 $(document).ready(function() {
+
+   let availableQuestions = [];
+   function holdQuestion() {};
+   holdQuestion.filtered = 0;
     // Schedule type toggle
     function toggleScheduleFields() {
         const selected = $('input[name="schedule_type"]:checked').val();
@@ -385,7 +413,7 @@ $(document).ready(function() {
     });
     
     // Load questions when subject is selected
-    let availableQuestions = [];
+   
     
     $('#subjectSelect').on('change', function() {
         const subjectId = $(this).val();
@@ -416,7 +444,9 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(response) {
                 availableQuestions = response;
-                
+
+               
+                  
                 if (!response || response.length === 0) {
                     $('#noQuestionsMessage').html(`
                         <i class="bi bi-info-circle"></i> 
@@ -428,7 +458,10 @@ $(document).ready(function() {
                     `);
                     return;
                 }
-                
+                  holdQuestion.availableQuestions = availableQuestions; 
+                  filterAndRenderQuestions(availableQuestions);
+                  return ;
+                  /*
                 let html = '<div class="border rounded p-3" style="max-height: 400px; overflow-y: auto;">';
                 response.forEach((question, index) => {
                     html += `
@@ -483,9 +516,10 @@ $(document).ready(function() {
                 $(document).on('click', '#deselectAllBtn', function() {
                     $('.question-checkbox').prop('checked', false);
                     updateStats();
+                    
                 });
-                
-                updateStats();
+   
+               updateStats();  */
             },
             error: function(xhr, status, error) {
                 console.error('Error:', error);
@@ -511,7 +545,7 @@ $(document).ready(function() {
         
         $('#selectedCount').text(count);
         $('#totalScore').text(totalScore);
-        $('#totalQuestions').text(availableQuestions.length);
+        $('#totalQuestions').text(holdQuestion.filtered);
     }
     
     // Form validation
@@ -552,7 +586,7 @@ $(document).ready(function() {
     
     // Remove novalidate on page load to allow HTML5 validation
     $('#examForm').removeAttr('novalidate');
-});
+
   
  // Add to your existing <script> section
 
@@ -582,6 +616,83 @@ $('#assessmentType').on('change', function() {
 
 // Trigger on page load
 $('#assessmentType').trigger('change');
+
+    // ============ FILTER AND RENDER QUESTIONS ============
+    
+    let selectedMode = 'objective';
+    $('#examMode').on('change', function() { 
+        selectedMode = $('#examMode').val(); 
+        if((holdQuestion.availableQuestions).length > 0)
+          filterAndRenderQuestions(holdQuestion.availableQuestions);
+    });
+
+    function filterAndRenderQuestions(availableQuestions = []) {
+        const selectedMode = $('#examMode').val(); // 'objective' or 'theory'
+        const container = $('#questionsList');
+       
+        if (availableQuestions.length === 0) return;
+
+        // Filter questions by mode
+        const filtered = availableQuestions.filter(q => q.question_type === selectedMode);
+        holdQuestion.filtered = filtered.length;
+        
+        $('#questionModeHint').text(`Showing ${selectedMode.toUpperCase()} questions only`);
+
+        if (filtered.length === 0) {
+            $('#noQuestionsMessage').html(`<div class="alert alert-warning mb-0"><i class="bi bi-exclamation-triangle"></i> No ${selectedMode} questions found for this subject. Please add some in the Question Bank first.</div>`).show();
+            container.hide();
+            $('#questionStats').hide();
+            return;
+        }
+
+        let html = `
+            <div class="mb-2">
+                <button type="button" class="btn btn-sm btn-outline-primary" id="selectAllBtn"><i class="bi bi-check-all"></i> Select All</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="deselectAllBtn"><i class="bi bi-x-circle"></i> Deselect All</button>
+            </div>
+            <div class="border rounded p-3" style="max-height: 400px; overflow-y: auto;">
+        `;
+        
+        filtered.forEach((question, index) => {
+            const isTheory = question.question_type === 'theory';
+            const badgeColor = isTheory ? 'warning text-dark' : 'primary';
+            
+            html += `
+                <div class="form-check p-2 border-bottom">
+                    <input class="form-check-input question-checkbox" type="checkbox" 
+                           name="question_ids[]" value="${question.id}" id="q_${question.id}">
+                    <label class="form-check-label w-100" for="q_${question.id}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <span class="badge bg-secondary me-2">${index + 1}</span>
+                                <span class="badge bg-${badgeColor} me-2">${question.question_type.toUpperCase()}</span>
+                                ${question.question_text}
+                            </div>
+                            <div>
+                                <span class="badge bg-info">${question.score} pts</span>
+                                <span class="badge bg-${question.difficulty === 'easy' ? 'success' : question.difficulty === 'medium' ? 'warning' : 'danger'}">${question.difficulty}</span>
+                            </div>
+                        </div>
+                    </label>
+                </div>
+            `;
+        });
+        html += '</div>';
+        
+        $('#noQuestionsMessage').hide();
+        container.html(html).show();
+        $('#questionStats').show();
+        
+        // Attach events
+        $('.question-checkbox').on('change', updateStats);
+        $('#selectAllBtn').on('click', function() { $('.question-checkbox').prop('checked', true); updateStats(); });
+        $('#deselectAllBtn').on('click', function() { $('.question-checkbox').prop('checked', false); updateStats(); });
+        
+        updateStats();
+    }
+
+
+}); // End of Docurment Ready.
 
 </script>
 @endpush

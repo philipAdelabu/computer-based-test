@@ -43,6 +43,8 @@ class Exam extends Model
         'max_attempts',
         'passing_score',
         'show_answers_after_completion',
+        'exam_mode',
+        'shuffle_questions',
     ];
 
     protected $casts = [
@@ -57,6 +59,7 @@ class Exam extends Model
         'max_marks' => 'integer',
         'benchmark' => 'integer',
         'academic_year' => 'integer',
+        'shuffle_questions' => 'boolean',
     ];
 
     // ============ NEW HELPER METHODS ============

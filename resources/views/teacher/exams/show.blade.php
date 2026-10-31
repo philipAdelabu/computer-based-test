@@ -10,6 +10,16 @@
 @section('page-title', 'Exam Details')
 
 @section('content')
+
+<!-- In the teacher exam show.blade.php -->
+@if($exam->exam_mode === 'theory')
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i> This is a Theory exam. Student submissions must be graded manually.
+        <a href="{{ route('teacher.exams.submissions', $exam->id) }}" class="btn btn-sm btn-primary ms-3">View Student Answers</a>
+    </div>
+@endif
+
+
 <div class="row">
     <div class="col-md-8">
         <div class="card">

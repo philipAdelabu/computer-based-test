@@ -161,7 +161,7 @@
                             <div class="row mb-3" id="objectiveCorrectAnswerWrapper">
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold">Correct Answer <span class="text-danger">*</span></label>
-                                    <select name="correct_answer" id="correctAnswerSelect" class="form-select" required>
+                                    <select name="correct_answer" id="correctAnswerSelect" class="form-select">
                                         <option value="">-- Select Correct Option --</option>
                                         @if(is_array($options))
                                             @foreach($options as $index => $opt)
@@ -365,6 +365,20 @@ $(document).ready(function() {
     document.addEventListener('DOMContentLoaded', function() {
         refreshDropdown();
     });
+
+
+    document.getElementById('examForm')?.addEventListener('submit', function(e) {
+    const isTheory = document.getElementById('typeTheory').checked;
+    const correctAnswer = document.getElementById('correctAnswerSelect').value;
+    
+    if (!isTheory && !correctAnswer) {
+        e.preventDefault(); // Stop submission
+        alert('Please select a correct answer for the objective question.');
+        
+        // Unhide the dropdown just in case
+        document.getElementById('objectiveCorrectAnswerWrapper').style.display = 'block';
+    }
+});
 
 
 </script>

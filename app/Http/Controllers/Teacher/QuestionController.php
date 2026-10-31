@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Teacher;
 
 use App\Http\Controllers\Controller;
-use App\Http\Contollers\FuncController;
+use App\Http\Controllers\FuncController;
 use App\Models\Subject;
 use App\Models\Question;
 use App\Models\ClassModel;
@@ -183,11 +183,12 @@ class QuestionController extends Controller
 
       // NEW: Handle Option Images
         $finalCorrectAnswer = null;
+        $optionImages = null;
         if ($validated['question_type'] === 'objective') {
             // The dropdown will submit either the text (e.g., "Paris") or the letter (e.g., "A")
             $finalCorrectAnswer = $validated['correct_answer'];
 
-            if ($request->hasFile('option_images')) {
+            if ($request->hasFile('option_images')) { 
                 $optionImages = [];
                 
                 foreach ($request->file('option_images') as $index => $file) {
@@ -398,7 +399,7 @@ class QuestionController extends Controller
      }
 
     private function deleteImage($imagePath){
-         FuncController::deleteIamge($imagePath);
+         FuncController::deleteImage($imagePath);
     }
 
 
@@ -636,7 +637,7 @@ public function importCSV(Request $request)
             }
             
             $questions = Question::where('subject_id', $subjectId)
-                                ->get(['id', 'question_text', 'options', 'correct_answer', 'score', 'difficulty']);
+                                ->get(['id', 'question_text', 'options', 'correct_answer', 'score', 'difficulty', 'question_type']);
             
             return response()->json($questions);
             

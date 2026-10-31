@@ -388,10 +388,18 @@ public function exams(Request $request)
         }
         
         // Load questions UNIQUELY (avoid duplicates)
-        $questions = $attempt->exam->questions()
-            ->distinct()
-            ->orderBy('exam_questions.question_order')
-            ->get();
+        $questions = $attempt->exam->questions()->distinct();
+
+          // ============ THE SHUFFLE LOGIC ============
+            if ($attempt->exam->shuffle_questions) {
+                // If shuffle is enabled, order randomly
+                $questionsQuery->inRandomOrder();
+            } else {
+                // If not, use the default order
+                $questionsQuery->orderBy('exam_questions.question_order');
+            }
+
+            $questions = $questionsQuery->get();
         
         // Fallback: if somehow no questions, return with error
         if ($questions->isEmpty()) {
@@ -427,6 +435,7 @@ public function exams(Request $request)
         
         $totalQuestions = $questions->count();
         $answeredCount = count($answers);
+       
         
         return view('student.take-exam', compact(
             'attempt', 'questions', 'answers', 
@@ -483,6 +492,7 @@ public function exams(Request $request)
         // ============ SINGLE SOURCE OF TRUTH FOR SCORE CALCULATION ============
         $answers = $attempt->answers ?? [];
         $questions = $attempt->exam->questions;
+        $examMode = $attempt->exam->exam_mode; 
 
         $score = 0;
         $correctCount = 0;
@@ -492,7 +502,10 @@ public function exams(Request $request)
         $theoryCount = 0; // NEW
         $hasTheoryQuestions = false; 
 
-        foreach ($questions as $question) {
+        if($examMode != 'objective'){
+            $score = 0;
+        }else 
+           foreach ($questions as $question) {
             // 1. Handle Theory Questions
             if ($question->is_theory) {
                 $hasTheoryQuestions = true;
@@ -543,7 +556,7 @@ public function exams(Request $request)
             ->delete();
 
         // Set remarks
-        $remarks = $hasTheoryQuestions 
+        $remarks = ($examMode === 'theory')
             ? 'Pending Theory Grading' 
             : $this->calculateRemarks($percentage);
 
@@ -551,12 +564,12 @@ public function exams(Request $request)
             'student_id' => $student->id,
             'subject_id' => $attempt->exam->subject_id,
             'exam_id' => $attempt->exam->id,
-            'assessment_type' => 'CBT Exam',
+            'assessment_type' => $examMode === 'theory' ? 'Theoretical Assessment' : 'CBT Assessment',
             'score' => $score,
             'max_score' => $totalScore, 
             'percentage' => round($percentage, 2),
             // If there are theory questions, we don't assign a final grade yet
-            'grade' => $hasTheoryQuestions ? 'Pending' : $this->calculateGrade($percentage), 
+            'grade' => ($examMode === 'theory') ? 'Pending' : $this->calculateGrade($percentage), 
             'remarks' => $remarks,
             'assessment_date' => now(),
         ]);

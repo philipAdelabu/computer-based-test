@@ -311,6 +311,19 @@ $(document).ready(function() {
         toggleQuestionType();
         refreshDropdown();
     });
+
+    document.getElementById('examForm')?.addEventListener('submit', function(e) {
+    const isTheory = document.getElementById('typeTheory').checked;
+    const correctAnswer = document.getElementById('correctAnswerSelect').value;
+    
+    if (!isTheory && !correctAnswer) {
+        e.preventDefault(); // Stop submission
+        alert('Please select a correct answer for the objective question.');
+        
+        // Unhide the dropdown just in case
+        document.getElementById('objectiveCorrectAnswerWrapper').style.display = 'block';
+    }
+});
 </script>
 
 @endpush

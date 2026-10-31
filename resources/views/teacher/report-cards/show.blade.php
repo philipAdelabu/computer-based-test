@@ -16,10 +16,22 @@
             Swipe left or right to view the full report card. Pinch to zoom.
         </div>
         <div class="card report-card-wrapper">
-            <div class="card-header bg-white no-print">
+              <div class="card-header bg-white no-print">
                 <div class="d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Report Card Preview</h5>
                     <div>
+
+                        <!-- NEW BUTTON -->
+                        <a href="{{ route('teacher.report-cards.remark.edit', $reportCard->id) }}" 
+                        class="btn btn-warning btn-sm">
+                            <i class="bi bi-chat-left-text"></i> Edit My Remark
+                        </a>
+
+                         <a href="{{ route('teacher.report-cards.traits.edit', $reportCard->id) }}" 
+                            class="btn btn-info btn-sm text-white me-1">
+                                <i class="bi bi-list-check"></i> Edit Traits & Skills
+                         </a>
+                        
                         <button onclick="window.print()" class="btn btn-primary btn-sm">
                             <i class="bi bi-printer"></i> Print
                         </button>
@@ -28,7 +40,7 @@
                         </a>
                     </div>
                 </div>
-            </div>
+             </div>
             <div class="card-body p-0">
                 @include('partials.report-card-body', ['reportCard' => $reportCard])
             </div>
