@@ -75,9 +75,9 @@ class User extends Authenticatable
         }
 
         // Storage fallback
-        $storagePath = storage_path('app/public/' . $this->photo_path);
+        $storagePath = storage_path($this->photo_path);
         if (file_exists($storagePath)) {
-            return asset('storage/' . $this->photo_path);
+            return asset($this->photo_path);
         }
 
         return null;

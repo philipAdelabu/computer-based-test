@@ -21,7 +21,7 @@ use App\Http\Middleware\CheckRole;
 use App\Http\Controllers\RichEditorController;
 
 // Auth Routes
-Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
+Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('login', [LoginController::class, 'login']);
 Route::post('logout', [LoginController::class, 'logout'])->name('logout');
 
@@ -297,9 +297,11 @@ Route::get('/', function () {
             return redirect()->route('student.dashboard');
         }
     }
-    
+
     return view('welcome');
 })->name('home');
+
+
 
 // routes/web.php - Add for debugging
 Route::get('/test-excel', function() {

@@ -250,7 +250,7 @@
                                     <div class="d-flex">
                                         @if($question->has_image)
                                             <a href="{{ $question->image_url }}" target="_blank" class="me-2">
-                                                <img src="{{ $question->image_url }}" 
+                                                <img src="{{ asset($question->image_url) }}" 
                                                      style="width: 40px; height: 40px; object-fit: cover;"
                                                      class="rounded border">
                                             </a>
@@ -272,25 +272,38 @@
                                 </td>
                                 <td>
                                     <div class="small">
-                                        @if($question->question_type == 'theory')
-                                            <em class="text-muted">Theory question</em>
-                                        @else
-                                             @if($question->options && is_array($question->options))
-                                            @foreach($question->options as $index => $option)
-                                                <div>
-                                                    <strong>{{ chr(65 + $index) }}.</strong> 
-                                                    {{ Str::limit($option, 25) }}
-                                                </div>
-                                            @endforeach
-                                           @else
-                                            <em class="text-muted">No options available</em>
-                                            @endif
-                                        @endif
+                                           @if($question->question_type == 'theory')
+                                            <em class="text-muted">Theory question</em> 
+                                            @else
+                                                @if($question->options && is_array($question->options))
+                                                    @foreach($question->options as $index => $option)
+                                                        <div>
+                                                            <strong>{{ chr(65 + $index) }}.</strong> 
+                                                            {{ Str::limit($option, 25) }}
+                                                        </div>
+                                                    @endforeach
+                                                @elseif($question->option_images && is_array($question->option_images))
+                                                   @foreach($question->option_images as $index => $path)
+                                                        <div>
+                                                            <strong>{{ chr(65 + $index) }}.</strong> 
+                                                           <img src="{{ asset($path) }}" alt="Option {{ chr(65 + $index) }}" 
+                                                             class="rounded border" style="height: 30px; width: 30px; object-fit: cover;">
+                                                        </div>
+                                                    @endforeach
+                                                @else
+                                                <em class="text-muted">No options available</em>
+                                                @endif
+                                         @endif
                                     </div>
                                 </td>
                                 <td>
                                     <span class="badge bg-success">
-                                        {{ $question->correct_answer }}
+                                        {{ 
+                                          (is_numeric($question->correct_answer)
+                                        && $question->correct_answer <= 5 
+                                        && $question->correct_answer >=0) ?
+                                        $options[$question->correct_answer] : $question->correct_answer
+                                       }}
                                     </span>
                                 </td>
                                 <td>

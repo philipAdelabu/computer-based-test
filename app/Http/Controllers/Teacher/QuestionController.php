@@ -82,6 +82,8 @@ class QuestionController extends Controller
         
         $totalQuestions = Question::whereIn('subject_id', $teacherSubjectIds)->count();
         $filteredCount = $questions->total();
+
+        $options = ['A', 'B', 'C', 'D', 'E', 'F'];
         
         return view('teacher.questions.index', compact(
             'questions',
@@ -92,7 +94,8 @@ class QuestionController extends Controller
             'totalQuestions',
             'filteredCount',
             'teacherSubjects',
-            'teacherId'
+            'teacherId',
+            'options',
         ));
     }
 

@@ -271,7 +271,7 @@
                                 <td>
                                     <div class="small">
                                            @if($question->question_type == 'theory')
-                                            <em class="text-muted">Theory question</em>
+                                            <em class="text-muted">Theory question</em> 
                                             @else
                                                 @if($question->options && is_array($question->options))
                                                     @foreach($question->options as $index => $option)
@@ -296,7 +296,12 @@
                                 </td>
                                 <td>
                                     <span class="badge bg-success">
-                                        {{ $question->correct_answer }}
+                                       {{ 
+                                          (is_numeric($question->correct_answer)
+                                        && $question->correct_answer <= 5 
+                                        && $question->correct_answer >=0) ?
+                                        $options[$question->correct_answer] : $question->correct_answer
+                                       }}
                                     </span>
                                 </td>
                                 <td>

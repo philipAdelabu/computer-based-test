@@ -24,7 +24,7 @@ class FuncController extends Controller
             $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
             $file->move($uploadPath, $filename);
 
-            return 'uploads/' . $folder . '/' . $filename;
+            return 'cbt-exam/public/uploads/' . $folder . '/' . $filename;
         }
 
         /**
@@ -70,7 +70,7 @@ class FuncController extends Controller
         $file->move($uploadPath, $filename);
         
         // Return relative path for storage in DB
-        return 'uploads/' . $folder . '/' . $filename;
+        return 'cbt-exam/public/uploads/' . $folder . '/' . $filename;
     }
 
 

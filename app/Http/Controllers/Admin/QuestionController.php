@@ -63,6 +63,8 @@ class QuestionController extends Controller
         // Group counts
         $totalQuestions = Question::count();
         $filteredCount = $questions->total();
+
+        $options = ['A', 'B', 'C', 'D', 'E', 'F'];
         
         return view('admin.questions.index', compact(
             'questions',
@@ -71,7 +73,8 @@ class QuestionController extends Controller
             'selectedSubject',
             'selectedClass',
             'totalQuestions',
-            'filteredCount'
+            'filteredCount',
+            'options',
         ));
     }
 

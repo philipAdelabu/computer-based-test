@@ -58,9 +58,9 @@ class Question extends Model
         }
         
         // Fallback: check the storage folder
-        $storagePath = storage_path('app/public/' . $this->image_path);
+        $storagePath = storage_path($this->image_path);
         if (file_exists($storagePath)) {
-            return asset('storage/' . $this->image_path);
+            return asset($this->image_path);
         }
         
         return null;

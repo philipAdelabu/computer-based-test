@@ -75,7 +75,7 @@ class Setting extends Model
         // Fallback: check storage folder
         $storagePath = storage_path('app/public/' . $value);
         if (file_exists($storagePath)) {
-            return asset('storage/' . $value);
+            return asset($value);
         }
         
         return $default;

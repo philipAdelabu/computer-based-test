@@ -67,7 +67,8 @@
                     <!-- ============ QUESTION TEXT ============ -->
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Question Text <span class="text-danger">*</span></label>
-                        <textarea name="question_text" class="form-control @error('question_text') is-invalid @enderror" 
+                        <textarea name="question_text" id="questionTextEditor" 
+                                        class="form-control rich-editor @error('question_text') is-invalid @enderror" 
                                   rows="4" required>{{ old('question_text', $question->question_text) }}</textarea>
                         @error('question_text')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
@@ -366,6 +367,7 @@ $(document).ready(function() {
         refreshDropdown();
     });
 
+
     document.getElementById('examForm')?.addEventListener('submit', function(e) {
     const isTheory = document.getElementById('typeTheory').checked;
     const correctAnswer = document.getElementById('correctAnswerSelect').value;
@@ -382,3 +384,5 @@ $(document).ready(function() {
 
 </script>
 @endpush
+
+@include('partials.rich-editor')

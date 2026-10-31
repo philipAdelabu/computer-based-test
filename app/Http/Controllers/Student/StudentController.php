@@ -388,7 +388,7 @@ public function exams(Request $request)
         }
         
         // Load questions UNIQUELY (avoid duplicates)
-        $questions = $attempt->exam->questions()->distinct();
+        $questionsQuery = $attempt->exam->questions()->distinct();
 
           // ============ THE SHUFFLE LOGIC ============
             if ($attempt->exam->shuffle_questions) {
