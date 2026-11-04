@@ -77,14 +77,17 @@
                             </td>
                             <td>{{ number_format($result->percentage, 1) }}%</td>
                             <td>
-                                <span class="badge 
-                                    @if($result->percentage >= 80) bg-success
-                                    @elseif($result->percentage >= 60) bg-warning
-                                    @elseif($result->percentage >= 40) bg-info
-                                    @else bg-danger
-                                    @endif">
-                                    {{ $result->grade }}
-                                </span>
+                                  @if($result->remarks === 'Pending Theory Grading' || $result->grade === null)
+                                        <span class="badge bg-warning text-dark">Pending</span>
+                                    @else
+                                        <span class="badge 
+                                            @if($result->percentage >= 80) bg-success
+                                            @elseif($result->percentage >= 50) bg-warning
+                                            @else bg-danger
+                                            @endif">
+                                            {{ $result->grade }}
+                                        </span>
+                                    @endif
                             </td>
                             <td>{{ $result->assessment_date->format('M d, Y') }}</td>
                             <td>

@@ -12,8 +12,8 @@
 @section('content')
 @php
     // Determine if the exam is pending teacher grading
-    $isPending = ($attempt->exam->show_answers_after_completion === false) || ($result->remarks === 'Pending Theory Grading' && $result->score == 0);
-    
+  $isPending = ($result->grade === null) || ($result->remarks === 'Pending Theory Grading');
+ 
     // Check if student passed based on the benchmark
     $passed = $result->exam->passing_score 
         ? $result->percentage >= $result->exam->passing_score 
@@ -60,6 +60,7 @@
                     </div>
                     
                     <div class="row g-4 mb-4">
+
                         <div class="col-md-3">
                             <div class="p-3 bg-light rounded">
                                 <h6 class="text-muted">Score</h6>
@@ -72,6 +73,7 @@
                                 <h3>{{ number_format($result->percentage, 1) }}%</h3>
                             </div>
                         </div>
+                          <!-- Inside the summary row -->
                         <div class="col-md-3">
                             <div class="p-3 bg-light rounded">
                                 <h6 class="text-muted">Grade</h6>
@@ -79,12 +81,7 @@
                                     @if($isPending)
                                         <span class="badge bg-secondary" style="font-size: 1.5rem; padding: 0.5rem 1.5rem;">—</span>
                                     @else
-                                        <span class="badge 
-                                            @if($result->percentage >= 70) bg-success
-                                            @elseif($result->percentage >= 50) bg-warning
-                                            @else bg-danger
-                                            @endif" 
-                                            style="font-size: 1.5rem; padding: 0.5rem 1.5rem;">
+                                        <span class="badge bg-{{ $result->grade_color ?? 'primary' }}" style="font-size: 1.5rem; padding: 0.5rem 1.5rem;">
                                             {{ $result->grade }}
                                         </span>
                                     @endif
@@ -97,8 +94,6 @@
                                 <h3>
                                     @if($isPending)
                                         <span class="badge bg-warning text-dark" style="font-size: 1.2rem; padding: 0.5rem 1rem;">Pending</span>
-                                    @elseif($passed === null)
-                                        <span class="badge bg-primary" style="font-size: 1.2rem; padding: 0.5rem 1rem;">Completed</span>
                                     @elseif($passed)
                                         <span class="badge bg-success" style="font-size: 1.2rem; padding: 0.5rem 1rem;">Passed</span>
                                     @else
@@ -107,14 +102,16 @@
                                 </h3>
                             </div>
                         </div>
+                        
+
                     </div>
                     
-                    @if($isPending)
+                     @if($isPending)
                         <div class="alert alert-warning">
                             <i class="bi bi-clock-history me-2"></i>
                             This assessment contains theory questions. Your final result will be available once your teacher grades them.
                         </div>
-                    @elseif($passed !== null)
+                     @elseif($passed !== null)
                         <div class="alert {{ $passed ? 'alert-success' : 'alert-danger' }}">
                             <i class="bi {{ $passed ? 'bi-check-circle' : 'bi-x-circle' }} me-2"></i>
                             @if($passed)
@@ -123,7 +120,7 @@
                                 You did not meet the passing score of {{ $result->exam->passing_score }}%.
                             @endif
                         </div>
-                    @endif
+                     @endif
                 </div>
             </div>
             
@@ -186,6 +183,7 @@
                         <h6 class="mb-0"><i class="bi bi-list-check"></i> Question Review</h6>
                     </div>
                     <div class="card-body">
+                        
                         @foreach($questionBreakdown as $index => $item)
                             @php
                                 $isTheory = $item['question']->is_theory;
@@ -240,22 +238,32 @@
                                     </div>
                                 @else
                                     <div class="row">
-                                        @foreach($item['question']->options as $optIndex => $option)
+                                     
+                                        @php
+                                            $options = $item['question']->options ?? [];
+                                            $images = $item['question']->option_images ?? [];
+                                            
+                                            // If images are saved as a string (JSON), decode them
+                                            if (is_string($images)) {
+                                                $images = json_decode($images, true) ?? [];
+                                            }
+                                            
+                                            // Ensure arrays are clean and indexed 0, 1, 2, 3
+                                            $options = array_values(is_array($options) ? $options : []);
+                                            $images = array_values(is_array($images) ? $images : []);
+                                            
+                                            // Determine how many options to show (max of text options or images)
+                                            $totalOptions = max(count($options), count($images));
+                                        @endphp
+
+                                        @for ($optIndex = 0; $optIndex < $totalOptions; $optIndex++)
                                             @php
                                                 $letter = chr(65 + $optIndex);
+                                                $optionText = $options[$optIndex] ?? null;
+                                                $optionImage = $images[$optIndex] ?? null;
                                                 
-                                                // Check if this option has an image
-                                                $optionImage = $item['question']->option_images[$optIndex] ?? null;
-                                                
-                                                // Determine what the "value" of this option is (image path or text)
-                                                $optionValue = $optionImage ? $optionImage : $option;
-                                                
-                                                // Check if this is the correct answer
-                                                $isCorrect = trim((string) $optionValue) === trim((string) $item['correct_answer']);
-                                                
-                                                // Check if the student picked this option
-                                                $isStudentChoice = $item['student_answer'] !== null 
-                                                    && trim((string) $optionValue) === trim((string) $item['student_answer']);
+                                                $isCorrect = $letter === $item['correct_answer'];
+                                                $isStudentChoice = $item['student_answer'] === $letter;
                                             @endphp
                                             
                                             <div class="col-md-6 mb-2">
@@ -268,27 +276,24 @@
                                                     <strong class="me-2">{{ $letter }}.</strong>
                                                     
                                                     @if($optionImage)
-                                                        {{-- Display Image --}}
-                                                        <img src="{{ asset($optionImage) }}" 
-                                                             alt="Option {{ $letter }}" 
-                                                             style="max-height: 80px; max-width: 100%; object-fit: contain;" 
-                                                             class="rounded bg-white p-1">
-                                                    @else
-                                                        {{-- Display Text --}}
-                                                        {{ $option }}
+                                                        <img src="{{ asset($optionImage) }}" alt="Option {{ $letter }}" 
+                                                            style="max-height: 100px; max-width: 100%; object-fit: contain;" 
+                                                            class="rounded bg-white p-1 border">
+                                                    @elseif($optionText)
+                                                        {{ $optionText }}
                                                     @endif
                                                     
-                                                    <div class="ms-auto">
+                                                    <div class="ms-auto ms-3">
                                                         @if($isCorrect)
-                                                            <i class="bi bi-check-circle-fill"></i>
-                                                        @endif
-                                                        @if($isStudentChoice && !$isCorrect)
-                                                            <i class="bi bi-x-circle-fill"></i>
+                                                            <span class="badge bg-white text-success fw-bold"><i class="bi bi-check-circle-fill"></i> Correct</span>
+                                                        @elseif($isStudentChoice)
+                                                            <span class="badge bg-white text-danger fw-bold"><i class="bi bi-x-circle-fill"></i> Your Answer</span>
                                                         @endif
                                                     </div>
                                                 </div>
                                             </div>
-                                        @endforeach
+                                        @endfor
+    
                                     </div>
                                 @endif
                             </div>

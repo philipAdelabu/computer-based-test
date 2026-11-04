@@ -66,5 +66,11 @@
             <i class="bi bi-award-fill"></i> Grading System
         </a>
     </li>
+    <li class="nav-item">
+        <a class="nav-link {{ request()->routeIs('profile.password*') ? 'active' : '' }}" 
+        href="{{ route('profile.password') }}">
+            <i class="bi bi-shield-lock-fill"></i> Change Password
+        </a>
+    </li>
     
 </ul>

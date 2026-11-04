@@ -105,7 +105,7 @@
                         <button type="submit" class="btn btn-primary px-5">
                             <i class="bi bi-save"></i> Update Score
                         </button>
-                        <a href="{{ route('teacher.scores') }}" class="btn btn-secondary px-5">Cancel</a>
+                        <a href="{{ route('admin.scores') }}" class="btn btn-secondary px-5">Cancel</a>
                     </div>
                 </form>
             </div>

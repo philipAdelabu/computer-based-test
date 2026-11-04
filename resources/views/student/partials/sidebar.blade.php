@@ -27,4 +27,10 @@
             <i class="bi bi-file-earmark-text-fill"></i> Report Cards
         </a>
     </li>
+     <li class="nav-item">
+        <a class="nav-link {{ request()->routeIs('profile.password*') ? 'active' : '' }}" 
+        href="{{ route('profile.password') }}">
+            <i class="bi bi-shield-lock-fill"></i> Change Password
+        </a>
+    </li>
 </ul>

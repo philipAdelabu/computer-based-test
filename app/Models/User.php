@@ -70,13 +70,13 @@ class User extends Authenticatable
 
         // Public folder check
         $publicPath = public_path($this->photo_path);
-        if (file_exists($publicPath)) {
+        if (file_exists($this->photo_path)) {
             return asset($this->photo_path);
         }
 
         // Storage fallback
         $storagePath = storage_path($this->photo_path);
-        if (file_exists($storagePath)) {
+        if (file_exists($this->photo_path)) {
             return asset($this->photo_path);
         }
 

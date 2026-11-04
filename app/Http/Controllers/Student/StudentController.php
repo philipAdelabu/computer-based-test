@@ -527,7 +527,7 @@ public function exams(Request $request)
                 $studentAnswer = trim($answers[$question->id]);
                 $correctAnswer = trim($question->correct_answer);
                 
-                if ($studentAnswer === $correctAnswer) {
+                if (strtoupper($studentAnswer) === strtoupper($correctAnswer)) {
                     $score += $question->score;
                     $correctCount++;
                 } else {
@@ -564,12 +564,12 @@ public function exams(Request $request)
             'student_id' => $student->id,
             'subject_id' => $attempt->exam->subject_id,
             'exam_id' => $attempt->exam->id,
-            'assessment_type' => $examMode === 'theory' ? 'Theoretical Assessment' : 'CBT Assessment',
+            'assessment_type' => $examMode === 'theory' ? 'Theory assessment' : 'CBT Assessment',
             'score' => $score,
             'max_score' => $totalScore, 
             'percentage' => round($percentage, 2),
             // If there are theory questions, we don't assign a final grade yet
-            'grade' => ($examMode === 'theory') ? 'Pending' : $this->calculateGrade($percentage), 
+            'grade' => ($examMode === 'theory') ? null : $this->calculateGrade($percentage), 
             'remarks' => $remarks,
             'assessment_date' => now(),
         ]);
@@ -595,7 +595,8 @@ public function exams(Request $request)
     // app/Http/Controllers/Student/StudentController.php
 public function examResult($attemptId)
 {
-    $attempt = ExamAttempt::with(['exam', 'exam.subject'])->findOrFail($attemptId);
+
+    $attempt = ExamAttempt::with(['exam.questions', 'exam.subject'])->findOrFail($attemptId);
     $student = Auth::user()->student;
     
     if ($attempt->student_id !== $student->id) {
@@ -611,14 +612,20 @@ public function examResult($attemptId)
     $result = Result::where('exam_id', $attempt->exam_id)
                    ->where('student_id', $student->id)
                    ->first();
-    
-    // If no result exists (edge case), create it from the stored attempt score
+
+
     if (!$result) {
         \Log::warning('Result missing for submitted attempt', ['attempt_id' => $attempt->id]);
         
         $totalScore = $attempt->exam->total_score;
         $percentage = $totalScore > 0 ? ($attempt->score / $totalScore) * 100 : 0;
-        
+         $examMode = $attempt->exam->exam_mode; 
+
+         // Set remarks
+        $remarks = ($examMode === 'theory')
+            ? 'Pending Theory Grading' 
+            : $this->calculateRemarks($percentage);
+
         $result = Result::create([
             'student_id' => $student->id,
             'subject_id' => $attempt->exam->subject_id,
@@ -627,8 +634,8 @@ public function examResult($attemptId)
             'score' => $attempt->score,
             'max_score' => $totalScore,
             'percentage' => round($percentage, 2),
-            'grade' => $this->calculateGrade($percentage),
-            'remarks' => $this->calculateRemarks($percentage),
+            'grade' => ($examMode === 'theory') ? null : $this->calculateGrade($percentage), 
+            'remarks' => $remarks,
             'assessment_date' => $attempt->completed_at ?? now(),
         ]);
     }
@@ -642,7 +649,7 @@ public function examResult($attemptId)
     $wrongCount = 0;
     $unansweredCount = 0;
     $questionBreakdown = [];
-    
+
     foreach ($questions as $question) {
         $studentAnswer = $answers[$question->id] ?? null;
         $correctAnswer = $question->correct_answer;

@@ -105,6 +105,7 @@
                         <div class="logo-preview-box">
                             @php
                                 $logoUrl = \App\Helpers\SettingHelper::schoolLogo();
+                            
                             @endphp
                             @if($logoUrl)
                                 <img src="{{ $logoUrl }}" 

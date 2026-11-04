@@ -50,7 +50,7 @@ class Result extends Model
         if ($percentage >= 60) return 'C';
         if ($percentage >= 50) return 'D';
         if ($percentage >= 40) return 'E';
-        return 'F';
+        return null;
     }
 
     public function getRemarksAttribute()
@@ -62,6 +62,6 @@ class Result extends Model
         if ($percentage >= 60) return 'Good';
         if ($percentage >= 50) return 'Fair';
         if ($percentage >= 40) return 'Poor';
-        return 'Very Poor';
+        return 'Pending Theory Grading';
     }
 }

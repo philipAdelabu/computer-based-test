@@ -53,8 +53,6 @@
                     <option value="">All Types</option>
                     <option value="test" {{ request('assessment_type') == 'test' ? 'selected' : '' }}>Test</option>
                     <option value="exam" {{ request('assessment_type') == 'exam' ? 'selected' : '' }}>Exam</option>
-                    <option value="assignment" {{ request('assessment_type') == 'assignment' ? 'selected' : '' }}>Assignment</option>
-                    <option value="project" {{ request('assessment_type') == 'project' ? 'selected' : '' }}>Project</option>
                 </select>
             </div>
             <div class="col-md-3 d-flex align-items-end">
@@ -112,14 +110,18 @@
                                 <strong>{{ $result->score }}</strong>/{{ $result->max_score }}
                             </td>
                             <td>{{ number_format($result->percentage, 1) }}%</td>
-                            <td>
-                                <span class="badge 
-                                    @if($result->percentage >= 80) bg-success
-                                    @elseif($result->percentage >= 60) bg-warning
-                                    @else bg-danger
-                                    @endif">
-                                    {{ $result->grade }}
-                                </span>
+                              <td>
+                                @if($result->remarks === 'Pending Theory Grading' || $result->grade === null)
+                                    <span class="badge bg-warning text-dark">Pending</span>
+                                @else
+                                    <span class="badge 
+                                        @if($result->percentage >= 80) bg-success
+                                        @elseif($result->percentage >= 60) bg-warning
+                                        @else bg-danger
+                                        @endif">
+                                        {{ $result->grade }}
+                                    </span>
+                                @endif
                             </td>
                             <td>{{ $result->assessment_date->format('M d, Y') }}</td>
                             <td>

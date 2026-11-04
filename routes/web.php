@@ -19,6 +19,7 @@ use App\Http\Controllers\Teacher\StudentAccessController as TeacherStudentAccess
 use App\Http\Controllers\Student\StudentController;
 use App\Http\Middleware\CheckRole;
 use App\Http\Controllers\RichEditorController;
+use App\Http\Controllers\ProfileController;
 
 // Auth Routes
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -324,4 +325,6 @@ Route::get('/test-excel', function() {
 Route::middleware(['auth'])->group(function () {
     Route::post('/rich-editor/upload-image', [RichEditorController::class, 'uploadImage'])
         ->name('rich-editor.upload-image');
+     Route::get('/profile/change-password', [ProfileController::class, 'showChangePasswordForm'])->name('profile.password');
+    Route::put('/profile/change-password', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
 });

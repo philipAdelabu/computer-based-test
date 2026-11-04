@@ -390,33 +390,48 @@
             </a>
             
          
-                <div class="ms-auto d-flex align-items-center gap-2">
-                    <!-- User avatar -->
-                    <div class="d-flex align-items-center gap-2">
-                        @if(Auth::user()->has_photo)
-                            <img src="{{ Auth::user()->photo_url }}" 
-                                alt="{{ Auth::user()->name }}"
-                                class="rounded-circle border border-2 border-white"
-                                style="width: 36px; height: 36px; object-fit: cover;">
-                        @else
-                            <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold"
-                                style="width: 36px; height: 36px; background: rgba(255,255,255,0.25); color: white; font-size: 0.85rem;">
-                                {{ Auth::user()->initials }}
-                            </div>
-                        @endif
-                        <span class="nav-link d-none d-md-inline mb-0">
-                            {{ Auth::user()->name }}
-                        </span>
-                    </div>
-                    
-                    <form action="{{ route('logout') }}" method="POST" class="d-inline">
-                        @csrf
-                        <button type="submit" class="nav-link btn btn-link" style="color: rgba(255,255,255,0.9);">
-                            <i class="bi bi-box-arrow-right"></i> 
-                            <span class="d-none d-sm-inline">Logout</span>
-                        </button>
-                    </form>
-                </div>
+                 <!-- Replace the current user info section in the navbar with this -->
+                <div class="ms-auto d-flex align-items-center gap-3">
+                        <div class="dropdown">
+                            <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" 
+                            id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
+                                @if(Auth::user()->has_photo)
+                                    <img src="{{ Auth::user()->photo_url }}" 
+                                        alt="{{ Auth::user()->name }}"
+                                        class="rounded-circle border border-2 border-white me-2"
+                                        style="width: 36px; height: 36px; object-fit: cover;">
+                                @else
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold me-2"
+                                        style="width: 36px; height: 36px; background: rgba(255,255,255,0.25); color: white; font-size: 0.85rem;">
+                                        {{ Auth::user()->initials }}
+                                    </div>
+                                @endif
+                                <span class="d-none d-md-inline">{{ Auth::user()->name }}</span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="userMenu">
+                                <li>
+                                    <div class="px-3 py-2">
+                                        <div class="fw-bold">{{ Auth::user()->name }}</div>
+                                        <div class="small text-muted text-capitalize">{{ Auth::user()->role }}</div>
+                                    </div>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ route('profile.password') }}">
+                                        <i class="bi bi-shield-lock me-2"></i> Change Password
+                                    </a>
+                                </li>
+                                <li>
+                                    <form action="{{ route('logout') }}" method="POST" class="d-inline">
+                                        @csrf
+                                        <button type="submit" class="dropdown-item text-danger">
+                                            <i class="bi bi-box-arrow-right me-2"></i> Logout
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                 </div>
         </div>
     </nav>
 

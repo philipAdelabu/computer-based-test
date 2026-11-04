@@ -146,31 +146,27 @@
                                 // If images exist, use the image count. Otherwise use the text options count.
                                 $optionsCount = $currentQuestion->option_images ? count($currentQuestion->option_images) : count($currentQuestion->options ?? []);
                             @endphp
-
-                            @for ($i = 0; $i < $optionsCount; $i++)
+                              @for ($i = 0; $i < $optionsCount; $i++)
                                 @php
-                                    $letter = chr(65 + $i);
-                                    
-                                    // Get text or image for this index
+                                    $letter = chr(65 + $i); // A, B, C, D
                                     $optionText = $currentQuestion->options[$i] ?? null;
                                     $optionImage = $currentQuestion->option_images[$i] ?? null;
                                     
-                                    // The value we save to the DB (either text or image path)
-                                    $optionValue = $optionImage ? $optionImage : $optionText;
+                                    // The value is now the LETTER
+                                    $optionValue = $letter; 
                                     
-                                    // Check if selected
                                     $isSelected = isset($answers[$currentQuestion->id]) && $answers[$currentQuestion->id] == $optionValue;
                                 @endphp
                                 
                                 <div class="option-item {{ $isSelected ? 'selected' : '' }}" 
-                                     data-question="{{ $currentQuestion->id }}"
-                                     data-option="{{ $optionValue }}">
+                                    data-question="{{ $currentQuestion->id }}"
+                                    data-option="{{ $optionValue }}">
                                     <input class="form-check-input me-3 mt-0" type="radio" 
-                                           name="answer" 
-                                           value="{{ $optionValue }}" 
-                                           id="option{{ $i }}"
-                                           style="width: 20px; height: 20px; flex-shrink: 0;"
-                                           {{ $isSelected ? 'checked' : '' }}>
+                                        name="answer" 
+                                        value="{{ $optionValue }}" 
+                                        id="option{{ $i }}"
+                                        style="width: 20px; height: 20px; flex-shrink: 0;"
+                                        {{ $isSelected ? 'checked' : '' }}>
                                     
                                     <label class="form-check-label w-100 d-flex align-items-center" for="option{{ $i }}" style="cursor: pointer;">
                                         <span class="fw-bold me-3 fs-5">{{ $letter }}.</span>
@@ -183,6 +179,7 @@
                                     </label>
                                 </div>
                             @endfor
+
                         </div>
                     </div>
 
@@ -356,7 +353,118 @@ $(document).ready(function() {
             }
         });
     }
+
+
+    // ============ KEYBOARD NAVIGATION ============
+  /*
+  (document).on('keydown', function(e) {
+        if ($(e.target).is('input[type="text"], textarea')) return;
+        
+        if (e.key === 'ArrowLeft') {
+            const prevBtn = $('a.btn-outline-primary').filter(function() {
+                return $(this).text().includes('Previous');
+            });
+            if (prevBtn.length) {
+                window.location.href = prevBtn.attr('href');
+            }
+        } else if (e.key === 'ArrowRight') {
+            const nextBtn = $('a.btn-primary').filter(function() {
+                return $(this).text().includes('Next');
+            });
+            if (nextBtn.length) {
+                window.location.href = nextBtn.attr('href');
+            }
+        } else if (['1', '2', '3', '4', '5', '6'].includes(e.key)) {
+            const index = parseInt(e.key) - 1;
+            const options = $('input[name="answer"]');
+            if (options.length > index) {
+                options.eq(index).prop('checked', true).trigger('change');
+            }
+        }
+    });  */
+    
+    // ============ PREVENT ACCIDENTAL SITE LEAVE ============
+    // Only warn when actually leaving the exam, NOT for in-exam navigation
+    let formSubmitted = false;
+    let allowNavigation = false;
+    
+    // Mark navigation as "allowed" when clicking in-exam links
+    $(document).on('click', '.q-btn, a.btn-primary, a.btn-outline-primary, a[href*="/student/exam/"]', function() {
+        allowNavigation = true;
+        setTimeout(function() {
+            allowNavigation = false;
+        }, 3000);
+    });
+    
+    // Mark as submitted when form is submitted
+    $('#submitForm').on('submit', function() {
+        formSubmitted = true;
+    });
+    
+    // Only warn for actual site-leaving actions
+    window.addEventListener('beforeunload', function(e) {
+        if (formSubmitted || allowNavigation) {
+            return;
+        }
+        
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+    });
+   
+
+
+
     @endif
+
+    @if($currentQuestion->is_theory)
+    let typingTimer;
+    const theoryInput = document.getElementById('theoryAnswerInput');
+
+    // Auto-save after 2 seconds of inactivity
+    theoryInput.addEventListener('input', function() {
+        clearTimeout(typingTimer);
+        typingTimer = setTimeout(() => {
+            const answer = this.value;
+           
+            $.ajax({
+                url: '{{ route("student.exam.save-answer", $attempt->id) }}',
+                method: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    question_id: {{ $currentQuestion->id }},
+                    answer: answer
+                },
+                success: function() {
+                    // Optional: Show a small "Saved" indicator
+                    $('#autosaveIndicator').fadeIn().delay(1000).fadeOut();
+                }
+            });
+        }, 2000);
+    });
+
+    // Save immediately before navigating away
+    window.addEventListener('beforeunload', function() {
+        const answer = theoryInput.value;
+        if (answer.trim() !== '') {
+            $.ajax({
+                url: '{{ route("student.exam.save-answer", $attempt->id) }}',
+                method: 'POST',
+                async: false,
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    question_id: {{ $currentQuestion->id }},
+                    answer: answer
+                }
+            });
+        }
+    });
+    @endif
+
 });
+
+
+
+
 </script>
 @endpush

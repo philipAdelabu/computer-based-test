@@ -60,21 +60,24 @@ class Setting extends Model
      */
     public static function getImageUrl($key, $default = null)
     {
+
+       
         $value = self::get($key);
         
         if (!$value) {
             return $default;
-        }
+        } 
         
         // Check if file exists in public folder
         $publicPath = public_path($value);
-        if (file_exists($publicPath)) {
+       
+        if (file_exists($value)) {
             return asset($value);
         }
         
         // Fallback: check storage folder
-        $storagePath = storage_path('app/public/' . $value);
-        if (file_exists($storagePath)) {
+        $storagePath = storage_path($value);
+        if (file_exists($value)) {
             return asset($value);
         }
         

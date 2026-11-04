@@ -296,12 +296,7 @@
                                 </td>
                                 <td>
                                     <span class="badge bg-success">
-                                       {{ 
-                                          (is_numeric($question->correct_answer)
-                                        && $question->correct_answer <= 5 
-                                        && $question->correct_answer >=0) ?
-                                        $options[$question->correct_answer] : $question->correct_answer
-                                       }}
+                                       {{ $question->correct_answer  }}
                                     </span>
                                 </td>
                                 <td>

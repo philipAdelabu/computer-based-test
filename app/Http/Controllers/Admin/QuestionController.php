@@ -64,7 +64,7 @@ class QuestionController extends Controller
         $totalQuestions = Question::count();
         $filteredCount = $questions->total();
 
-        $options = ['A', 'B', 'C', 'D', 'E', 'F'];
+     
         
         return view('admin.questions.index', compact(
             'questions',
@@ -74,7 +74,7 @@ class QuestionController extends Controller
             'selectedClass',
             'totalQuestions',
             'filteredCount',
-            'options',
+
         ));
     }
 
@@ -174,17 +174,20 @@ class QuestionController extends Controller
         // Handle Option Images and Correct Answer
         $finalCorrectAnswer = null;
         if ($validated['question_type'] === 'objective') {
-            // The dropdown will submit either the text (e.g., "Paris") or the letter (e.g., "A")
-            $finalCorrectAnswer = $validated['correct_answer'];
-
+        
+            $selectedIndex = $validated['correct_answer'];
+                // Convert index to letter (0 -> A, 1 -> B, etc.)
+            if ($selectedIndex !== null && $selectedIndex !== '') {
+                $finalCorrectAnswer = chr(65 + (int) $selectedIndex);
+            }
+             
+            $optionImages = null;
             if ($request->hasFile('option_images')) {
                 $optionImages = [];
                 
                 foreach ($request->file('option_images') as $index => $file) {
                     if ($file && $file->isValid()) {
-                       // $path = $file->store('uploads/options', 'public');
                         $path  = $this->uploadImage($file, 'options');
-                         // Store the path using the option index (0, 1, 2, 3)
                         $optionImages[$index] =  $path;
            
                     }
@@ -222,146 +225,97 @@ class QuestionController extends Controller
     // =====================================================
     // UPDATE
     // =====================================================
-    public function update(Request $request, $id)
+        public function update(Request $request, $id)
     {
-
-
         $question = Question::findOrFail($id);
-        
-         if ($request->input('question_type') === 'theory') {
-        $request->merge([
-            'options' => null,
-            'correct_answer' => null,
-        ]);
-      }
 
+        // 1. Handle Theory Questions immediately
+        if ($request->input('question_type') === 'theory') {
+            $request->merge([
+                'options' => null,
+                'correct_answer' => null,
+                'option_images' => null,
+            ]);
+        }
+
+        // 2. Validate Request
         $validated = $request->validate([
             'subject_id' => 'required|exists:subjects,id',
             'question_type' => 'required|in:objective,theory',
             'question_text' => 'required|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:3048',
-             'options' => 'nullable|array',
-             'options.*' => 'nullable|string',
-             'correct_answer' => 'nullable|string',
-             'option_images.*' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:3048',
+            'options' => 'nullable|array',
+            'options.*' => 'nullable|string',
+            'correct_answer' => 'nullable|string',
+            'option_images.*' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:3048',
             'score' => 'required|integer|min:1',
             'difficulty' => 'required|in:easy,medium,hard',
-    ]);
+        ]);
 
-  
+        // 3. Handle Main Question Image
+        $imagePath = $question->image_path;
+        if ($request->hasFile('image')) {
+            if ($imagePath) $this->deleteImage($imagePath);
+            $imagePath = $this->uploadImage($request->file('image'), 'questions');
+        }
 
-      // ============ FIX: Additional safety check for Objective ============
+        // 4. Prepare Option Images and Correct Answer
+        $optionImages = $question->option_images ?? [];
+        if(!is_array($optionImages)) $optionImages = [];
+        
+        $finalCorrectAnswer = null;
+        $finalOptions = null;
 
         if ($validated['question_type'] === 'objective') {
-        
-        // 1. Check if we are in Image Mode or Text Mode
-        $hasImages = $request->hasFile('option_images') && count(array_filter($request->file('option_images'))) > 0;
-        
-        if (!$hasImages) {
-            // --- TEXT MODE CHECKS ---
-            $filteredOptions = array_filter($request->input('options', []));
-            if (count($filteredOptions) < 2) {
-                throw \Illuminate\Validation\ValidationException::withMessages([
-                    'options' => ['You must provide at least 2 non-empty text options for objective questions.'],
-                ]);
-            }
-           $request->option_images = null;
-        } else {
-            // --- IMAGE MODE CHECKS ---
-            $validImages = array_filter($request->file('option_images'));
-         
-            if (count($validImages) < 2) {
-                throw \Illuminate\Validation\ValidationException::withMessages([
-                    'option_images' => ['You must upload at least 2 images for objective questions.'],
-                ]);
-            }
-
-            $validated['options'] = null; // Clear text options if images are used
-        }
-
-        // 2. Check if correct answer is selected
-        if (empty($request->input('correct_answer'))) {
-            throw \Illuminate\Validation\ValidationException::withMessages([
-                'correct_answer' => ['You must select a correct answer for objective questions.'],
-            ]);
-        }
-    }
-
-        // Handle image upload
-        if ($request->hasFile('image')) {
-            // Delete old image from public folder
-            if ($question->image_path) {
-                $this->deleteImage($question->image_path);
-            }
             
-            // Upload new image
-            $question->image_path = $this->uploadImage($request->file('image'), 'questions');
-        }
+            // Save Correct Answer as Letter (A, B, C)
+            $selectedIndex = $request->input('correct_answer'); // 0, 1, 2
+            if ($selectedIndex !== null && $selectedIndex !== '') {
+                $finalCorrectAnswer = chr(65 + (int) $selectedIndex);
+            }
 
-        // NEW: Handle Option Images
-          // Inside update() method, after validation...
-
-            $optionImages = $question->option_images ?? []; // Start with existing images
-            $finalCorrectAnswer = $validated['correct_answer'];
-
-            if ($validated['question_type'] === 'objective') {
-                
-                // 1. Handle Removals
-                if ($request->has('remove_images')) {
-                    foreach ($request->input('remove_images') as $index => $remove) {
-                        if ($remove == 1) {
-                            // Delete the file from storage
-                            if (isset($optionImages[$index])) {
-                                 $oldPath = $optionImages[$index];
-                                $this->deleteImage( $oldPath);
-                            }
-                        
-                        }
+            // Handle Option Images (Uploads & Removals)
+            if ($request->has('remove_images')) {
+                foreach ($request->input('remove_images') as $index => $remove) {
+                    if ($remove == 1 && isset($optionImages[$index])) {
+                        $this->deleteImage($optionImages[$index]);
+                        unset($optionImages[$index]);
                     }
                 }
+            }
 
-                // 2. Handle New Uploads (Replacements)
-                if ($request->hasFile('option_images')) {
-                    foreach ($request->file('option_images') as $index => $file) {
-                        if ($file && $file->isValid()) {
-                            // Delete old image if it exists
-                            if (isset($optionImages[$index])) {
-                                $oldPath = $optionImages[$index];
-                                $this->deleteImage( $oldPath);
-                            }
-                            // Upload new image
-                            $path  = $this->uploadImage($file, 'options');;
-                            $optionImages[$index] =  $path;
+            if ($request->hasFile('option_images')) {
+                foreach ($request->file('option_images') as $index => $file) {
+                    if ($file && $file->isValid()) {
+                        if (isset($optionImages[$index])) {
+                            $this->deleteImage($optionImages[$index]);
                         }
+                        $optionImages[$index] = $this->uploadImage($file, 'options');
                     }
-                }
-            
-                if($request->option_images == null){
-                      if($question->option_images && count(array_filter($question->option_images)) > 0){
-                       foreach ($question->option_images as $index => $oldPath) {
-                            if (isset($oldPath)) {
-                                $this->deleteImage( $oldPath);
-                            }
-                         }
-                      }
-                    $optionImages = null;
-                }else{
-                // Re-index array to be clean
-                  $optionImages = array_values($optionImages);
                 }
             }
 
-          // ============ Update the Question ============
-            $question->update([
-                'subject_id' => $validated['subject_id'],
-                'question_type' => $validated['question_type'],
-                'question_text' => $validated['question_text'],
-                'options' => $validated['question_type'] === 'objective' ? array_values(array_filter($request->input('options', []))) : null,
-                'option_images' => $optionImages,
-                'correct_answer' => $validated['question_type'] === 'objective' ? $finalCorrectAnswer : null,
-                'score' => $validated['score'],
-                'difficulty' => $validated['difficulty'],
-            ]);
+            // Clean up array
+            $optionImages = array_values($optionImages);
+            if (empty($optionImages)) $optionImages = null;
+
+            // Handle Text Options
+            $rawOptions = $request->input('options', []);
+            $finalOptions = array_values(array_filter($rawOptions));
+        }
+
+        // 5. Update the Question
+        $question->update([
+            'subject_id' => $validated['subject_id'],
+            'question_type' => $validated['question_type'],
+            'question_text' => $validated['question_text'],
+            'image_path' => $imagePath,
+            'options' => $finalOptions,
+            'option_images' => $optionImages,
+            'correct_answer' => $finalCorrectAnswer,
+            'score' => $validated['score'],
+            'difficulty' => $validated['difficulty'],
+        ]);
 
         return redirect()->route('admin.questions')
             ->with('success', 'Question updated successfully.');
@@ -422,137 +376,147 @@ class QuestionController extends Controller
     /**
      * Import questions from CSV file
      */
-    public function importCSV(Request $request)
-    {
-        // Validate request
-        $validator = Validator::make($request->all(), [
-            'subject_id' => 'required|exists:subjects,id',
-            'file' => 'required|file|mimes:csv,txt|max:5120',
-        ]);
+        public function importCSV(Request $request)
+        {
+            $validator = Validator::make($request->all(), [
+                'subject_id' => 'required|exists:subjects,id',
+                'file' => 'required|file|mimes:csv,txt|max:5120',
+            ]);
 
-        if ($validator->fails()) {
-            return back()->withErrors($validator)->withInput();
-        }
-
-        try {
-            $file = $request->file('file');
-            $handle = fopen($file->getRealPath(), 'r');
-            
-            if (!$handle) {
-                throw new \Exception('Could not open the file.');
+            if ($validator->fails()) {
+                return back()->withErrors($validator)->withInput();
             }
 
-            // Read header
-            $header = fgetcsv($handle);
-            if (!$header) {
-                fclose($handle);
-                return back()->with('error', 'The CSV file appears to be empty or invalid.');
-            }
-
-            // Clean and normalize header
-            $header = array_map(function($col) {
-                return strtolower(trim($col));
-            }, $header);
-
-            // Validate header
-            $requiredColumns = ['question', 'option_a', 'option_b', 'option_c', 'option_d', 'correct_answer'];
-            $missingColumns = array_diff($requiredColumns, $header);
-            
-            if (!empty($missingColumns)) {
-                fclose($handle);
-                return back()->with('error', 'Missing required columns: ' . implode(', ', $missingColumns));
-            }
-
-            $imported = 0;
-            $errors = [];
-            $rowNumber = 1;
-            $questions = [];
-
-            while (($row = fgetcsv($handle)) !== false) {
-                $rowNumber++;
+            try {
+                $file = $request->file('file');
+                $handle = fopen($file->getRealPath(), 'r');
                 
-                // Skip empty rows
-                if (empty(array_filter($row))) {
-                    continue;
+                if (!$handle) {
+                    throw new \Exception('Could not open the file.');
                 }
 
-                // Map row data to columns
-                $data = [];
-                foreach ($header as $index => $column) {
-                    $data[$column] = trim($row[$index] ?? '');
+                // Read the first line
+                $headerLine = fgets($handle);
+                
+                // Remove UTF-8 BOM if Excel added it
+                $bom = pack('H*','EFBBBF');
+                $headerLine = preg_replace("/^$bom/", '', $headerLine);
+                
+                // Parse headers
+                $header = str_getcsv($headerLine);
+                
+                // Clean up headers (trim spaces, lowercase)
+                $header = array_map(function($col) {
+                    return strtolower(trim($col));
+                }, $header);
+
+                // Check for required columns
+                $requiredColumns = ['question', 'correct_answer', 'score'];
+                $missingColumns = array_diff($requiredColumns, $header);
+                
+                if (!empty($missingColumns)) {
+                    fclose($handle);
+                    return back()->with('error', 'Missing required column(s): ' . implode(', ', $missingColumns) . '. Please check your CSV headers.');
                 }
 
-                // Validate row data
-                $rowErrors = $this->validateRow($data, $rowNumber);
-                if (!empty($rowErrors)) {
-                    $errors = array_merge($errors, $rowErrors);
-                    continue;
+                $imported = 0;
+                $errors = [];
+                $rowNumber = 1;
+
+                // Read the rest of the file
+                while (($row = fgetcsv($handle)) !== false) {
+                    $rowNumber++;
+                    
+                    // Skip empty rows
+                    if (empty(array_filter($row))) {
+                        continue;
+                    }
+
+                    // Map the row data to the header columns
+                    $data = [];
+                    foreach ($header as $index => $column) {
+                        $data[$column] = trim($row[$index] ?? '');
+                    }
+
+                    // Basic validation
+                    if (empty($data['question'])) {
+                        $errors[] = "Row {$rowNumber}: Missing question text.";
+                        continue;
+                    }
+                    
+                    if (empty($data['correct_answer'])) {
+                        $errors[] = "Row {$rowNumber}: Missing correct answer.";
+                        continue;
+                    }
+
+                    // Determine Question Type (default to objective if not provided)
+                    $questionType = $data['question_type'] ?? 'objective';
+                    
+                    $options = [];
+                    $optionImages = null;
+                    $finalCorrectAnswer = $data['correct_answer'];
+
+                    // If it's an objective question, gather options
+                    if (strtolower($questionType) === 'objective') {
+                        $options = [
+                            $data['option_a'] ?? '',
+                            $data['option_b'] ?? '',
+                            $data['option_c'] ?? '',
+                            $data['option_d'] ?? '',
+                        ];
+                        $options = array_values(array_filter($options));
+                        
+                        if (count($options) < 2) {
+                            $errors[] = "Row {$rowNumber}: Must have at least 2 options.";
+                            continue;
+                        }
+                        
+                        // Ensure the correct answer matches the letter (A, B, C, D)
+                        $finalCorrectAnswer = strtoupper($finalCorrectAnswer);
+                        if (!in_array($finalCorrectAnswer, ['A', 'B', 'C', 'D', 'E', 'F'])) {
+                            $errors[] = "Row {$rowNumber}: Correct answer must be a letter (A, B, C, etc.).";
+                            continue;
+                        }
+                    }
+
+                    try {
+                        Question::create([
+                            'subject_id' => $request->subject_id,
+                            'question_type' => strtolower($questionType),
+                            'question_text' => $data['question'],
+                            'options' => strtolower($questionType) === 'objective' ? $options : null,
+                            'correct_answer' => strtolower($questionType) === 'objective' ? $finalCorrectAnswer : null,
+                            'score' => isset($data['score']) && is_numeric($data['score']) ? (int)$data['score'] : 1,
+                            'difficulty' => isset($data['difficulty']) ? strtolower(trim($data['difficulty'])) : 'medium',
+                        ]);
+                        $imported++;
+                    } catch (\Exception $e) {
+                        $errors[] = "Row {$rowNumber}: " . $e->getMessage();
+                    }
                 }
 
-                // Build options array
-                $options = array_values(array_filter([
-                    $data['option_a'],
-                    $data['option_b'],
-                    $data['option_c'],
-                    $data['option_d'],
-                ]));
-
-                // Determine correct answer
-                $correctAnswer = $data['correct_answer'];
-                if (!in_array($correctAnswer, $options)) {
-                    $correctAnswer = $options[0];
-                    $errors[] = "Row {$rowNumber}: Correct answer not in options, using '{$correctAnswer}' as default.";
-                }
-
-                // Prepare question data
-                $questions[] = [
-                    'subject_id' => $request->subject_id,
-                    'question_text' => $data['question'],
-                    'options' => json_encode($options),
-                    'correct_answer' => $correctAnswer,
-                    'score' => isset($data['score']) && is_numeric($data['score']) ? (int)$data['score'] : 1,
-                    'difficulty' => isset($data['difficulty']) ? strtolower(trim($data['difficulty'])) : 'medium',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ];
-
-                $imported++;
-            }
-
-            fclose($handle);
-
-            // Bulk insert for better performance
-            if (!empty($questions)) {
-                Question::insert($questions);
-            }
-
-            // Prepare response message
-            if ($imported === 0) {
-                return back()->with('error', 'No questions were imported. Please check your file format.');
-            }
-
-            $message = "{$imported} question(s) imported successfully.";
-            if (!empty($errors)) {
-                $message .= " Warnings: " . implode('; ', array_slice($errors, 0, 5));
-                if (count($errors) > 5) {
-                    $message .= " and " . (count($errors) - 5) . " more warnings.";
-                }
-                return redirect()->route('admin.questions')->with('warning', $message);
-            }
-
-            return redirect()->route('admin.questions')->with('success', $message);
-
-        } catch (\Exception $e) {
-            Log::error('CSV Import Error: ' . $e->getMessage());
-            Log::error($e->getTraceAsString());
-            
-            if (isset($handle) && is_resource($handle)) {
                 fclose($handle);
+
+                if ($imported === 0 && empty($errors)) {
+                    return back()->with('error', 'No questions were imported. Please check your file format.');
+                }
+
+                $message = "{$imported} question(s) imported successfully.";
+                if (!empty($errors)) {
+                    $message .= " Warnings: " . implode('; ', array_slice($errors, 0, 5));
+                    return redirect()->route('admin.questions')->with('warning', $message);
+                }
+
+                return redirect()->route('admin.questions')->with('success', $message);
+
+            } catch (\Exception $e) {
+                \Log::error('CSV Import Error: ' . $e->getMessage());
+                if (isset($handle) && is_resource($handle)) {
+                    fclose($handle);
+                }
+                return back()->with('error', 'Error importing questions: ' . $e->getMessage());
             }
-            
-            return back()->with('error', 'Error importing questions: ' . $e->getMessage());
         }
-    }
 
     /**
      * Validate a single row of data
@@ -605,22 +569,20 @@ class QuestionController extends Controller
     /**
      * Download CSV template
      */
-    public function downloadTemplate()
+   public function downloadTemplate()
     {
         try {
-            $headers = ['question', 'option_a', 'option_b', 'option_c', 'option_d', 'correct_answer', 'score', 'difficulty'];
+            // Updated headers
+            $headers = ['question_type', 'question', 'option_a', 'option_b', 'option_c', 'option_d', 'correct_answer', 'score', 'difficulty'];
+            
             $sampleData = [
-                ['What is 2+2?', '3', '4', '5', '6', '4', '1', 'easy'],
-                ['What is the capital of Nigeria?', 'Lagos', 'Abuja', 'Kano', 'Ibadan', 'Abuja', '2', 'medium'],
-                ['Which planet is known as the Red Planet?', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Mars', '1', 'easy'],
-                ['What is the chemical symbol for water?', 'H2O', 'CO2', 'NaCl', 'HCl', 'H2O', '1', 'easy'],
+                ['objective', 'What is 2+2?', '3', '4', '5', '6', 'B', '1', 'easy'],
+                ['objective', 'What is the capital of Nigeria?', 'Lagos', 'Abuja', 'Kano', 'Ibadan', 'B', '2', 'medium'],
+                ['theory', 'Explain the theory of relativity.', '', '', '', '', '', '10', 'hard'],
             ];
 
             $output = fopen('php://memory', 'w');
-            
-            // Add UTF-8 BOM for Excel compatibility
-            fputs($output, "\xEF\xBB\xBF");
-            
+            fputs($output, "\xEF\xBB\xBF"); // Add BOM for Excel
             fputcsv($output, $headers);
             foreach ($sampleData as $row) {
                 fputcsv($output, $row);
@@ -633,14 +595,9 @@ class QuestionController extends Controller
             return response($content, 200, [
                 'Content-Type' => 'text/csv; charset=UTF-8',
                 'Content-Disposition' => 'attachment; filename="questions_template.csv"',
-                'Cache-Control' => 'no-cache, no-store, must-revalidate',
-                'Pragma' => 'no-cache',
-                'Expires' => '0',
             ]);
-
         } catch (\Exception $e) {
-            Log::error('Error generating template: ' . $e->getMessage());
-            return back()->with('error', 'Error generating template: ' . $e->getMessage());
+            return back()->with('error', 'Error generating template.');
         }
     }
 
@@ -698,8 +655,8 @@ class QuestionController extends Controller
         return response()->json([
             'headers' => ['question', 'option_a', 'option_b', 'option_c', 'option_d', 'correct_answer', 'score', 'difficulty'],
             'sample' => [
-                ['What is 2+2?', '3', '4', '5', '6', '4', '1', 'easy'],
-                ['What is the capital of Nigeria?', 'Lagos', 'Abuja', 'Kano', 'Ibadan', 'Abuja', '2', 'medium'],
+                ['What is 2+2?', '3', '4', '5', '6', 'B', '1', 'easy'],
+                ['What is the capital of Nigeria?', 'Lagos', 'Abuja', 'Kano', 'Ibadan', 'B', '2', 'medium'],
             ]
         ]);
     }

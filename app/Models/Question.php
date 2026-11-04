@@ -53,13 +53,13 @@ class Question extends Model
         
         // Check if the image is in the public folder
         $publicPath = public_path($this->image_path);
-        if (file_exists($publicPath)) {
+        if (file_exists($this->image_path)) {
             return asset($this->image_path);
         }
         
         // Fallback: check the storage folder
         $storagePath = storage_path($this->image_path);
-        if (file_exists($storagePath)) {
+        if (file_exists($this->image_path)) {
             return asset($this->image_path);
         }
         

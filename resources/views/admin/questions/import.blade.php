@@ -120,7 +120,7 @@
                                         <td><code>correct_answer</code></td>
                                         <td>The correct answer</td>
                                         <td><span class="badge bg-danger">Yes</span></td>
-                                        <td>4</td>
+                                        <td>B</td>
                                     </tr>
                                     <tr>
                                         <td><code>score</code></td>
