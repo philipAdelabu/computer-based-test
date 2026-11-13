@@ -92,12 +92,21 @@
                 </select>
             </div>
             <div class="col-md-3">
+                <label class="form-label small fw-semibold">Term</label>
+                <select name="term" class="form-select">
+                    <option value="">All Terms</option>
+                    <option value="First Term" {{ request('term') == 'First Term' ? 'selected' : '' }}>First Term</option>
+                    <option value="Second Term" {{ request('term') == 'Second Term' ? 'selected' : '' }}>Second Term</option>
+                    <option value="Third Term" {{ request('term') == 'Third Term' ? 'selected' : '' }}>Third Term</option>
+                </select>
+            </div>
+            <div class="col-md-3">
                 <label class="form-label small fw-semibold">Assessment Type</label>
                 <select name="assessment_type" class="form-select">
                     <option value="">All Types</option>
                     <option value="test" {{ request('assessment_type') == 'test' ? 'selected' : '' }}>Test</option>
-                    <option value="exam" {{ request('assessment_type') == 'exam' ? 'selected' : '' }}>Exam</option>
-                    <option value="quiz" {{ request('assessment_type') == 'quiz' ? 'selected' : '' }}>Quiz</option>
+                    <option value="exam" {{ request('assessment_type') == 'exam' ? 'selected' : '' }}>Exam</option><!--
+                    <option value="quiz" {{ request('assessment_type') == 'quiz' ? 'selected' : '' }}>Quiz</option> -->
                 </select>
             </div>
             <div class="col-md-2 d-flex align-items-end">
@@ -131,6 +140,7 @@
                         <th>Score</th>
                         <th>Percentage</th>
                         <th>Grade</th>
+                        <th>Term</th>
                         <th>Date</th>
                         <th>Source</th>
                         <th>Actions</th>
@@ -177,6 +187,7 @@
                                     </span>
                                 @endif
                             </td>
+                            <td><span class="badge bg-secondary">{{ $result->term ?? 'N/A' }}</span></td>
                             <td>{{ $result->assessment_date->format('M d, Y') }}</td>
                             <td>
                                 @if($result->exam_id)

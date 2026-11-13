@@ -70,7 +70,7 @@
                     </div>
                     
                     <div class="row mb-3">
-                        <div class="col-md-6">
+                        <div class="col-md-3">
                             <label class="form-label fw-semibold">Class <span class="text-danger">*</span></label>
                             <select name="class_id" class="form-select @error('class_id') is-invalid @enderror" required>
                                 <option value="">Select Class</option>
@@ -84,7 +84,15 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
-                        <div class="col-md-6">
+                        <!-- Subjects Multi-Select -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Subjects Offered <span class="text-danger">*</span></label>
+                            <select name="subjects[]" id="subjectsSelect" class="form-select" multiple size="6" required>
+                                <!-- Populated by AJAX based on the selected class -->
+                            </select>
+                            <small class="text-muted">Hold Ctrl (Windows) or Cmd (Mac) to select multiple subjects.</small>
+                        </div>
+                        <div class="col-md-3">
                             <label class="form-label fw-semibold">Date of Birth</label>
                             <input type="date" name="date_of_birth" class="form-control @error('date_of_birth') is-invalid @enderror" 
                                    value="{{ old('date_of_birth') }}">
@@ -204,5 +212,35 @@ function removePhoto() {
     `;
     document.getElementById('removePhotoBtn').classList.add('d-none');
 }
+</script>
+
+ <script>
+    $('#classSelect').on('change', function() {
+        const classId = $(this).val();
+        const subjectSelect = $('#subjectsSelect');
+        
+        if (!classId) {
+            subjectSelect.html('<option value="">-- Select Class First --</option>');
+            return;
+        }
+
+        subjectSelect.html('<option value="">Loading subjects...</option>');
+        const baseUrl = {{ url('/') }};
+        // Fetch subjects for the selected class
+        $.ajax({
+            url: `${baseUrl}/admin/api/classes/${classId}/subjects`, // We will create this route
+            method: 'GET',
+            success: function(subjects) {
+                let html = '';
+                subjects.forEach(subject => {
+                    html += `<option value="${subject.id}">${subject.name}</option>`;
+                });
+                subjectSelect.html(html);
+            },
+            error: function() {
+                subjectSelect.html('<option value="">Error loading subjects</option>');
+            }
+        });
+    });
 </script>
 @endpush

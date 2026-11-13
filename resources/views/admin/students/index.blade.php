@@ -114,10 +114,14 @@
                                 </td>
                             <td>
                                 <div class="btn-group" role="group">
+                                     <a href="{{ route('admin.students.show', $student->id) }}" 
+                                    class="btn btn-sm btn-outline-info" title="View Profile">
+                                        <i class="bi bi-eye"></i>
+                                    </a> &nbsp;&nbsp;
                                     <a href="{{ route('admin.students.edit', $student->id) }}" 
                                        class="btn btn-sm btn-outline-primary" title="Edit Student">
                                         <i class="bi bi-pencil"></i>
-                                    </a>
+                                    </a>&nbsp;&nbsp;
                                       <button type="button" 
                                             class="btn btn-sm btn-outline-danger delete-student-btn"
                                             title="Delete Student"

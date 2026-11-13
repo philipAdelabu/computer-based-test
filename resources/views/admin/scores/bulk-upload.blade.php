@@ -18,7 +18,7 @@
                     @csrf
                     
                     <div class="row mb-3">
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label class="form-label fw-semibold">Class <span class="text-danger">*</span></label>
                             <select name="class_id" id="classSelect" class="form-select" required>
                                 <option value="">-- Select Class --</option>
@@ -27,7 +27,7 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label class="form-label fw-semibold">Subject <span class="text-danger">*</span></label>
                             <select name="subject_id" class="form-select" required>
                                 <option value="">-- Select Subject --</option>
@@ -38,13 +38,22 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label class="form-label fw-semibold">Assessment Type <span class="text-danger">*</span></label>
                             <select name="assessment_type" class="form-select" required>
                                 <option value="test">Test</option>
-                                <option value="exam">Exam</option>
+                                <option value="exam">Exam</option><!--
                                 <option value="assignment">Assignment</option>
-                                <option value="project">Project</option>
+                                <option value="project">Project</option> -->
+                            </select>
+                        </div>
+
+                         <div class="col-md-3">
+                            <label class="form-label fw-semibold">Term <span class="text-danger">*</span></label>
+                            <select name="term" class="form-select" required>
+                                <option value="First Term">First Term</option>
+                                <option value="Second Term">Second Term</option>
+                                <option value="Third Term">Third Term</option>
                             </select>
                         </div>
                     </div>

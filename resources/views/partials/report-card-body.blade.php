@@ -148,6 +148,7 @@
     <!-- ================================================ -->
     <!-- RESULT ANALYSIS                                  -->
     <!-- ================================================ -->
+     <!--
     <div class="rc-section-title">RESULT ANALYSIS</div>
     <div class="rc-analysis-row">
         <div class="rc-analysis-box">
@@ -178,125 +179,145 @@
         </div>
     </div>
 
-    <!-- ================================================ -->
+-->
+
+
+  <!-- ================================================ -->
     <!-- COGNITIVE ABILITY (SUBJECT SCORES)               -->
     <!-- ================================================ -->
     <div class="rc-section-title">COGNITIVE ABILITY</div>
-    <table class="rc-scores-table">
-        <thead>
-            <tr>
-                <th rowspan="2" class="rc-th-subject">SUBJECT</th>
-                <th colspan="2" class="rc-th-ca">CA</th>
-                <th colspan="2" class="rc-th-exam">EXAM</th>
-                <th rowspan="2" class="rc-th-small">TOTAL<br>100</th>
-                <th rowspan="2" class="rc-th-small">2<sup>nd</sup><br>TERM</th>
-                <th rowspan="2" class="rc-th-small">1<sup>st</sup><br>TERM</th>
-                <th rowspan="2" class="rc-th-small">SESSION<br>AVG.</th>
-                <th rowspan="2" class="rc-th-grade">GRADE</th>
-                <th rowspan="2" class="rc-th-remark">REMARK</th>
-            </tr>
-            <tr>
-                <th class="rc-th-small">SCORE</th>
-                <th class="rc-th-small">40</th>
-                <th class="rc-th-small">SCORE</th>
-                <th class="rc-th-small">60</th>
-            </tr>
-        </thead>
-        <tbody>
-            @forelse($reportCard->subject_scores as $score)
-                @php
-                    $attempted = $score['attempted'] ?? false;
-                    $testAttempted = $score['test_attempted'] ?? false;
-                    $examAttempted = $score['exam_attempted'] ?? false;
+    @php
+        // Get Admin Settings for CA and Exam weights
+        $caWeight = (float) \App\Models\Setting::get('ca_weight', 40);
+        $examWeight = (float) \App\Models\Setting::get('exam_weight', 60);
+    @endphp
 
-                    // Convert to a 40/60 scale
-                    $caScore40 = null;
-                    $examScore60 = null;
-                    $total100 = null;
+    <style>
+        .thead-line th {
+      border: 1px solid #dee2e6;/* solid black line */
+}
+</style>
 
-                    if ($attempted) {
-                        $testPct = ($score['test_max'] ?? 0) > 0 && $score['test_score'] !== null
-                            ? (($score['test_score'] ?? 0) / $score['test_max']) * 100
-                            : 0;
-                        $examPct = ($score['exam_max'] ?? 0) > 0 && $score['exam_score'] !== null
-                            ? (($score['exam_score'] ?? 0) / $score['exam_max']) * 100
-                            : 0;
-
-                        $caScore40 = round(($testPct / 100) * 40, 1);
-                        $examScore60 = round(($examPct / 100) * 60, 1);
-                        $total100 = round($caScore40 + $examScore60, 1);
-                    }
-
-                    // Term scores (if provided by service)
-                    $termScores = $score['term_scores'] ?? [];
-                    $firstTerm = $termScores['first'] ?? null;
-                    $secondTerm = $termScores['second'] ?? null;
-                    $sessionAvg = $score['session_avg'] ?? $total100;
-                @endphp
-                <tr class="{{ !$attempted ? 'rc-row-unattempted' : '' }}">
-                    <td class="rc-td-subject">{{ strtoupper($score['subject'] ?? 'N/A') }}</td>
-
-                    @if($attempted)
-                        {{-- Test Score + Max --}}
-                        <td class="rc-td-num">{{ $caScore40 }}</td>
-                        <td class="rc-td-num">{{ $caScore40 }}</td>
-
-                        {{-- Exam Score + Max --}}
-                        <td class="rc-td-num">{{ $examScore60 }}</td>
-                        <td class="rc-td-num">{{ $total100 }}</td>
-
-                        {{-- Total 100 --}}
-                        <td class="rc-td-num"><strong>{{ $total100 }}</strong></td>
-
-                        {{-- Previous terms --}}
-                        <td class="rc-td-num">
-                            {{ $secondTerm !== null ? number_format($secondTerm, 1) : '—' }}
-                        </td>
-                        <td class="rc-td-num">
-                            {{ $firstTerm !== null ? number_format($firstTerm, 1) : '—' }}
-                        </td>
-
-                        {{-- Session Average --}}
-                        <td class="rc-td-num">
-                            {{ $sessionAvg !== null ? number_format($sessionAvg, 1) : '—' }}
-                        </td>
-
-                        {{-- Grade --}}
-                        <td class="rc-td-grade">{{ $score['grade'] ?? '—' }}</td>
-
-                        {{-- Remark --}}
-                        <td class="rc-td-remark">
-                            {{ strtoupper($score['remark'] ?? '—') }}
-                        </td>
-                    @else
-                        {{-- Unattempted — dashes across the board --}}
-                        <td class="rc-td-num rc-td-dash">—</td>
-                        <td class="rc-td-num rc-td-dash">—</td>
-                        <td class="rc-td-num rc-td-dash">—</td>
-                        <td class="rc-td-num rc-td-dash">—</td>
-                        <td class="rc-td-num rc-td-dash">—</td>
-                        <td class="rc-td-num rc-td-dash">
-                            {{ $secondTerm !== null ? number_format($secondTerm, 1) : '—' }}
-                        </td>
-                        <td class="rc-td-num rc-td-dash">
-                            {{ $firstTerm !== null ? number_format($firstTerm, 1) : '—' }}
-                        </td>
-                        <td class="rc-td-num rc-td-dash">
-                            {{ $sessionAvg !== null ? number_format($sessionAvg, 1) : '—' }}
-                        </td>
-                        <td class="rc-td-grade rc-td-dash">—</td>
-                        <td class="rc-td-remark rc-td-dash">NOT ATTEMPTED</td>
-                    @endif
+    <div class="table-responsive">
+        <table class="rc-scores-table">
+            <thead class="thead-line">
+                <!-- TOP ROW: GROUPINGS -->
+                <tr class="rc-th-group-row mt-3"">
+                    <th rowspan="2" class="rc-th-subject" style="vertical-align: middle;">SUBJECT</th>
+                    
+                    <!-- 1st Term Group -->
+                    <th colspan="3" class="rc-th-term-group" style="padding-top: 10px; border:">1<sup>ST</sup> TERM</th>
+                    
+                    <!-- 2nd Term Group -->
+                    <th colspan="3" class="rc-th-term-group" style="padding-top: 10px;">2<sup>ND</sup> TERM</th>
+                    
+                    <!-- 3rd Term Group -->
+                    <th colspan="3" class="rc-th-term-group" style="padding-top: 10px;">3<sup>RD</sup> TERM</th>
+                    
+                    <!-- Session Summary -->
+                    <th rowspan="2" class="rc-th-session" style="vertical-align: middle;">SESSION<br>AVG</th>
+                    <th rowspan="2" class="rc-th-grade" style="vertical-align: middle;">GRADE</th>
+                    <th rowspan="2" class="rc-th-remark" style="vertical-align: middle;">REMARK</th>
                 </tr>
-            @empty
+                
+                <!-- SECOND ROW: SUB-COLUMNS -->
                 <tr>
-                    <td colspan="11" class="text-center text-muted py-4">
-                        <em>No subjects have been set up for this class yet.</em>
-                    </td>
+                    <!-- 1st Term Sub-columns -->
+                    <th class="rc-th-sub">CA<br><small>({{ $caWeight }})</small></th>
+                    <th class="rc-th-sub">EXAM<br><small>({{ $examWeight }})</small></th>
+                    <th class="rc-th-sub">TOTAL</th>
+                    
+                    <!-- 2nd Term Sub-columns -->
+                    <th class="rc-th-sub">CA<br><small>({{ $caWeight }})</small></th>
+                    <th class="rc-th-sub">EXAM<br><small>({{ $examWeight }})</small></th>
+                    <th class="rc-th-sub">TOTAL</th>
+                    
+                    <!-- 3rd Term Sub-columns -->
+                    <th class="rc-th-sub">CA<br><small>({{ $caWeight }})</small></th>
+                    <th class="rc-th-sub">EXAM<br><small>({{ $examWeight }})</small></th>
+                    <th class="rc-th-sub">TOTAL</th>
                 </tr>
-            @endforelse
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @forelse($reportCard->subject_scores as $score)
+                    @php
+                        $attempted = $score['attempted'] ?? false;
+                        
+                        // Extract the per-term historical data
+                        $termScores = $score['term_scores'] ?? [];
+                        
+                        $firstTerm  = $termScores['first'] ?? null;
+                        $secondTerm = $termScores['second'] ?? null;
+                        $thirdTerm  = $termScores['third'] ?? null;
+
+                        // For the CURRENT term, we calculate the live CA/Exam breakdown
+                        // We use the service's test/exam data for the current term.
+                        $currentCa = null;
+                        $currentExam = null;
+                        $currentTotal = null;
+
+                        if ($attempted) {
+                            $testScore = $score['test_score'] ?? 0;
+                            $testMax = $score['test_max'] ?? 1;
+                            $examScore = $score['exam_score'] ?? 0;
+                            $examMax = $score['exam_max'] ?? 1;
+
+                            $currentCa = round(($testScore / $testMax) * $caWeight, 1);
+                            $currentExam = round(($examScore / $examMax) * $examWeight, 1);
+                            $currentTotal = round($currentCa + $currentExam, 1);
+                        }
+
+                        // Determine which slot holds the CURRENT term's data
+                        $currentTermName = $reportCard->term;
+                        
+                        // Map the live data to the correct display slot
+                        $ca1 = ($currentTermName === 'First Term') ? $currentCa : null;
+                        $exam1 = ($currentTermName === 'First Term') ? $currentExam : null;
+                        $total1 = ($currentTermName === 'First Term') ? $currentTotal : null;
+
+                        $ca2 = ($currentTermName === 'Second Term') ? $currentCa : null;
+                        $exam2 = ($currentTermName === 'Second Term') ? $currentExam : null;
+                        $total2 = ($currentTermName === 'Second Term') ? $currentTotal : null;
+
+                        $ca3 = ($currentTermName === 'Third Term') ? $currentCa : null;
+                        $exam3 = ($currentTermName === 'Third Term') ? $currentExam : null;
+                        $total3 = ($currentTermName === 'Third Term') ? $currentTotal : null;
+
+                        $sessionAvg = $score['session_avg'] ?? null;
+                    @endphp
+                    <tr class="{{ !$attempted ? 'rc-row-unattempted' : '' }}">
+                        <td class="rc-td-subject">{{ strtoupper($score['subject'] ?? 'N/A') }}</td>
+
+                        <!-- 1st Term Cells -->
+                        <td class="rc-td-num">{{ $ca1 !== null ? number_format($ca1, 1) : '—' }}</td>
+                        <td class="rc-td-num">{{ $exam1 !== null ? number_format($exam1, 1) : '—' }}</td>
+                        <td class="rc-td-num"><strong>{{ $total1 !== null ? number_format($total1, 1) : '—' }}</strong></td>
+
+                        <!-- 2nd Term Cells -->
+                        <td class="rc-td-num">{{ $ca2 !== null ? number_format($ca2, 1) : '—' }}</td>
+                        <td class="rc-td-num">{{ $exam2 !== null ? number_format($exam2, 1) : '—' }}</td>
+                        <td class="rc-td-num"><strong>{{ $total2 !== null ? number_format($total2, 1) : '—' }}</strong></td>
+
+                        <!-- 3rd Term Cells -->
+                        <td class="rc-td-num">{{ $ca3 !== null ? number_format($ca3, 1) : '—' }}</td>
+                        <td class="rc-td-num">{{ $exam3 !== null ? number_format($exam3, 1) : '—' }}</td>
+                        <td class="rc-td-num"><strong>{{ $total3 !== null ? number_format($total3, 1) : '—' }}</strong></td>
+
+                        <!-- Session Summary -->
+                        <td class="rc-td-num">{{ $sessionAvg !== null ? number_format($sessionAvg, 1) : '—' }}</td>
+                        <td class="rc-td-grade">{{ $score['grade'] ?? '—' }}</td>
+                        <td class="rc-td-remark">{{ strtoupper($score['remark'] ?? '—') }}</td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="13" class="text-center text-muted py-4">
+                            <em>No subjects have been set up for this class yet.</em>
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
 
     <!-- ================================================ -->
     <!-- AFFECTIVE TRAITS & PSYCHOMOTOR SKILLS            -->
@@ -406,9 +427,15 @@
                     {{ $reportCard->class_teacher_comment ?? '—' }}
                 </div>
             </td>
-            <td class="rc-comments-sign">
+              <td class="rc-comments-sign">
                 <div class="rc-signature-label">Signature:</div>
-                <div class="rc-signature-space"></div>
+                @if($reportCard->class->classTeacher && $reportCard->class->classTeacher->signature_url)
+                    <img src="{{ $reportCard->class->classTeacher->signature_url }}" 
+                        alt="Teacher Signature" 
+                        style="max-height: 35px; max-width: 100px; object-fit: contain; display: block; margin: 0 auto;">
+                @else
+                    <div class="rc-signature-space"></div>
+                @endif
             </td>
         </tr>
 
@@ -425,9 +452,16 @@
                     {{ $reportCard->principal_comment ?? '—' }}
                 </div>
             </td>
-            <td class="rc-comments-sign">
+              <td class="rc-comments-sign">
                 <div class="rc-signature-label">Signature:</div>
-                <div class="rc-signature-space"></div>
+                @php $principalSig = \App\Models\Setting::getImageUrl('principal_signature'); @endphp
+                @if($principalSig)
+                    <img src="{{ $principalSig }}" 
+                        alt="Principal Signature" 
+                        style="max-height: 35px; max-width: 100px; object-fit: contain; display: block; margin: 0 auto;">
+                @else
+                    <div class="rc-signature-space"></div>
+                @endif
             </td>
         </tr>
 
@@ -439,17 +473,23 @@
                     {{ $reportCard->vacation_date ? strtoupper($reportCard->vacation_date->format('jS F, Y')) : '—' }}
                 </strong>
             </td>
-            <td class="rc-comments-sign rc-comments-sign-label">
-                <div class="rc-signature-label">RESUMPTION DATE:</div>
-            </td>
+              <td  class="rc-comments-sign mb-2" rowspan="2" >
+                @php $schoolStamp = \App\Models\Setting::getImageUrl('school_stamp'); @endphp
+                @if($schoolStamp)
+                    <div style="position: absolute; bottom: 40px; right: 20px; opacity: 0.85;">
+                        <img src="{{ $schoolStamp }}" alt="School Stamp" style="max-height: 80px; max-width: 80px; transform: rotate(-15deg);">
+                    </div>
+                @endif
+             </td>
         </tr>
         <tr>
-            <td class="rc-comments-label"></td>
-            <td class="rc-comments-cell" colspan="2">
+            <td class="rc-comments-label">RESUMPTION DATE:</td>
+            <td class="rc-comments-cell">
                 <strong>
                     {{ $reportCard->resumption_date ? strtoupper($reportCard->resumption_date->format('jS F, Y')) : '—' }}
                 </strong>
             </td>
+             
         </tr>
     </table>
 

@@ -36,6 +36,8 @@ class SettingController extends Controller
             'theme_secondary' => 'nullable|string|max:20',
             'theme_report_header' => 'nullable|string|max:20',
             'theme_report_text' => 'nullable|string|max:20',
+            'ca_weight' => 'nullable|integer|min:1|max:99',
+            'exam_weight' => 'nullable|integer|min:1|max:99',
         ]);
 
         try {
@@ -56,31 +58,44 @@ class SettingController extends Controller
 
             // Handle logo upload
             if ($request->hasFile('school_logo')) {
-                $logoPath = $this->uploadLogo($request->file('school_logo'));
+                $logoPath = $this->uploadImage($request->file('school_logo'));
                 
                 // Delete old logo
                 $oldLogo = Setting::get('school_logo');
                 if ($oldLogo) {
-                    $oldPath = public_path($oldLogo);
-                    if (file_exists($oldPath)) {
-                        @unlink($oldPath);
-                    }
+                    $this->deleteImage($oldLogo);
                 }
                 
                 Setting::set('school_logo', $logoPath, 'image');
+            }
+
+            
+
+            if ($request->hasFile('principal_signature')) {
+                $imagePath = $this->uploadImage($request->file('principal_signature'), 'signatures');
+                Setting::set('principal_signature', $imagePath, 'image');
+            }
+            if ($request->hasFile('school_stamp')) {
+                $imagePath = $this->uploadImage($request->file('school_stamp'), 'signatures');
+                Setting::set('school_stamp', $imagePath, 'image');
             }
 
             // Handle logo removal
             if ($request->has('remove_logo') && $request->remove_logo == '1') {
                 $oldLogo = Setting::get('school_logo');
                 if ($oldLogo) {
-                    $oldPath = public_path($oldLogo);
-                    if (file_exists($oldPath)) {
-                        @unlink($oldPath);
-                    }
+                    $this->deleteImage($oldLogo);
                 }
                 Setting::set('school_logo', null, 'image');
             }
+
+                if ($request->has('ca_weight')) {
+                    Setting::set('ca_weight', $request->input('ca_weight'));
+                }
+                
+                if ($request->has('exam_weight')) {
+                    Setting::set('exam_weight', $request->input('exam_weight'));
+                }
 
             Setting::clearCache();
 
@@ -95,10 +110,13 @@ class SettingController extends Controller
     /**
      * Upload logo to public/uploads/settings folder
      */
-    private function uploadLogo($file)
-    {
-      
-        return FuncController::uploadImage($file, 'settings');
+    private function uploadImage($file, $folder='settings')
+    { 
+        return FuncController::uploadImage($file, $folder);
+    }
+
+      private function deleteImage($imagePath){
+         FuncController::deleteImage($imagePath);
     }
 
 

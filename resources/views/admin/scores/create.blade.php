@@ -36,7 +36,7 @@
                     </div>
                     
                     <div class="row mb-3">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label fw-semibold">Subject <span class="text-danger">*</span></label>
                             <select name="subject_id" class="form-select" required>
                                 <option value="">-- Select Subject --</option>
@@ -47,16 +47,26 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label fw-semibold">Assessment Type <span class="text-danger">*</span></label>
                             <select name="assessment_type" class="form-select" required>
                                 <option value="test">Test</option>
                                 <option value="exam">Exam</option>
-                                <option value="assignment">Assignment</option>
-                                <option value="project">Project</option>
+                            <!--    <option value="assignment">Assignment</option>
+                                <option value="project">Project</option>  -->
                             </select>
                         </div>
+                        <div class="col-md-4">
+                        <label class="form-label fw-semibold">Term <span class="text-danger">*</span></label>
+                        <select name="term" class="form-select" required>
+                            <option value="First Term">First Term</option>
+                            <option value="Second Term">Second Term</option>
+                            <option value="Third Term">Third Term</option>
+                        </select>
                     </div>
+                    </div>
+
+                      
                     
                     <div class="row mb-3">
                         <div class="col-md-4">
@@ -68,7 +78,7 @@
                             <input type="number" name="max_score" class="form-control" value="100" min="1" required>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label fw-semibold">Date <span class="text-danger">*</span></label>
+                            <label class="form-label fw-semibold">Assessmnent Date <span class="text-danger">*</span></label>
                             <input type="date" name="assessment_date" class="form-control" value="{{ date('Y-m-d') }}" required>
                         </div>
                     </div>

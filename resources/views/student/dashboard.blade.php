@@ -380,10 +380,13 @@
                                             <i class="bi bi-play-circle"></i> Continue Test
                                         </a>
                                     @else
-                                        <a href="{{ route('student.exam.take', $test->id) }}" 
-                                           class="btn btn-info w-100 mt-3">
+                                        <button type="button" class="btn btn-info w-100 mt-3 start-exam-btn" 
+                                                data-exam-id="{{ $test->id }}"
+                                                data-exam-title="{{ $test->title }}"
+                                                data-exam-type="test"
+                                                data-student-num="{{ Auth::user()->student->admission_number }}">
                                             <i class="bi bi-play-circle"></i> Start Test
-                                        </a>
+                                        </button>
                                     @endif
                                 </div>
                             </div>
@@ -440,10 +443,13 @@
                                             <i class="bi bi-play-circle"></i> Continue Exam
                                         </a>
                                     @else
-                                        <a href="{{ route('student.exam.take', $exam->id) }}" 
-                                           class="btn btn-primary w-100 mt-3">
+                                          <button type="button" class="btn btn-primary w-100 mt-3 start-exam-btn" 
+                                                data-exam-id="{{ $exam->id }}"
+                                                data-exam-title="{{ $exam->title }}"
+                                                data-exam-type="exam"
+                                                data-student-num="{{ Auth::user()->student->admission_number }}">
                                             <i class="bi bi-play-circle"></i> Start Exam
-                                        </a>
+                                        </button>
                                     @endif
                                 </div>
                             </div>
@@ -580,6 +586,45 @@
         </div>
     </div>
 </div>
+
+<!-- ============================================ -->
+<!-- PRE-EXAM VERIFICATION MODAL                  -->
+<!-- ============================================ -->
+<div class="modal fade" id="verifyExamModal" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="bi bi-shield-lock"></i> Exam Verification</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <h4 class="mb-1" id="modalExamTitle">Exam Title</h4>
+                <p class="text-muted mb-4" id="modalExamType">Test</p>
+                
+                <div class="alert alert-info small">
+                    <i class="bi bi-info-circle"></i> To proceed, please enter your Admission Number to verify your identity.
+                </div>
+
+                <div class="mb-3 text-start">
+                    <label class="form-label fw-semibold">Admission Number</label>
+                    <input type="text" id="admissionInput" class="form-control form-control-lg text-center fw-bold" 
+                           placeholder="e.g. STU001" autocomplete="off">
+                    <div id="admissionError" class="text-danger small mt-2" style="display: none;">
+                        <i class="bi bi-exclamation-circle"></i> Incorrect admission number. Please try again.
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success px-4" id="verifyAndStartBtn">
+                    <i class="bi bi-check-circle"></i> Verify & Start
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 @endsection
 
 @push('styles')
@@ -629,4 +674,67 @@
 }
 
 </style>
+@endpush
+
+
+@push('scripts')
+<script>
+$(document).ready(function() {
+    let selectedExamId = null;
+    let correctAdmissionNumber = null;
+
+    // 1. When "Start Exam/Test" is clicked
+    $('.start-exam-btn').on('click', function() {
+        selectedExamId = $(this).data('exam-id');
+        correctAdmissionNumber = $(this).data('student-num').toString().trim().toLowerCase();
+        
+        const examTitle = $(this).data('exam-title');
+        const examType = $(this).data('exam-type');
+
+        // Populate modal
+        $('#modalExamTitle').text(examTitle);
+        $('#modalExamType').text(examType.toUpperCase());
+        $('#admissionInput').val(''); // Clear previous input
+        $('#admissionError').hide();
+        $('#admissionInput').removeClass('is-invalid');
+
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('verifyExamModal'));
+        modal.show();
+        
+        // Auto-focus the input
+        setTimeout(() => $('#admissionInput').focus(), 500);
+    });
+
+    // 2. Handle "Verify & Start" button click
+    $('#verifyAndStartBtn').on('click', function() {
+        const enteredNumber = $('#admissionInput').val().trim().toLowerCase();
+
+        if (enteredNumber === correctAdmissionNumber) {
+            // Correct: Show loading state and redirect
+            $(this).html('<span class="spinner-border spinner-border-sm"></span> Starting...').prop('disabled', true);
+            window.location.href = `/student/exam/take/${selectedExamId}`;
+        } else {
+            // Wrong: Show error
+            $('#admissionInput').addClass('is-invalid');
+            $('#admissionError').fadeIn();
+        }
+    });
+
+    // 3. Allow pressing "Enter" in the input to trigger the verification
+    $('#admissionInput').on('keypress', function(e) {
+        if (e.which == 13) { // Enter key
+            e.preventDefault();
+            $('#verifyAndStartBtn').click();
+        }
+    });
+    
+    // 4. Reset state when modal is closed
+    $('#verifyExamModal').on('hidden.bs.modal', function() {
+        $('#verifyAndStartBtn').html('<i class="bi bi-check-circle"></i> Verify & Start').prop('disabled', false);
+        $('#admissionInput').val('').removeClass('is-invalid');
+        $('#admissionError').hide();
+    });
+});
+</script>
 @endpush

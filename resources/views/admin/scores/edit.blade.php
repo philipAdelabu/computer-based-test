@@ -37,7 +37,7 @@
                     </div>
                     
                     <div class="row mb-3">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label fw-semibold">Subject <span class="text-danger">*</span></label>
                             <select name="subject_id" class="form-select" required>
                                 @foreach($subjects as $subject)
@@ -49,14 +49,22 @@
                             </select>
                         </div>
                         
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label fw-semibold">Assessment Type <span class="text-danger">*</span></label>
                             <select name="assessment_type" class="form-select" required>
                                 <option value="test" {{ old('assessment_type', $result->assessment_type) == 'test' ? 'selected' : '' }}>Test</option>
-                                <option value="exam" {{ old('assessment_type', $result->assessment_type) == 'exam' ? 'selected' : '' }}>Exam</option>
+                                <option value="exam" {{ old('assessment_type', $result->assessment_type) == 'exam' ? 'selected' : '' }}>Exam</option><!--
                                 <option value="assignment" {{ old('assessment_type', $result->assessment_type) == 'assignment' ? 'selected' : '' }}>Assignment</option>
                                 <option value="project" {{ old('assessment_type', $result->assessment_type) == 'project' ? 'selected' : '' }}>Project</option>
-                                <option value="quiz" {{ old('assessment_type', $result->assessment_type) == 'quiz' ? 'selected' : '' }}>Quiz</option>
+                                <option value="quiz" {{ old('assessment_type', $result->assessment_type) == 'quiz' ? 'selected' : '' }}>Quiz</option>  -->
+                            </select>
+                        </div>
+                         <div class="col-md-4">
+                            <label class="form-label fw-semibold">Term <span class="text-danger">*</span></label>
+                            <select name="term" class="form-select" required>
+                                <option value="First Term"  {{ old('term', $result->term) == 'First Term' ? 'selected' : '' }} >First Term</option>
+                                <option value="Second Term" {{ old('term', $result->term) == 'Second Term' ? 'selected' : '' }}>Second Term</option>
+                                <option value="Third Term" {{ old('term', $result->term) == 'Third Term' ? 'selected' : '' }}>Third Term</option>
                             </select>
                         </div>
                     </div>

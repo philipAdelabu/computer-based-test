@@ -59,7 +59,8 @@ public function dashboard()
 {
     $student = Auth::user()->student;
     $class = $student->class;
-    $subjects = $class ? $class->subjects : collect();
+   // $subjects = $class ? $class->subjects : collect();
+    $subjects = $student->subjects()->with('teacher')->get();
     $now = Carbon::now(config('app.timezone'));
     
     // ============ AVAILABLE ASSESSMENTS ============
@@ -328,11 +329,18 @@ public function exams(Request $request)
     /**
      * START EXAM - When student clicks "Start Exam" button
      */
-    public function takeExam($examId)
+    public function takeExam(Request $request, $examId)
     {
+
+          // If they bypassed the modal, block them
+            if (!$request->session()->has('verified_exam_'.$examId)) {
+                return redirect()->route('student.exams')
+                    ->with('error', 'Please verify your student number before starting the assessment.');
+            }
 
       
         $student = Auth::user()->student;
+
         $exam = Exam::with(['questions' => function($query) {
             $query->inRandomOrder();
         }])->findOrFail($examId);
@@ -340,7 +348,11 @@ public function exams(Request $request)
         // Check if student can take the exam
         $canTake = $exam->canStudentTake($student->id);
 
-       
+        // Check if the student takes this subject
+        if (!$student->takesSubject($exam->subject_id)) {
+            return redirect()->route('student.exams')
+                ->with('error', 'You are not enrolled in this subject.');
+        }
        
         if (!$canTake['can']) {
             return redirect()->route('student.exams')

@@ -175,8 +175,17 @@ Route::get('/students/by-class/{classId}', [AdminController::class, 'getStudents
     Route::post('/report-cards/{id}/auto-fill', [AdminReportCardController::class, 'autoFill'])->name('report-cards.auto-fill');
     Route::post('/report-cards/bulk-auto-fill', [AdminReportCardController::class, 'bulkAutoFill'])->name('report-cards.bulk-auto-fill');
 
-
-    });
+   Route::get('/students/{id}', [AdminController::class, 'showStudent'])->name('students.show');
+   Route::get('/teachers/{id}', [AdminController::class, 'showTeacher'])->name('teachers.show');
+   Route::get('/api/classes/{classId}/subjects', function($classId) {
+    return response()->json(\App\Models\Subject::where('class_id', $classId)->get(['id', 'name']));
+   });
+   
+   Route::get('/students/{id}/subjects', [AdminController::class, 'manageSubjects'])->name('students.subjects');
+  Route::post('/students/{id}/subjects', [AdminController::class, 'updateSubjects'])->name('students.subjects.update');
+    
+  
+  });
 
 // Teacher Routes
 Route::middleware(['auth', CheckRole::class . ':teacher'])->prefix('teacher')->name('teacher.')->group(function () {
@@ -327,4 +336,6 @@ Route::middleware(['auth'])->group(function () {
         ->name('rich-editor.upload-image');
      Route::get('/profile/change-password', [ProfileController::class, 'showChangePasswordForm'])->name('profile.password');
     Route::put('/profile/change-password', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
+    Route::get('/profile', [ProfileController::class, 'showProfile'])->name('profile.index');
+    Route::post('/profile', [ProfileController::class, 'updateProfile'])->name('profile.update');
 });

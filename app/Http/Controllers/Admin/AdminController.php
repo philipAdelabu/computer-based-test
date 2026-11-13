@@ -230,6 +230,8 @@ public function getStudentsByClass($classId)
             'guardian_name' => 'nullable|string',
             'guardian_phone' => 'nullable|string',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',  // NEW
+            'subjects' => 'required|array|min:1', // NEW
+            'subjects.*' => 'exists:subjects,id', // NEW
         ]);
 
          // Handle photo upload
@@ -246,7 +248,7 @@ public function getStudentsByClass($classId)
             'photo_path' => $photoPath,  // NEW
         ]);
 
-        Student::create([
+        $student = Student::create([
             'user_id' => $user->id,
             'admission_number' => $validated['admission_number'],
             'class_id' => $validated['class_id'],
@@ -255,6 +257,9 @@ public function getStudentsByClass($classId)
             'guardian_name' => $validated['guardian_name'] ?? null,
             'guardian_phone' => $validated['guardian_phone'] ?? null,
         ]);
+
+         // Attach selected subjects
+         $student->subjects()->sync($validated['subjects']);
 
         return redirect()->route('admin.students')
             ->with('success', 'Student created successfully.');
@@ -660,5 +665,88 @@ public function processAdmission(Request $request)
     return redirect()->route('admin.classes')
         ->with('success', "{$updatedCount} student(s) have been successfully admitted to {$nextClass->name}.");
 }
+
+  // ============ STUDENT SHOW ============
+public function showStudent($id)
+{
+    // Eager load everything needed for the profile
+    $student = Student::with([
+        'user', 
+        'class',
+        'results.subject',
+        'results.exam',
+        'examAttempts.exam.subject',
+        'reportCards'
+    ])->findOrFail($id);
+
+    // Get the subjects assigned to the student's class
+    $subjects = Subject::where('class_id', $student->class_id)
+                       ->with('teacher')
+                       ->get();
+
+    // Calculate average score from all results
+    $averageScore = $student->results->avg('percentage') ?? 0;
+    $totalExams = $student->examAttempts->where('status', 'submitted')->count();
+    $passedExams = $student->examAttempts->where('status', 'submitted')
+        ->filter(function($attempt) {
+            return $attempt->exam && $attempt->score >= ($attempt->exam->total_score * ($attempt->exam->benchmark / 100));
+        })->count();
+
+    return view('admin.students.show', compact(
+        'student', 'subjects', 'averageScore', 'totalExams', 'passedExams'
+    ));
+}
+
+        // ============ TEACHER SHOW ============
+        public function showTeacher($id)
+        {
+            // Eager load subjects they teach and the classes
+            $teacher = User::with([
+                'teacherSubjects.class',
+            ])->where('role', 'teacher')->findOrFail($id);
+
+            // Get classes where this teacher is the Class Teacher
+            $classTeacherOf = ClassModel::where('class_teacher_id', $teacher->id)->get();
+
+            // Get all students in the classes the teacher teaches
+            $classIds = $teacher->teacherSubjects->pluck('class_id')->unique();
+            $totalStudents = Student::whereIn('class_id', $classIds)->where('status', 'active')->count();
+
+            // Recent assessments created by this teacher
+            $recentAssessments = Exam::where('created_by', $teacher->id)
+                ->with('subject')
+                ->latest()
+                ->limit(5)
+                ->get();
+
+            return view('admin.teachers.show', compact(
+                'teacher', 'classTeacherOf', 'totalStudents', 'recentAssessments'
+            ));
+        }
+
+        public function manageSubjects($id)
+        {
+            $student = Student::with(['user', 'class', 'subjects'])->findOrFail($id);
+            $subjects = Subject::where('class_id', $student->class_id)->get();
+            $enrolledSubjectIds = $student->subjects->pluck('id')->toArray();
+
+            return view('admin.students.manage-subjects', compact('student', 'subjects', 'enrolledSubjectIds'));
+        }
+
+        public function updateSubjects(Request $request, $id)
+        {
+            $request->validate([
+                'subjects' => 'required|array|min:1',
+                'subjects.*' => 'exists:subjects,id',
+            ]);
+
+            $student = Student::findOrFail($id);
+            
+            // Sync will automatically add new ones and remove unchecked ones
+            $student->subjects()->sync($request->subjects);
+
+            return redirect()->route('admin.students.show', $student->id)
+                ->with('success', 'Student subjects updated successfully.');
+        }
 
 }

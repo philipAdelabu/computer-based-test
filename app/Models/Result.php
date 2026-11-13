@@ -20,6 +20,7 @@ class Result extends Model
         'grade',
         'remarks',
         'assessment_date',
+        'term',
     ];
 
     protected $casts = [

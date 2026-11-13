@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
+use App\Http\Controllers\FuncController;
 
 class ProfileController extends Controller
 {
@@ -27,4 +28,35 @@ class ProfileController extends Controller
 
         return back()->with('success', 'Password updated successfully!');
     }
+
+    public function showProfile()
+    {
+        return view('profile.index');
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $validated = $request->validate([
+            'signature' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+        ]);
+
+        $user = Auth::user();
+
+        if ($request->hasFile('signature')) {
+            $path = $this->uploadImage($request->file('signature'), 'signatures');
+            $user->update(['signature_path' => $path]);
+        }
+
+        return back()->with('success', 'Profile updated successfully.');
+    }
+
+      private function uploadImage($file, $folder='settings')
+    { 
+        return FuncController::uploadImage($file, $folder);
+    }
+
+      private function deleteImage($imagePath){
+         FuncController::deleteImage($imagePath);
+    }
+
 }

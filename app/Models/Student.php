@@ -132,17 +132,32 @@ public function deactivateAssessments($reason, $deactivatedBy = null, $reactivat
     ]);
 }
 
-/**
- * Reactivate the student for assessments
- */
-public function reactivateAssessments()
-{
-    $this->update([
-        'can_take_assessments' => true,
-        'deactivation_reason' => null,
-        'deactivated_by' => null,
-        'deactivated_at' => null,
-        'reactivate_at' => null,
-    ]);
-}
+    /**
+     * Reactivate the student for assessments
+     */
+    public function reactivateAssessments()
+    {
+        $this->update([
+            'can_take_assessments' => true,
+            'deactivation_reason' => null,
+            'deactivated_by' => null,
+            'deactivated_at' => null,
+            'reactivate_at' => null,
+        ]);
+    }
+
+    public function subjects()
+    {
+        return $this->belongsToMany(Subject::class, 'student_subject')->withTimestamps();
+    }
+
+    /**
+     * Check if the student is enrolled in a specific subject.
+     */
+    public function takesSubject($subjectId)
+    {
+        return $this->subjects()->where('subject_id', $subjectId)->exists();
+    }
+
+    
 }

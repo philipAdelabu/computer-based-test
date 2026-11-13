@@ -18,6 +18,7 @@ class User extends Authenticatable
         'phone',
         'address',
         'photo_path',
+        'signature_path', // NEW
     ];
 
     protected $hidden = [
@@ -80,6 +81,19 @@ class User extends Authenticatable
             return asset($this->photo_path);
         }
 
+        return null;
+    }
+
+
+    // Add accessor for signature
+    public function getSignatureUrlAttribute()
+    {
+        if (!$this->signature_path) return null;
+        
+        $publicPath = public_path($this->signature_path);
+        if (file_exists($this->signature_path)) {
+            return asset($this->signature_path);
+        }
         return null;
     }
 

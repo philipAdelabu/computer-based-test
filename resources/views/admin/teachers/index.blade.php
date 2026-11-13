@@ -57,10 +57,14 @@
                             </td>
                             <td>
                                 <div class="btn-group" role="group">
+                                    <a href="{{ route('admin.teachers.show', $teacher->id) }}" 
+                                    class="btn btn-sm btn-outline-info" title="View Profile">
+                                        <i class="bi bi-eye"></i>
+                                    </a> &nbsp;&nbsp;
                                     <a href="{{ route('admin.teachers.edit', $teacher->id) }}" 
                                        class="btn btn-sm btn-outline-primary">
                                         <i class="bi bi-pencil"></i>
-                                    </a>
+                                    </a> &nbsp;&nbsp;
                                     <button type="button" 
                                             class="btn btn-sm btn-outline-danger" 
                                             data-bs-toggle="modal" 

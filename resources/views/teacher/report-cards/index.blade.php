@@ -10,11 +10,13 @@
 @section('page-title', 'Report Cards')
 
 @section('content')
+
+<!--
 <div class="d-flex justify-content-between align-items-center mb-4">
     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#generateModal">
         <i class="bi bi-plus-circle"></i> Generate Report Cards
     </button>
-</div>
+</div>  -->
 
 <div class="card">
     <div class="card-body p-0">

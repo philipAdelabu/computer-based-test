@@ -49,6 +49,12 @@
             <i class="bi bi-list-check"></i> Bulk Traits
         </a>
     </li>
+      <li class="nav-item">
+        <a class="nav-link {{ request()->routeIs('profile.index*') ? 'active' : '' }}" 
+        href="{{ route('profile.index') }}">
+            <i class="bi bi-shield-lock-fill"></i> Upload Signature
+        </a>
+    </li>
      <li class="nav-item">
         <a class="nav-link {{ request()->routeIs('profile.password*') ? 'active' : '' }}" 
         href="{{ route('profile.password') }}">

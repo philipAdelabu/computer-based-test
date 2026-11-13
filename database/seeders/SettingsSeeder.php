@@ -117,6 +117,39 @@ class SettingsSeeder extends Seeder
                     'label' => 'Report Card Header Text',
                     'description' => 'Text color inside the report card header',
                 ],
+                [
+                    'key' => 'principal_signature',
+                    'value' => null,
+                    'type' => 'image',
+                    'group' => 'school',
+                    'label' => 'Principal Signature',
+                    'description' => 'Upload the Principal\'s signature image.',
+                ],
+                [
+                    'key' => 'school_stamp',
+                    'value' => null,
+                    'type' => 'image',
+                    'group' => 'school',
+                    'label' => 'School Stamp',
+                    'description' => 'Upload the official school stamp.',
+                ],
+                [
+                    'key' => 'ca_weight',
+                    'value' => '40',
+                    'type' => 'number',
+                    'group' => 'grading',
+                    'label' => 'Continuous Assessment Weight (%)',
+                    'description' => 'The percentage weight for Tests/CA (e.g., 30 or 40)',
+                ],
+                [
+                    'key' => 'exam_weight',
+                    'value' => '60',
+                    'type' => 'number',
+                    'group' => 'grading',
+                    'label' => 'Exam Weight (%)',
+                    'description' => 'The percentage weight for Exams (e.g., 70 or 60)',
+                ],
+                
         ];
 
         foreach ($settings as $setting) {

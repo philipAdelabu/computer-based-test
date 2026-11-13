@@ -30,6 +30,10 @@ class ScoreController extends Controller
         if ($request->has('assessment_type') && $request->assessment_type) {
             $query->where('assessment_type', $request->assessment_type);
         }
+
+        if ($request->has('term') && $request->term) {
+            $query->where('term', $request->term);
+        }
         
         $results = $query->paginate(20);
         $classes = ClassModel::orderBy('name')->get();
@@ -58,6 +62,7 @@ class ScoreController extends Controller
             'score' => 'required|integer|min:0',
             'max_score' => 'required|integer|min:1',
             'assessment_date' => 'required|date',
+            'term' => 'required|string|in:First Term,Second Term,Third Term, 1st Term, 2nd Term, 3rd Term', // NEW
             'remarks' => 'nullable|string',
         ]);
 
@@ -65,6 +70,7 @@ class ScoreController extends Controller
         $exists = Result::where('student_id', $validated['student_id'])
                         ->where('subject_id', $validated['subject_id'])
                         ->where('assessment_type', $validated['assessment_type'])
+                        ->where('term', $validated['term']) // NEW
                         ->whereDate('assessment_date', $validated['assessment_date'])
                         ->exists();
         
@@ -79,6 +85,7 @@ class ScoreController extends Controller
             'student_id' => $validated['student_id'],
             'subject_id' => $validated['subject_id'],
             'assessment_type' => $validated['assessment_type'],
+            'term' => $validated['term'], // NEW
             'score' => $validated['score'],
             'max_score' => $validated['max_score'],
             'percentage' => $percentage,
@@ -109,6 +116,7 @@ class ScoreController extends Controller
             'max_score' => 'required|integer|min:1',
             'assessment_type' => 'required|string',
             'assessment_date' => 'required|date',
+            'term' => 'required|string|in:First Term,Second Term,Third Term, 1st Term, 2nd Term, 3rd Term', // NEW
             'remarks' => 'nullable|string',
         ]);
 
@@ -121,6 +129,7 @@ class ScoreController extends Controller
             'percentage' => $percentage,
             'assessment_type' => $validated['assessment_type'],
             'assessment_date' => $validated['assessment_date'],
+             'term' => $validated['term'], // NEW
             'remarks' => $validated['remarks'] ?? null,
         ]);
 
@@ -145,60 +154,94 @@ class ScoreController extends Controller
         return view('admin.scores.bulk-upload', compact('classes', 'subjects'));
     }
 
+     /**
+     * Store bulk uploaded scores
+     */
     public function bulkUploadStore(Request $request)
     {
         $validated = $request->validate([
             'subject_id' => 'required|exists:subjects,id',
-            'class_id' => 'required|exists:classes,id',
-            'assessment_type' => 'required|string',
-            'max_score' => 'required|integer|min:1',
+            'assessment_type' => 'required|in:test,exam,assignment,project,quiz',
+            'max_score' => 'required|numeric|min:1',
             'assessment_date' => 'required|date',
+            'term' => 'required|string|in:First Term,Second Term,Third Term, 1st Term, 2nd Term, 3rd Term', // NEW
             'scores' => 'required|array',
-            'scores.*' => 'nullable|integer|min:0',
+            'scores.*' => 'nullable|numeric|min:0',
         ]);
 
         $subject = Subject::findOrFail($validated['subject_id']);
-        $students = Student::where('class_id', $validated['class_id'])
-                          ->where('status', 'active')
-                          ->get();
         
+
         $saved = 0;
+        $updated = 0;
         $skipped = 0;
-        
-        foreach ($students as $student) {
-            $score = $validated['scores'][$student->id] ?? null;
-            
+        $errors = [];
+
+        foreach ($validated['scores'] as $studentId => $score) {
+            // Skip empty scores
             if ($score === null || $score === '') {
                 $skipped++;
                 continue;
             }
-            
+
+            // Validate score range
             if ($score > $validated['max_score']) {
+                $errors[] = "Student #{$studentId}: Score exceeds max score.";
                 continue;
             }
-            
+
+            // Verify student belongs to subject's class
+            $student = Student::find($studentId);
+            if (!$student || $student->class_id !== $subject->class_id) {
+                $errors[] = "Student #{$studentId}: Not in this subject's class.";
+                continue;
+            }
+
             $percentage = ($score / $validated['max_score']) * 100;
-            
-            Result::updateOrCreate(
-                [
-                    'student_id' => $student->id,
-                    'subject_id' => $validated['subject_id'],
-                    'assessment_type' => $validated['assessment_type'],
-                    'assessment_date' => $validated['assessment_date'],
-                ],
-                [
+
+            // Check if score already exists
+            $existing = Result::where('student_id', $studentId)
+                              ->where('subject_id', $validated['subject_id'])
+                              ->where('assessment_type', $validated['assessment_type'])
+                              ->whereDate('assessment_date', $validated['assessment_date'])
+                              ->where('term', $validated['term']) // NEW
+                              ->first();
+
+            if ($existing) {
+                $existing->update([
                     'score' => $score,
                     'max_score' => $validated['max_score'],
-                    'percentage' => $percentage,
-                ]
-            );
-            
-            $saved++;
+                    'percentage' => round($percentage, 2),
+                ]);
+                $updated++;
+            } else {
+                Result::create([
+                    'student_id' => $studentId,
+                    'subject_id' => $validated['subject_id'],
+                    'assessment_type' => $validated['assessment_type'],
+                    'score' => $score,
+                    'max_score' => $validated['max_score'],
+                    'percentage' => round($percentage, 2),
+                     'term' => $validated['term'], // NEW
+                    'assessment_date' => $validated['assessment_date'],
+                ]);
+                $saved++;
+            }
         }
 
-        return redirect()->route('admin.scores')
-            ->with('success', "{$saved} score(s) uploaded successfully. {$skipped} student(s) skipped.");
+        $message = "{$saved} new score(s) added, {$updated} updated, {$skipped} skipped.";
+        if (!empty($errors)) {
+            $message .= " Errors: " . implode('; ', array_slice($errors, 0, 3));
+            if (count($errors) > 3) {
+                $message .= " and " . (count($errors) - 3) . " more.";
+            }
+            return redirect()->route('admin.scores')->with('warning', $message);
+        }
+
+        return redirect()->route('admin.scores')->with('success', $message);
     }
+
+
 
     public function getStudentsByClass($classId)
     {

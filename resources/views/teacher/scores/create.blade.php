@@ -60,21 +60,30 @@
                     </div>
                     
                     <div class="row mb-3">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label fw-semibold">
                                 Assessment Type <span class="text-danger">*</span>
                             </label>
                             <select name="assessment_type" class="form-select @error('assessment_type') is-invalid @enderror" required>
                                 <option value="test" {{ old('assessment_type') == 'test' ? 'selected' : '' }}>Test</option>
-                                <option value="exam" {{ old('assessment_type') == 'exam' ? 'selected' : '' }}>Exam</option>
+                                <option value="exam" {{ old('assessment_type') == 'exam' ? 'selected' : '' }}>Exam</option><!--
                                 <option value="assignment" {{ old('assessment_type') == 'assignment' ? 'selected' : '' }}>Assignment</option>
                                 <option value="project" {{ old('assessment_type') == 'project' ? 'selected' : '' }}>Project</option>
-                                <option value="quiz" {{ old('assessment_type') == 'quiz' ? 'selected' : '' }}>Quiz</option>
+                                <option value="quiz" {{ old('assessment_type') == 'quiz' ? 'selected' : '' }}>Quiz</option>  -->
                             </select>
                             @error('assessment_type')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
+
+                        <div class="col-md-4">
+                        <label class="form-label fw-semibold">Term <span class="text-danger">*</span></label>
+                        <select name="term" class="form-select" required>
+                            <option value="First Term">First Term</option>
+                            <option value="Second Term">Second Term</option>
+                            <option value="Third Term">Third Term</option>
+                        </select>
+                       </div>
                         
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label fw-semibold">
                                 Assessment Date <span class="text-danger">*</span>
                             </label>

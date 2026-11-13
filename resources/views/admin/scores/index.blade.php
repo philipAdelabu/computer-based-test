@@ -55,6 +55,15 @@
                     <option value="exam" {{ request('assessment_type') == 'exam' ? 'selected' : '' }}>Exam</option>
                 </select>
             </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold">Term</label>
+                <select name="term" class="form-select">
+                    <option value="">All Terms</option>
+                    <option value="First Term" {{ request('term') == 'First Term' ? 'selected' : '' }}>First Term</option>
+                    <option value="Second Term" {{ request('term') == 'Second Term' ? 'selected' : '' }}>Second Term</option>
+                    <option value="Third Term" {{ request('term') == 'Third Term' ? 'selected' : '' }}>Third Term</option>
+                </select>
+            </div>
             <div class="col-md-3 d-flex align-items-end">
                 <button type="submit" class="btn btn-primary w-100">
                     <i class="bi bi-search"></i> Filter
@@ -78,6 +87,7 @@
                         <th>Score</th>
                         <th>Percentage</th>
                         <th>Grade</th>
+                        <th>Term</th>
                         <th>Date</th>
                         <th>Actions</th>
                     </tr>
@@ -123,6 +133,7 @@
                                     </span>
                                 @endif
                             </td>
+                            <td><span class="badge bg-secondary">{{ $result->term ?? 'N/A' }}</span></td>
                             <td>{{ $result->assessment_date->format('M d, Y') }}</td>
                             <td>
                                 <div class="btn-group">

@@ -42,6 +42,10 @@ class ScoreController extends Controller
         if ($request->has('assessment_type') && $request->assessment_type) {
             $query->where('assessment_type', $request->assessment_type);
         }
+
+        if ($request->has('term') && $request->term) {
+            $query->where('term', $request->term);
+        }
         
         $results = $query->orderBy('created_at', 'desc')->paginate(20)->withQueryString();
         
@@ -90,6 +94,7 @@ class ScoreController extends Controller
             'subject_id' => 'required|exists:subjects,id',
             'student_id' => 'required|exists:students,id',
             'assessment_type' => 'required|in:test,exam,assignment,project,quiz',
+            'term' => 'required|string|in:First Term,Second Term,Third Term, 1st Term, 2nd Term, 3rd Term', // NEW
             'score' => 'required|numeric|min:0',
             'max_score' => 'required|numeric|min:1|gte:score',
             'assessment_date' => 'required|date',
@@ -117,6 +122,7 @@ class ScoreController extends Controller
                         ->where('subject_id', $validated['subject_id'])
                         ->where('assessment_type', $validated['assessment_type'])
                         ->whereDate('assessment_date', $validated['assessment_date'])
+                        ->where('term', $validated['term']) // NEW
                         ->exists();
 
         if ($exists) {
@@ -134,6 +140,7 @@ class ScoreController extends Controller
             'max_score' => $validated['max_score'],
             'percentage' => round($percentage, 2),
             'assessment_date' => $validated['assessment_date'],
+            'term' => $validated['term'], // NEW
             'remarks' => $validated['remarks'] ?? null,
         ]);
 
@@ -169,6 +176,7 @@ class ScoreController extends Controller
             'score' => 'required|numeric|min:0',
             'max_score' => 'required|numeric|min:1|gte:score',
             'assessment_date' => 'required|date',
+            'term' => 'required|string|in:First Term,Second Term,Third Term, 1st Term, 2nd Term, 3rd Term', // NEW
             'remarks' => 'nullable|string|max:500',
         ], [
             'max_score.gte' => 'Max score must be greater than or equal to the score.',
@@ -189,6 +197,7 @@ class ScoreController extends Controller
             'max_score' => $validated['max_score'],
             'percentage' => round($percentage, 2),
             'assessment_date' => $validated['assessment_date'],
+             'term' => $validated['term'], // NEW
             'remarks' => $validated['remarks'] ?? null,
         ]);
 
@@ -236,6 +245,7 @@ class ScoreController extends Controller
             'assessment_type' => 'required|in:test,exam,assignment,project,quiz',
             'max_score' => 'required|numeric|min:1',
             'assessment_date' => 'required|date',
+            'term' => 'required|string|in:First Term,Second Term,Third Term, 1st Term, 2nd Term, 3rd Term', // NEW
             'scores' => 'required|array',
             'scores.*' => 'nullable|numeric|min:0',
         ]);
@@ -279,6 +289,7 @@ class ScoreController extends Controller
                               ->where('subject_id', $validated['subject_id'])
                               ->where('assessment_type', $validated['assessment_type'])
                               ->whereDate('assessment_date', $validated['assessment_date'])
+                              ->where('term', $validated['term']) // NEW
                               ->first();
 
             if ($existing) {
@@ -296,6 +307,7 @@ class ScoreController extends Controller
                     'score' => $score,
                     'max_score' => $validated['max_score'],
                     'percentage' => round($percentage, 2),
+                     'term' => $validated['term'], // NEW
                     'assessment_date' => $validated['assessment_date'],
                 ]);
                 $saved++;

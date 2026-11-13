@@ -61,4 +61,11 @@ class SettingHelper
     {
         return Setting::get('school_email', '');
     }
+
+    public static function principalSignature(){
+        return Setting::get('principal_signature', '');
+    }
+    public static function schoolStamp(){
+        return Setting::get('school_stamp', '');
+    }
 }

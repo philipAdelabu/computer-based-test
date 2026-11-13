@@ -252,6 +252,56 @@
         </div>
     </div>
 </div>
+       <br />
+       <div class="row g-3">
+            <div class="col-md-6 mb-3">
+            <label class="form-label fw-semibold">Principal Signature</label>
+            @if(\App\Models\Setting::get('principal_signature'))
+                <div class="mb-2">
+                    <img src="{{ \App\Models\Setting::getImageUrl('principal_signature') }}" 
+                        style="max-height: 60px; background: #f8f9fa;" class="border rounded p-1">
+                </div>
+            @endif
+            <input type="file" name="principal_signature" class="form-control" accept="image/*">
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <label class="form-label fw-semibold">School Stamp</label>
+            @if(\App\Models\Setting::get('school_stamp'))
+                <div class="mb-2">
+                    <img src="{{ \App\Models\Setting::getImageUrl('school_stamp') }}" 
+                        style="max-height: 60px; background: #f8f9fa;" class="border rounded p-1">
+                </div>
+            @endif
+            <input type="file" name="school_stamp" class="form-control" accept="image/*">
+        </div>
+     </div>
+
+      <div class="row g-3">
+         <!-- ============ GRADING WEIGHTS ============ -->
+        <div class="card mb-4">
+            <div class="card-header bg-white">
+                <h6 class="mb-0"><i class="bi bi-calculator text-primary"></i> Assessment Weighting</h6>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info small">
+                    <i class="bi bi-info-circle"></i> These percentages determine how the report card is calculated. For example, 30/70 means CA is 30% and Exam is 70%.
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Continuous Assessment (CA) Weight (%)</label>
+                        <input type="number" name="ca_weight" class="form-control" 
+                            value="{{ old('ca_weight', \App\Models\Setting::get('ca_weight', 40)) }}" min="1" max="99" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Examination Weight (%)</label>
+                        <input type="number" name="exam_weight" class="form-control" 
+                            value="{{ old('exam_weight', \App\Models\Setting::get('exam_weight', 60)) }}" min="1" max="99" required>
+                    </div>
+                </div>
+            </div>
+        </div>
+      </div>
 
     <!-- Submit Buttons -->
     <div class="card">
