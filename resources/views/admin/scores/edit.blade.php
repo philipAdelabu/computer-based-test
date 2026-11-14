@@ -41,6 +41,7 @@
                             <label class="form-label fw-semibold">Subject <span class="text-danger">*</span></label>
                             <select name="subject_id" class="form-select" required>
                                 @foreach($subjects as $subject)
+                                 @php if(!$subject->class) continue; @endphp
                                     <option value="{{ $subject->id }}" 
                                             {{ old('subject_id', $result->subject_id) == $subject->id ? 'selected' : '' }}>
                                         {{ $subject->name }} ({{ $subject->class->name }})

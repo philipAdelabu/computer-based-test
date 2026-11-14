@@ -39,9 +39,10 @@
                     
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">Class <span class="text-danger">*</span></label>
-                            <select name="class_id" class="form-select @error('class_id') is-invalid @enderror" required>
+                            <label class="form-label fw-semibold">Class </label>
+                            <select name="class_id" class="form-select @error('class_id') is-invalid @enderror" >
                                 <option value="">Select Class</option>
+                                <option value="">None</option>
                                 @foreach($classes as $class)
                                     <option value="{{ $class->id }}" {{ old('class_id') == $class->id ? 'selected' : '' }}>
                                         {{ $class->name }}
@@ -53,9 +54,10 @@
                             @enderror
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">Teacher <span class="text-danger">*</span></label>
-                            <select name="teacher_id" class="form-select @error('teacher_id') is-invalid @enderror" required>
+                            <label class="form-label fw-semibold">Teacher </label>
+                            <select name="teacher_id" class="form-select @error('teacher_id') is-invalid @enderror">
                                 <option value="">Select Teacher</option>
+                                <option value="">None</option>
                                 @foreach($teachers as $teacher)
                                     <option value="{{ $teacher->id }}" {{ old('teacher_id') == $teacher->id ? 'selected' : '' }}>
                                         {{ $teacher->name }} ({{ $teacher->email }})

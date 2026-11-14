@@ -72,7 +72,7 @@
                     <div class="row mb-3">
                         <div class="col-md-3">
                             <label class="form-label fw-semibold">Class <span class="text-danger">*</span></label>
-                            <select name="class_id" class="form-select @error('class_id') is-invalid @enderror" required>
+                            <select id="classSelect" name="class_id" class="form-select @error('class_id') is-invalid @enderror" required>
                                 <option value="">Select Class</option>
                                 @foreach($classes as $class)
                                     <option value="{{ $class->id }}" {{ old('class_id') == $class->id ? 'selected' : '' }}>
@@ -189,58 +189,64 @@
 
 @push('scripts')
 <script>
-document.getElementById('photoInput').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const preview = document.getElementById('photoPreview');
-            preview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
-            document.getElementById('removePhotoBtn').classList.remove('d-none');
-        };
-        reader.readAsDataURL(file);
-    }
-});
 
-function removePhoto() {
-    document.getElementById('photoInput').value = '';
-    document.getElementById('photoPreview').innerHTML = `
-        <div class="photo-placeholder">
-            <i class="bi bi-camera"></i>
-            <span>Upload Photo</span>
-        </div>
-    `;
-    document.getElementById('removePhotoBtn').classList.add('d-none');
-}
-</script>
-
- <script>
-    $('#classSelect').on('change', function() {
-        const classId = $(this).val();
-        const subjectSelect = $('#subjectsSelect');
-        
-        if (!classId) {
-            subjectSelect.html('<option value="">-- Select Class First --</option>');
-            return;
+ /*
+    document.getElementById('photoInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById('photoPreview');
+                preview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+                document.getElementById('removePhotoBtn').classList.remove('d-none');
+            };
+            reader.readAsDataURL(file);
         }
-
-        subjectSelect.html('<option value="">Loading subjects...</option>');
-        const baseUrl = {{ url('/') }};
-        // Fetch subjects for the selected class
-        $.ajax({
-            url: `${baseUrl}/admin/api/classes/${classId}/subjects`, // We will create this route
-            method: 'GET',
-            success: function(subjects) {
-                let html = '';
-                subjects.forEach(subject => {
-                    html += `<option value="${subject.id}">${subject.name}</option>`;
-                });
-                subjectSelect.html(html);
-            },
-            error: function() {
-                subjectSelect.html('<option value="">Error loading subjects</option>');
-            }
-        });
     });
+
+    function removePhoto() {
+        document.getElementById('photoInput').value = '';
+        document.getElementById('photoPreview').innerHTML = `
+            <div class="photo-placeholder">
+                <i class="bi bi-camera"></i>
+                <span>Upload Photo</span>
+            </div>
+        `;
+        document.getElementById('removePhotoBtn').classList.add('d-none');
+    }  */
+
+
+        $('#classSelect').on('change', function() {
+
+            const classId = $(this).val();
+            const subjectSelect = $('#subjectsSelect');
+            
+            if (!classId) {
+                subjectSelect.html('<option value="">-- Select Class First --</option>');
+                return;
+            }
+
+            subjectSelect.html('<option value="">Loading subjects...</option>');
+            const baseUrl = "{{ url('/') }}"; 
+            // Fetch subjects for the selected class
+            $.ajax({
+                url: `${baseUrl}/admin/api/classes/${classId}/subjects`, // We will create this route
+                method: 'GET',
+                success: function(subjects) {
+                    let html = '';
+                    subjects.forEach(subject => {
+                        html += `<option value="${subject.id}">${subject.name}</option>`;
+                    });
+                    subjectSelect.html(html);
+                },
+                error: function() {
+                    subjectSelect.html('<option value="">Error loading subjects</option>');
+                }
+            });
+        });
+
+
 </script>
+
+
 @endpush

@@ -52,6 +52,7 @@
                 <select name="subject_id" class="form-select">
                     <option value="">All Subjects</option>
                     @foreach($subjects as $subject)
+                       @php if(!$subject->class) continue; @endphp
                         <option value="{{ $subject->id }}" {{ request('subject_id') == $subject->id ? 'selected' : '' }}>
                             {{ $subject->name }} ({{ $subject->class->name }})
                         </option>

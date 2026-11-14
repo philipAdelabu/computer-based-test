@@ -41,6 +41,7 @@
                             <select name="subject_id" class="form-select" required>
                                 <option value="">-- Select Subject --</option>
                                 @foreach($subjects as $subject)
+                                 @php if(!$subject->class) continue; @endphp
                                     <option value="{{ $subject->id }}">
                                         {{ $subject->name }} ({{ $subject->class->name }})
                                     </option>

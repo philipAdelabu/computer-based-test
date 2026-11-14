@@ -453,16 +453,18 @@ public function getStudentsByClass($classId)
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'required|string|unique:subjects|max:50',
-            'class_id' => 'required|exists:classes,id',
-            'teacher_id' => 'required|exists:users,id',
+            'class_id' => 'nullable|exists:classes,id',
+            'teacher_id' => 'nullable|exists:users,id',
             'description' => 'nullable|string',
             'status' => 'required|in:active,inactive',
         ]);
 
         // Verify that the teacher exists and has teacher role
-        $teacher = User::findOrFail($validated['teacher_id']);
-        if ($teacher->role !== 'teacher') {
+        if(isset($validated['teacher_id'])){ 
+          $teacher = User::findOrFail($validated['teacher_id']);
+         if ($teacher->role !== 'teacher') {
             return back()->with('error', 'Selected user is not a teacher.');
+          } 
         }
 
         Subject::create($validated);
@@ -486,17 +488,19 @@ public function getStudentsByClass($classId)
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:50|unique:subjects,code,' . $id,
-            'class_id' => 'required|exists:classes,id',
-            'teacher_id' => 'required|exists:users,id',
+            'class_id' => 'nullable|exists:classes,id',
+            'teacher_id' => 'nullable|exists:users,id',
             'description' => 'nullable|string',
             'status' => 'required|in:active,inactive',
         ]);
 
         // Verify that the teacher exists and has teacher role
+          if(isset($validated['teacher_id'])){ 
         $teacher = User::findOrFail($validated['teacher_id']);
         if ($teacher->role !== 'teacher') {
             return back()->with('error', 'Selected user is not a teacher.');
-        }
+        } 
+       }
 
         $subject->update($validated);
 
@@ -535,16 +539,18 @@ public function getStudentsByClass($classId)
     {
         $validated = $request->validate([
             'subject_id' => 'required|exists:subjects,id',
-            'class_id' => 'required|exists:classes,id',
-            'teacher_id' => 'required|exists:users,id',
+            'class_id' => 'nullable|exists:classes,id',
+            'teacher_id' => 'nullable|exists:users,id',
         ]);
 
         $subject = Subject::findOrFail($validated['subject_id']);
         
         // Verify teacher role
+        if(isset($validated['teacher_id'])){ 
         $teacher = User::findOrFail($validated['teacher_id']);
         if ($teacher->role !== 'teacher') {
             return back()->with('error', 'Selected user is not a teacher.');
+        }
         }
 
         $subject->update([

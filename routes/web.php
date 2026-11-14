@@ -160,7 +160,7 @@ Route::get('/students/by-class/{classId}', [AdminController::class, 'getStudents
     Route::post('/students/bulk-reactivate', 
         [\App\Http\Controllers\Admin\StudentAccessController::class, 'bulkReactivate'])
         ->name('students.bulk-reactivate');
-
+        
     // ============ GRADING SYSTEM ============
     Route::get('/grading', [GradingScaleController::class, 'index'])->name('grading.index');
     Route::get('/grading/create', [GradingScaleController::class, 'create'])->name('grading.create');
