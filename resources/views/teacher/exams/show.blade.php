@@ -7,7 +7,7 @@
     @include('teacher.partials.sidebar')
 @endsection
 
-@section('page-title', 'Exam Details')
+@section('page-title', 'Assessment Details')
 
 @section('content')
 
@@ -41,7 +41,7 @@
             <div class="card-body">
                 <div class="row mb-4">
                     <div class="col-md-6">
-                        <h6>Exam Information</h6>
+                        <h6>Asssesment Information</h6>
                         <table class="table table-sm table-borderless">
                             <tr>
                                 <td><strong>Subject:</strong></td>
@@ -50,6 +50,10 @@
                             <tr>
                                 <td><strong>Class:</strong></td>
                                 <td>{{ $exam->subject->class->name }}</td>
+                            </tr>
+                             <tr>
+                                <td><strong>Term | Year:</strong></td>
+                                <td>{{ $exam->term }} | {{ $exam->academic_year }}</td>
                             </tr>
                             <tr>
                                 <td><strong>Duration:</strong></td>

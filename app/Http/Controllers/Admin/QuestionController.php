@@ -128,7 +128,7 @@ class QuestionController extends Controller
             'difficulty' => 'required|in:easy,medium,hard',
         ]);
 
-    
+  
      // =========================================================================
     // POST-VALIDATION CUSTOM CHECKS
     // =========================================================================
@@ -140,11 +140,16 @@ class QuestionController extends Controller
         if (!$hasImages) {
             // --- TEXT MODE CHECKS ---
             $filteredOptions = array_filter($request->input('options', []));
+
+            
             if (count($filteredOptions) < 2) {
                 throw \Illuminate\Validation\ValidationException::withMessages([
                     'options' => ['You must provide at least 2 non-empty text options for objective questions.'],
                 ]);
             }
+
+            
+
         } else {
             // --- IMAGE MODE CHECKS ---
             $validImages = array_filter($request->file('option_images'));
@@ -155,13 +160,15 @@ class QuestionController extends Controller
                 ]);
             }
         }
-
+ 
+          
         // 2. Check if correct answer is selected
-        if (empty($request->input('correct_answer'))) {
+        if ($request->input('correct_answer') != '0' && empty($request->input('correct_answer'))) {
             throw \Illuminate\Validation\ValidationException::withMessages([
                 'correct_answer' => ['You must select a correct answer for objective questions.'],
             ]);
         }
+
     }
 
    

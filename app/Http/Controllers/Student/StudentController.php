@@ -48,7 +48,11 @@ class StudentController extends Controller
                             });
                     })
                     ->count();
-                
+                $completedCount = ExamAttempt::where('student_id', $student->id)
+                                 ->where('status', 'submitted')
+                                 ->count();
+
+                $availableExamsCount -= $completedCount;                 
                 $view->with('availableExamsCount', $availableExamsCount);
             }
         });
@@ -59,7 +63,6 @@ public function dashboard()
 {
     $student = Auth::user()->student;
     $class = $student->class;
-   // $subjects = $class ? $class->subjects : collect();
     $subjects = $student->subjects()->with('teacher')->get();
     $now = Carbon::now(config('app.timezone'));
     
@@ -67,7 +70,11 @@ public function dashboard()
     $availableAssessments = Exam::where('is_published', true)
         ->where('status', 'active')
         ->whereHas('subject', function($query) use ($student) {
-            $query->where('class_id', $student->class_id);
+            $query->whereIn('subject_id', function($q) use ($student) {
+                $q->select('subject_id')
+                   ->from('student_subject')
+                   ->where('student_id', $student->id)->get();
+            });
         })
         ->where(function($query) use ($now) {
             $query->where('schedule_type', 'no_date')
@@ -92,16 +99,23 @@ public function dashboard()
         ->orderBy('start_date')
         ->limit(6)
         ->get();
+
+      //  return count($availableAssessments);
     
     // Split by type for display
     $availableTests = $availableAssessments->where('assessment_type', 'test');
     $availableExams = $availableAssessments->where('assessment_type', 'exam');
     
     // ============ UPCOMING ASSESSMENTS ============
+    // $student->subjects()
     $upcomingAssessments = Exam::where('is_published', true)
         ->where('status', 'active')
         ->whereHas('subject', function($query) use ($student) {
-            $query->where('class_id', $student->class_id);
+            $query->whereIn('subject_id', function($q) use ($student) {
+                $q->select('subject_id')
+                   ->from('student_subject')
+                   ->where('student_id', $student->id)->get();
+            });
         })
         ->where(function($query) use ($now) {
             $query->where(function($q) use ($now) {
@@ -120,10 +134,12 @@ public function dashboard()
     // ============ STATS ============
     $availableCount = $availableAssessments->count();
     $upcomingCount = $upcomingAssessments->count();
+
     $completedCount = ExamAttempt::where('student_id', $student->id)
                                  ->where('status', 'submitted')
                                  ->count();
     
+
     // Get average from results
     $averageScore = Result::where('student_id', $student->id)
                          ->avg('percentage') ?? 0;
@@ -141,7 +157,7 @@ public function dashboard()
         ->whereHas('exam', function($query) {
             $query->where('assessment_type', 'test');
         })
-        ->with('exam')
+        ->with('exam') 
         ->get();
     
     $totalTestScore = 0;
@@ -228,6 +244,8 @@ public function dashboard()
             'percentage' => round($percentage, 2),
         ];
     }
+
+
     
     return view('student.dashboard', compact(
         'student',
@@ -247,7 +265,8 @@ public function dashboard()
         'totalExamScore',
         'totalExamMax',
         'latestReportCard',
-        'subjectBreakdown'
+        'subjectBreakdown',
+        'subjects',
     ));
 }
 
@@ -261,7 +280,11 @@ public function exams(Request $request)
     $baseQuery = Exam::where('is_published', true)
         ->where('status', 'active')
         ->whereHas('subject', function($query) use ($student) {
-            $query->where('class_id', $student->class_id);
+            $query->whereIn('subject_id', function($q) use ($student) {
+                $q->select('subject_id')
+                   ->from('student_subject')
+                   ->where('student_id', $student->id)->get();
+            });
         });
     
     // Available assessments
@@ -316,13 +339,15 @@ public function exams(Request $request)
                                 ->with(['exam', 'exam.subject'])
                                 ->latest()
                                 ->paginate(10);
+    $completedCount = $completedExams->total();
     
     return view('student.exams', compact(
         'availableTests',
         'availableExams',
         'availableAssessments',
         'upcomingAssessments',
-        'completedExams' 
+        'completedExams',
+        'completedCount', 
     ));
 }
 
@@ -331,9 +356,9 @@ public function exams(Request $request)
      */
     public function takeExam(Request $request, $examId)
     {
-
+      
           // If they bypassed the modal, block them
-            if (!$request->session()->has('verified_exam_'.$examId)) {
+            if ($request->session()->getName() != 'cbt-session' && $request->session()->getStarted() != 'true') {
                 return redirect()->route('student.exams')
                     ->with('error', 'Please verify your student number before starting the assessment.');
             }
@@ -608,6 +633,8 @@ public function exams(Request $request)
 public function examResult($attemptId)
 {
 
+  
+
     $attempt = ExamAttempt::with(['exam.questions', 'exam.subject'])->findOrFail($attemptId);
     $student = Auth::user()->student;
     
@@ -690,6 +717,7 @@ public function examResult($attemptId)
     }
     
     $totalQuestions = $questions->count();
+
     
     return view('student.exam-result', compact(
         'attempt',
@@ -699,7 +727,7 @@ public function examResult($attemptId)
         'correctCount',
         'wrongCount',
         'unansweredCount',
-        'totalQuestions'
+        'totalQuestions',
     ));
    }
 
@@ -726,8 +754,13 @@ public function results(Request $request)
     }
     
     $results = $query->latest()->paginate(15);
+
+    $completedCount = ExamAttempt::where('student_id', $student->id)
+                                 ->where('status', 'submitted')
+                                 ->count();
+
     
-    return view('student.results', compact('results'));
+    return view('student.results', compact('results', 'completedCount'));
 }
 
     public function reportCards()
@@ -737,8 +770,12 @@ public function results(Request $request)
                                 ->orderBy('academic_year', 'desc')
                                 ->orderBy('term', 'desc')
                                 ->get();
+
+        $completedCount = ExamAttempt::where('student_id', $student->id)
+                                 ->where('status', 'submitted')
+                                 ->count();
         
-        return view('student.report-cards', compact('reportCards'));
+        return view('student.report-cards', compact('reportCards', 'completedCount'));
     }
 
     public function viewReportCard($id)
@@ -749,6 +786,8 @@ public function results(Request $request)
         if ($reportCard->student_id !== $student->id) {
             abort(403);
         }
+
+
         
         return view('student.view-report-card', compact('reportCard'));
     }

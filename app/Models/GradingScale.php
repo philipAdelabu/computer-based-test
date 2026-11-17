@@ -34,22 +34,24 @@ class GradingScale extends Model
      */
     public static function getDefault()
     {
-        return Cache::remember('default_grading_scale', 3600, function () {
-            // Try to get the default one
-            $scale = self::with('items')
-                ->where('is_default', true)
-                ->where('is_active', true)
-                ->first();
-
-            // Fallback to first active
+        // 1. Cache ONLY the ID (integer)
+        $id = Cache::remember('default_grading_scale_id', 3600, function () {
+            $scale = self::where('is_default', true)->where('is_active', true)->first();
             if (!$scale) {
-                $scale = self::with('items')
-                    ->where('is_active', true)
-                    ->first();
+                $scale = self::where('is_active', true)->first();
             }
-            
-            return $scale; 
+            return $scale ? $scale->id : null;
         });
+
+        if (!$id) return null;
+
+        // 2. Load the model fresh from the database
+        return self::with('items')->find($id);
+    }
+
+    public static function clearCache()
+    {
+        Cache::forget('default_grading_scale_id');
     }
 
     /**

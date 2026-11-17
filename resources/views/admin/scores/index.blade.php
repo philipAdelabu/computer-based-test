@@ -133,7 +133,7 @@
                                     </span>
                                 @endif
                             </td>
-                            <td><span class="badge bg-secondary">{{ $result->term ?? 'N/A' }}</span></td>
+                            <td><span class="badge bg-secondary">{{ $result->exam->term ?? 'N/A' }}</span></td>
                             <td>{{ $result->assessment_date->format('M d, Y') }}</td>
                             <td>
                                 <div class="btn-group">

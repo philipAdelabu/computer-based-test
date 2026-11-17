@@ -15,9 +15,9 @@
                     @csrf
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Upload Signature</label>
-                        @if(Auth::user()->has_photo) {{-- Or signature_path --}}
+                        @if(Auth::user()->signature_path)
                             <div class="mb-2">
-                                <img src="{{ Auth::user()->signature_url }}" style="max-height: 80px;" class="border p-1 rounded">
+                                <img src="{{ url(Auth::user()->signature_path) }}" style="max-height: 80px;" class="border p-1 rounded">
                             </div>
                         @endif
                         <input type="file" name="signature" class="form-control" accept="image/*">

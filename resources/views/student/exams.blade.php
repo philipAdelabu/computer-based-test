@@ -36,7 +36,7 @@
         <div class="stat-card" style="border-left-color: #0dcaf0;">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <h6 class="text-muted mb-1">Available Tests</h6>
+                    <h6 class="text-muted mb-1">Total Tests</h6>
                     <h3 class="mb-0">{{ $availableTests->count() }}</h3>
                     <small class="text-muted">Continuous Assessment</small>
                 </div>
@@ -50,7 +50,7 @@
         <div class="stat-card" style="border-left-color: #0d6efd;">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <h6 class="text-muted mb-1">Available Exams</h6>
+                    <h6 class="text-muted mb-1">Total Exams</h6>
                     <h3 class="mb-0">{{ $availableExams->count() }}</h3>
                     <small class="text-muted">Final Examinations</small>
                 </div>
@@ -514,6 +514,7 @@
 <!-- ============================================== -->
 <!-- COMPLETED ASSESSMENTS                          -->
 <!-- ============================================== -->
+ <!--
 <div class="card">
     <div class="card-header bg-white">
         <h6 class="mb-0">
@@ -639,8 +640,8 @@
         </div>
     @endif
 </div>
-
-
+-->
+ 
  <!-- ============================================ -->
 <!-- PRE-EXAM VERIFICATION MODAL                  -->
 <!-- ============================================ -->
@@ -751,7 +752,8 @@ $(document).ready(function() {
         if (enteredNumber === correctAdmissionNumber) {
             // Correct: Show loading state and redirect
             $(this).html('<span class="spinner-border spinner-border-sm"></span> Starting...').prop('disabled', true);
-            window.location.href = `/student/exam/take/${selectedExamId}`;
+            const baseURL = "{{ url('/') }}";
+            window.location.href = `${baseURL}/student/exam/take/${selectedExamId}`;
         } else {
             // Wrong: Show error
             $('#admissionInput').addClass('is-invalid');

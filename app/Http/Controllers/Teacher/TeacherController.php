@@ -182,12 +182,13 @@ class TeacherController extends Controller
                        ->toArray();
     
     // Get all students in those classes
+    //  $students = Student::with(['user', 'class'])->paginate(10);
     $students = Student::whereIn('class_id', $classIds)
                        ->where('status', 'active')
                        ->with(['user', 'class'])
                        ->orderBy('class_id')
                        ->orderBy('admission_number')
-                       ->get();
+                       ->paginate(10);
         
         return view('teacher.subjects', compact('subjects', 'students'));
     }

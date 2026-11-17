@@ -143,7 +143,7 @@
                         <th>Test Score</th>
                         <th>Exam Score</th>
                         <th>Grand Total</th>
-                        <th>Grade</th>
+                      <!--  <th>Grade</th> -->
                         <th>Position</th>
                         <th>Actions</th>
                     </tr>
@@ -173,7 +173,7 @@
                             <td>
                                 <strong>{{ $reportCard->grand_total }}/{{ $reportCard->grand_max }}</strong>
                             </td>
-                            <td>
+                          <!--  <td>
                                 <span class="badge 
                                     @if($reportCard->grade == 'A') bg-success
                                     @elseif($reportCard->grade == 'B') bg-primary
@@ -183,7 +183,7 @@
                                     @endif">
                                     {{ $reportCard->grade }}
                                 </span>
-                            </td>
+                            </td>  -->
                             <td>
                                 #{{ $reportCard->position ?? 'N/A' }}
                                 <small class="text-muted">of {{ $reportCard->total_students }}</small>

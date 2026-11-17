@@ -686,9 +686,9 @@ public function showStudent($id)
     ])->findOrFail($id);
 
     // Get the subjects assigned to the student's class
-    $subjects = Subject::where('class_id', $student->class_id)
-                       ->with('teacher')
-                       ->get();
+    $subjects = $student->subjects()->with('teacher')->get();
+
+  
 
     // Calculate average score from all results
     $averageScore = $student->results->avg('percentage') ?? 0;

@@ -1,4 +1,4 @@
-<!-- resources/views/teacher/exams/create.blade.php -->
+
 @extends('layouts.app')
 
 @section('title', 'Create Exam/Test')
@@ -116,6 +116,7 @@
                             <select name="subject_id" id="subjectSelect" class="form-select @error('subject_id') is-invalid @enderror" required>
                                 <option value="">Select Subject</option>
                                 @foreach($subjects as $subject)
+                                  @php if(!$subject->class) continue; @endphp
                                     <option value="{{ $subject->id }}" {{ old('subject_id') == $subject->id ? 'selected' : '' }}>
                                         {{ $subject->name }} ({{ $subject->class->name }})
                                           {{ $subject->teacher->name ?? 'No Teacher' }}
@@ -452,7 +453,7 @@ $(document).ready(function() {
                         <i class="bi bi-info-circle"></i> 
                         No questions available for this subject.
                         <br>
-                        <a href="{{ route('teacher.questions.create') }}" class="text-decoration-none">
+                        <a href="{{ route('admin.questions.create') }}" class="text-decoration-none">
                             <i class="bi bi-plus-circle"></i> Add questions
                         </a>
                     `);
@@ -460,66 +461,6 @@ $(document).ready(function() {
                 }
                   holdQuestion.availableQuestions = availableQuestions; 
                   filterAndRenderQuestions(availableQuestions);
-                  return ;
-                  /*
-                let html = '<div class="border rounded p-3" style="max-height: 400px; overflow-y: auto;">';
-                response.forEach((question, index) => {
-                    html += `
-                        <div class="form-check p-2 border-bottom">
-                            <input class="form-check-input question-checkbox" type="checkbox" 
-                                   name="question_ids[]" value="${question.id}" id="q_${question.id}">
-                            <label class="form-check-label w-100" for="q_${question.id}">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div>
-                                        <span class="badge bg-secondary me-2">${index + 1}</span>
-                                        ${question.question_text}
-                                    </div>
-                                    <div>
-                                        <span class="badge bg-info">${question.score} pts</span>
-                                        <span class="badge 
-                                            ${question.difficulty === 'easy' ? 'bg-success' : 
-                                              question.difficulty === 'medium' ? 'bg-warning' : 'bg-danger'}">
-                                            ${question.difficulty}
-                                        </span>
-                                    </div>
-                                </div>
-                            </label>
-                        </div>
-                    `;
-                });
-                html += '</div>';
-                
-                // Add select all buttons
-                html = `
-                    <div class="mb-2">
-                        <button type="button" class="btn btn-sm btn-outline-primary" id="selectAllBtn">
-                            <i class="bi bi-check-all"></i> Select All
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary" id="deselectAllBtn">
-                            <i class="bi bi-x-circle"></i> Deselect All
-                        </button>
-                    </div>
-                    ${html}
-                `;
-                
-                $('#questionsList').html(html);
-                $('#noQuestionsMessage').hide();
-                $('#questionsList').show();
-                $('#questionStats').show();
-                
-                // Event handlers
-                $(document).on('change', '.question-checkbox', updateStats);
-                $(document).on('click', '#selectAllBtn', function() {
-                    $('.question-checkbox').prop('checked', true);
-                    updateStats();
-                });
-                $(document).on('click', '#deselectAllBtn', function() {
-                    $('.question-checkbox').prop('checked', false);
-                    updateStats();
-                    
-                });
-   
-               updateStats();  */
             },
             error: function(xhr, status, error) {
                 console.error('Error:', error);
@@ -622,7 +563,7 @@ $('#assessmentType').trigger('change');
     let selectedMode = 'objective';
     $('#examMode').on('change', function() { 
         selectedMode = $('#examMode').val(); 
-        if((holdQuestion.availableQuestions).length > 0)
+        if((holdQuestion.availableQuestions) && (holdQuestion.availableQuestions).length > 0)
           filterAndRenderQuestions(holdQuestion.availableQuestions);
     });
 

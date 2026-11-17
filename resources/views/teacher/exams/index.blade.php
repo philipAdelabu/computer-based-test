@@ -27,6 +27,7 @@
                     <tr>
                         <th>#</th>
                         <th>Title</th>
+                        <th>Test/Exam</th>
                         <th>Subject</th>
                         <th>Questions</th>
                         <th>Duration</th>
@@ -47,7 +48,9 @@
                                     <br>
                                     <small class="text-muted">{{ Str::limit($exam->description, 50) }}</small>
                                 @endif
+                                <br> {{ $exam->subject->class->name }}
                             </td>
+                            <td>{{ strtoupper($exam->assessment_type) }}</td>
                             <td>{{ $exam->subject->name }}</td>
                             <td>{{ $exam->total_questions }}</td>
                             <td>{{ $exam->duration_minutes }} min</td>

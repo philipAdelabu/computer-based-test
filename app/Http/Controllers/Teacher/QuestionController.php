@@ -170,7 +170,7 @@ class QuestionController extends Controller
         }
 
         // 2. Check if correct answer is selected
-        if (empty($request->input('correct_answer'))) {
+        if ($request->input('correct_answer') != '0' && empty($request->input('correct_answer'))) {
             throw \Illuminate\Validation\ValidationException::withMessages([
                 'correct_answer' => ['You must select a correct answer for objective questions.'],
             ]);
@@ -228,7 +228,7 @@ class QuestionController extends Controller
     
 
 
-              public function update(Request $request, $id)
+    public function update(Request $request, $id)
     {
         $question = Question::findOrFail($id);
 

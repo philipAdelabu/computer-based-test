@@ -13,7 +13,6 @@
 @php
     $student = Auth::user()->student;
     $class = $student->class;
-    $subjects = $class ? $class->subjects : collect();
 @endphp
 
 
@@ -79,7 +78,7 @@
                             <strong>Admission #:</strong> {{ $student->admission_number }}
                         </p>
                         @if($class)
-                            <p class="mb-0 mt-1 opacity-90">
+                            <p class="mb-0 mt-1 opacity-90"> 
                                 <i class="bi bi-book"></i> 
                                 <strong>Subjects:</strong> {{ $subjects->count() }} subjects
                             </p>
@@ -336,6 +335,7 @@
 @endif
 
 <!-- Available Tests -->
+ <!--
 @if($availableTests->count() > 0)
     <div class="row mb-4">
         <div class="col-md-12">
@@ -397,8 +397,9 @@
         </div>
     </div>
 @endif
-
+-->
 <!-- Available Exams -->
+ <!--
 @if($availableExams->count() > 0)
     <div class="row mb-4">
         <div class="col-md-12">
@@ -460,7 +461,7 @@
         </div>
     </div>
 @endif
-
+-->
 <!-- Upcoming Assessments -->
 @if($upcomingAssessments->count() > 0)
     <div class="row mb-4">
@@ -535,7 +536,9 @@
                                 <th>Subject</th>
                                 <th>Score</th>
                                 <th>Percentage</th>
-                                <th>Grade</th>
+                               <th>Grade</th> 
+                               <th>Term</th>
+                               <th>Year</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -558,6 +561,7 @@
                                         {{ $result->score }}/{{ $result->max_score }}
                                     </td>
                                     <td>{{ number_format($result->percentage, 1) }}%</td>
+
                                     <td>
                                         @if($result->remarks === 'Pending Theory Grading' || $result->grade === null)
                                             <span class="badge bg-warning text-dark">Pending</span>
@@ -571,6 +575,8 @@
                                             </span>
                                         @endif
                                     </td>
+                                    <td><span class="badge bg-secondary">{{ $result->exam->term ?? 'N/A' }}</span></td>
+                                     <td>{{ $result->exam->academic_year ?? 'N/A' }}</td>
                                 </tr>
                             @empty
                                 <tr>
@@ -713,7 +719,8 @@ $(document).ready(function() {
         if (enteredNumber === correctAdmissionNumber) {
             // Correct: Show loading state and redirect
             $(this).html('<span class="spinner-border spinner-border-sm"></span> Starting...').prop('disabled', true);
-            window.location.href = `/student/exam/take/${selectedExamId}`;
+           const baseURL = "{{ url('/') }}";
+            window.location.href = `${baseURL}/student/exam/take/${selectedExamId}`;
         } else {
             // Wrong: Show error
             $('#admissionInput').addClass('is-invalid');

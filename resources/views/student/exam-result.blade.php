@@ -146,7 +146,7 @@
                         <div class="col-md-3">
                             <div class="p-3">
                                 <h2 class="text-warning mb-0">{{ $theoryPendingCount }}</h2>
-                                <small class="text-muted">Pending Theory</small>
+                                <small class="text-muted">Theory</small>
                             </div>
                         </div>
                         <div class="col-md-3">

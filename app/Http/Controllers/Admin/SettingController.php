@@ -69,7 +69,6 @@ class SettingController extends Controller
                 Setting::set('school_logo', $logoPath, 'image');
             }
 
-            
 
             if ($request->hasFile('principal_signature')) {
                 $imagePath = $this->uploadImage($request->file('principal_signature'), 'signatures');

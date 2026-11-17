@@ -26,7 +26,7 @@ class ReportCardService
         $this->autoFillService = new ReportCardAutoFillService();
     }
 
-    /**
+    /** 
      * Generate report cards for all students in a class for a given term/year
      */
     public function generateForClass($classId, $term, $academicYear)
@@ -120,12 +120,9 @@ class ReportCardService
     // app/Services/ReportCardService.php
 // Replace the calculateStudentData method entirely
 
-private function calculateStudentData($student, $term, $academicYear)
+  private function calculateStudentData($student, $term, $academicYear)
 {
-    // Get ALL subjects for the student's class
-    // (this is the KEY change - not just subjects with attempts)
-   
-
+    // Get subjects assigned to the student
     $subjects = $student->subjects()->with(['teacher'])->orderBy('name')->get();
 
     $subjectScores = [];
@@ -135,12 +132,16 @@ private function calculateStudentData($student, $term, $academicYear)
     $totalExamScore = 0;
     $totalExamMax = 0;
 
-     // Fetch the Admin Settings for CA and Exam weights
+    // Fetch Admin Weights
     $caWeight = (float) \App\Models\Setting::get('ca_weight', 40);
     $examWeight = (float) \App\Models\Setting::get('exam_weight', 60);
 
+    // Define the term order for snapshots
+    $termOrder = ['First Term', 'Second Term', 'Third Term'];
+
     foreach ($subjects as $subject) {
-        // Get all tests for this subject in the term
+        
+        // ============ FETCH ASSESSMENTS FOR CURRENT TERM ============
         $tests = Exam::where('subject_id', $subject->id)
             ->where('assessment_type', 'test')
             ->where('term', $term)
@@ -148,7 +149,6 @@ private function calculateStudentData($student, $term, $academicYear)
             ->where('is_published', true)
             ->get();
 
-        // Get all exams for this subject in the term
         $exams = Exam::where('subject_id', $subject->id)
             ->where('assessment_type', 'exam')
             ->where('term', $term)
@@ -156,225 +156,169 @@ private function calculateStudentData($student, $term, $academicYear)
             ->where('is_published', true)
             ->get();
 
-        // ============ CALCULATE TEST SCORE ============
+        // ============ CALCULATE CURRENT TERM SCORES ============
         $testScore = 0;
         $testMax = 0;
         $testAttempted = false;
         $testAttempts = [];
 
         foreach ($tests as $test) {
-            $bestAttempt = ExamAttempt::where('exam_id', $test->id)
-                ->where('student_id', $student->id)
-                ->where('status', 'submitted')
-                ->orderBy('score', 'desc')
-                ->first();
-
+            $manualResult = Result::where('exam_id', $test->id)->where('student_id', $student->id)->first();
             $testMax += $test->max_marks;
 
-            if ($bestAttempt) {
-                $scaledScore = $test->convertScoreToMaxMarks($bestAttempt->score);
-                $testScore += $scaledScore;
+            if ($manualResult) {
+                $scaled = $test->convertScoreToMaxMarks($manualResult->score);
+                $testScore += $scaled;
                 $testAttempted = true;
-
-                $testAttempts[] = [
-                    'id' => $test->id,
-                    'title' => $test->title,
-                    'max_marks' => $test->max_marks,
-                    'attempted' => true,
-                    'raw_score' => $bestAttempt->score,
-                    'raw_total' => $test->total_score,
-                    'scaled_score' => round($scaledScore, 2),
-                ];
+                $testAttempts[] = ['id' => $test->id, 'title' => $test->title, 'attempted' => true, 'raw_score' => $manualResult->score, 'raw_total' => $test->total_score, 'scaled_score' => round($scaled, 2)];
             } else {
-                $testAttempts[] = [
-                    'id' => $test->id,
-                    'title' => $test->title,
-                    'max_marks' => $test->max_marks,
-                    'attempted' => false,
-                    'raw_score' => null,
-                    'raw_total' => $test->total_score,
-                    'scaled_score' => null,
-                ];
+                $bestAttempt = ExamAttempt::where('exam_id', $test->id)->where('student_id', $student->id)->where('status', 'submitted')->orderBy('score', 'desc')->first();
+                if ($bestAttempt) {
+                    $scaled = $test->convertScoreToMaxMarks($bestAttempt->score);
+                    $testScore += $scaled;
+                    $testAttempted = true;
+                    $testAttempts[] = ['id' => $test->id, 'title' => $test->title, 'attempted' => true, 'raw_score' => $bestAttempt->score, 'raw_total' => $test->total_score, 'scaled_score' => round($scaled, 2)];
+                } else {
+                    $testAttempts[] = ['id' => $test->id, 'title' => $test->title, 'attempted' => false, 'raw_score' => null, 'raw_total' => $test->total_score, 'scaled_score' => null];
+                }
             }
         }
 
-        // ============ CALCULATE EXAM SCORE ============
         $examScore = 0;
         $examMax = 0;
         $examAttempted = false;
         $examAttempts = [];
 
         foreach ($exams as $exam) {
-            $bestAttempt = ExamAttempt::where('exam_id', $exam->id)
-                ->where('student_id', $student->id)
-                ->where('status', 'submitted')
-                ->orderBy('score', 'desc')
-                ->first();
-
+            $manualResult = Result::where('exam_id', $exam->id)->where('student_id', $student->id)->first();
             $examMax += $exam->max_marks;
 
-            if ($bestAttempt) {
-                $scaledScore = $exam->convertScoreToMaxMarks($bestAttempt->score);
-                $examScore += $scaledScore;
+            if ($manualResult) {
+                $scaled = $exam->convertScoreToMaxMarks($manualResult->score);
+                $examScore += $scaled;
                 $examAttempted = true;
-
-                $examAttempts[] = [
-                    'id' => $exam->id,
-                    'title' => $exam->title,
-                    'max_marks' => $exam->max_marks,
-                    'attempted' => true,
-                    'raw_score' => $bestAttempt->score,
-                    'raw_total' => $exam->total_score,
-                    'scaled_score' => round($scaledScore, 2),
-                ];
+                $examAttempts[] = ['id' => $exam->id, 'title' => $exam->title, 'attempted' => true, 'raw_score' => $manualResult->score, 'raw_total' => $exam->total_score, 'scaled_score' => round($scaled, 2)];
             } else {
-                $examAttempts[] = [
-                    'id' => $exam->id,
-                    'title' => $exam->title,
-                    'max_marks' => $exam->max_marks,
-                    'attempted' => false,
-                    'raw_score' => null,
-                    'raw_total' => $exam->total_score,
-                    'scaled_score' => null,
-                ];
-            }
-        }
-
-        // ============ NEW CALCULATION LOGIC ============
-        // Convert raw scores into percentages
-        $testPercentage = $testMax > 0 ? ($testScore / $testMax) * 100 : 0;
-        $examPercentage = $examMax > 0 ? ($examScore / $examMax) * 100 : 0;
-
-        // Apply the admin's weights
-        $weightedTestScore = ($testPercentage / 100) * $caWeight;
-        $weightedExamScore = ($examPercentage / 100) * $examWeight;
-
-        // The final subject total is out of 100
-        $subjectTotal = $weightedTestScore + $weightedExamScore;
-        $subjectMax = 100; 
-        
-        $subjectPercentage = $anyAttempt ? round($subjectTotal, 2) : null;
-        $grade = $this->calculateGrade($subjectPercentage);
-        $remark = $this->calculateRemarks($subjectPercentage);
-
-        // ============ CRITICAL: Include Manual Results (Assignments/Projects) ============
-        // If you want manual scores (assignments) to contribute to the total,
-        // you must fetch them here, filtering by term.
-
-        $manualResults = \App\Models\Result::where('student_id', $student->id)
-            ->where('subject_id', $subject->id)
-            ->where('term', $term) //
-            ->whereIn('assessment_type', ['assignment', 'project', 'quiz']) // exclude 'test'/'exam' because those come from the CBT exams above
-            ->get();
-
-        $manualScore = 0;
-        $manualMax = 0;
-        foreach ($manualResults as $res) {
-            $manualScore += $res->score;
-            $manualMax += $res->max_score;
-        }
-
-        // If you want manual scores to count toward the final grade:
-        $testScore += $manualScore;
-        $testMax += $manualMax;
-        if ($manualResults->count() > 0) $testAttempted = true;
-
-         /////   the end of manual score entry //////
-
-         
-
-        // ============ SUBJECT TOTALS ============
-        $subjectTotal = $testScore + $examScore;
-        $subjectMax = $testMax + $examMax;
-
-        // If no assessments were even created, mark subject as "not assessed"
-        $hasAnyAssessments = ($tests->count() > 0 || $exams->count() > 0);
-        $anyAttempt = $testAttempted || $examAttempted;
-
-        if (!$hasAnyAssessments || !$anyAttempt) {
-            // Student has not attempted ANY assessment for this subject
-            $subjectPercentage = null;
-            $grade = null;
-            $remark = null;
-        } else {
-            $subjectPercentage = $subjectMax > 0 
-                ? round(($subjectTotal / $subjectMax) * 100, 2) 
-                : 0;
-            $grade = $this->calculateGrade($subjectPercentage);
-            $remark = $this->calculateRemarks($subjectPercentage);
-        }
-
-        /**     Term and session_avg    **/
-
-                // Get the previous terms
-        $termOrder = ['First Term', 'Second Term', 'Third Term'];
-        $currentTermIndex = array_search($term, $termOrder);
-
-        $firstTermScore = null;
-        $secondTermScore = null;
-        $thirdTermScore = null;
-
-        foreach ($termOrder as $index => $t) {
-            if ($t === $term) {
-                // Set the current term's score
-                if ($t === 'First Term') $firstTermScore = $subjectPercentage;
-                if ($t === 'Second Term') $secondTermScore = $subjectPercentage;
-                if ($t === 'Third Term') $thirdTermScore = $subjectPercentage;
-                break;
-            }
-
-            // Fetch historical scores from the database
-            $prevReport = ReportCard::where('student_id', $student->id)
-                ->where('class_id', $student->class_id)
-                ->where('term', $t)
-                ->where('academic_year', $academicYear)
-                ->first();
-
-            if ($prevReport && $prevReport->subject_scores) {
-                foreach ($prevReport->subject_scores as $prevScore) {
-                    if (($prevScore['subject_id'] ?? null) === $subject->id) {
-                        $val = $prevScore['percentage'] ?? null;
-                        if ($t === 'First Term') $firstTermScore = $val;
-                        if ($t === 'Second Term') $secondTermScore = $val;
-                        if ($t === 'Third Term') $thirdTermScore = $val;
-                        break;
-                    }
+                $bestAttempt = ExamAttempt::where('exam_id', $exam->id)->where('student_id', $student->id)->where('status', 'submitted')->orderBy('score', 'desc')->first();
+                if ($bestAttempt) {
+                    $scaled = $exam->convertScoreToMaxMarks($bestAttempt->score);
+                    $examScore += $scaled;
+                    $examAttempted = true;
+                    $examAttempts[] = ['id' => $exam->id, 'title' => $exam->title, 'attempted' => true, 'raw_score' => $bestAttempt->score, 'raw_total' => $exam->total_score, 'scaled_score' => round($scaled, 2)];
+                } else {
+                    $examAttempts[] = ['id' => $exam->id, 'title' => $exam->title, 'attempted' => false, 'raw_score' => null, 'raw_total' => $exam->total_score, 'scaled_score' => null];
                 }
             }
         }
 
-        // Calculate Session Average (average of available terms)
-        $allTermScores = array_filter([$firstTermScore, $secondTermScore, $thirdTermScore]);
-        $sessionAvg = count($allTermScores) > 0 
-            ? round(array_sum($allTermScores) / count($allTermScores), 2) 
-            : $subjectPercentage;
+        // ============ CALCULATE FINAL WEIGHTED SCORES ============
+        // 1. Calculate percentages
+        $testPercentage = $testMax > 0 ? ($testScore / $testMax) * 100 : 0;
+        $examPercentage = $examMax > 0 ? ($examScore / $examMax) * 100 : 0;
 
-        ////////////////////////////////////
+        // 2. Apply weights (e.g., 30% to CA, 70% to Exam)
+        $weightedTestScore = ($testPercentage / 100) * $caWeight;
+        $weightedExamScore = ($examPercentage / 100) * $examWeight;
 
+        // 3. Final subject total out of 100
+        $subjectTotal = round($weightedTestScore + $weightedExamScore, 1);
+        $subjectMax = 100;
+        
+        $anyAttempt = $testAttempted || $examAttempted;
+        $subjectPercentage = $anyAttempt ? $subjectTotal : null;
+        $grade = $anyAttempt ? $this->calculateGrade($subjectPercentage) : null;
+        $remark = $anyAttempt ? $this->calculateRemarks($subjectPercentage) : null;
 
+        // Handle manual assignment/project scores
+        $manualResults = \App\Models\Result::where('student_id', $student->id)
+            ->where('subject_id', $subject->id)
+            ->where('term', $term)
+            ->whereIn('assessment_type', ['assignment', 'project', 'quiz'])
+            ->get();
+
+        // If manual results exist, you can add them to $weightedTestScore here if needed
+        // (Assuming you aren't mixing them with CBT tests for now)
+
+          // ============ FETCH PREVIOUS TERMS (IMMUTABLE SNAPSHOTS) ============
+              // ============ FETCH PREVIOUS TERMS (IMMUTABLE SNAPSHOTS) ============
+                $termOrder = ['First Term', 'Second Term', 'Third Term'];
+                $firstTermData = null;
+                $secondTermData = null;
+                $thirdTermData = null;
+
+                foreach ($termOrder as $t) {
+                    if ($t === $term) {
+                        // Save the CURRENT term's exact snapshot
+                        $currentData = [
+                            'ca' => $anyAttempt ? round($weightedTestScore, 1) : null,
+                            'exam' => $anyAttempt ? round($weightedExamScore, 1) : null,
+                            'total' => $anyAttempt ? $subjectTotal : null,
+                            'grade' => $grade,
+                        ];
+                        if ($t === 'First Term') $firstTermData = $currentData;
+                        if ($t === 'Second Term') $secondTermData = $currentData;
+                        if ($t === 'Third Term') $thirdTermData = $currentData;
+                        break; 
+                    }
+
+                    $key = '';
+                    if ($t === 'First Term') $key = 'first';
+                    if ($t === 'Second Term') $key = 'second';
+                    if ($t === 'Third Term') $key = 'third';
+
+                    $prevReport = ReportCard::where('student_id', $student->id)
+                        ->where('term', $t)
+                        ->where('academic_year', $academicYear)
+                        ->first();
+
+                    if ($prevReport && $prevReport->subject_scores) {
+                        foreach ($prevReport->subject_scores as $prevScore) {
+                            if (($prevScore['subject_id'] ?? null) === $subject->id) {
+                                $snapshot = $prevScore['term_scores'][$key] ?? null;
+                                
+                                if ($t === 'First Term') $firstTermData = $snapshot;
+                                if ($t === 'Second Term') $secondTermData = $snapshot;
+                                if ($t === 'Third Term') $thirdTermData = $snapshot;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+        // ============ CALCULATE SESSION AVERAGE ============
+        // Average only the terms that have a valid total
+        $availableTotals = array_filter([
+            $firstTermData['total'] ?? null,
+            $secondTermData['total'] ?? null,
+            $thirdTermData['total'] ?? null,
+        ]);
+        
+        $sessionAvg = count($availableTotals) > 0 ? round(array_sum($availableTotals) / count($availableTotals), 1) : null;
+
+        // ============ BUILD SUBJECT SCORE ARRAY ============
         $subjectScores[] = [
             'subject' => $subject->name,
             'subject_id' => $subject->id,
             'subject_code' => $subject->code,
             'teacher' => $subject->teacher->name ?? null,
-            'test_score' => $testAttempted ? round($testScore, 2) : null,
-            'test_max' => $testMax,
+            'test_score' => $testAttempted ? round($weightedTestScore, 2) : null, // Saving weighted score
+            'test_max' => $caWeight,
             'test_attempted' => $testAttempted,
-            'exam_score' => $examAttempted ? round($examScore, 2) : null,
-            'exam_max' => $examMax,
+            'exam_score' => $examAttempted ? round($weightedExamScore, 2) : null, // Saving weighted score
+            'exam_max' => $examWeight,
             'exam_attempted' => $examAttempted,
-            'total' => $anyAttempt ? round($subjectTotal, 2) : null,
-            'max' => $subjectMax,
+            'total' => $anyAttempt ? $subjectTotal : null,
+            'max' => 100,
             'percentage' => $subjectPercentage,
             'grade' => $grade,
             'remark' => $remark,
             'attempted' => $anyAttempt,
-            'has_assessments' => $hasAnyAssessments,
+            'has_assessments' => ($tests->count() > 0 || $exams->count() > 0),
             'term_scores' => [
-            'first' => $firstTermScore,
-            'second' => $secondTermScore,
-            'third' => $thirdTermScore,
-                ],
+                'first' => $firstTermData,
+                'second' => $secondTermData,
+                'third' => $thirdTermData,
+            ],
             'session_avg' => $sessionAvg,
         ];
 
@@ -385,64 +329,22 @@ private function calculateStudentData($student, $term, $academicYear)
             'exams' => $examAttempts,
         ];
 
-        // Only add to totals if attempted
+        // ============ ADD TO GRAND TOTALS ============
         if ($anyAttempt) {
-            $totalTestScore += $testScore;
-            $totalTestMax += $testMax;
-            $totalExamScore += $examScore;
-            $totalExamMax += $examMax;
+            $totalTestScore += $weightedTestScore;
+            $totalTestMax += $caWeight;
+            $totalExamScore += $weightedExamScore;
+            $totalExamMax += $examWeight;
         } else {
-            // Still count max marks so percentages work correctly
-            $totalTestMax += $testMax;
-            $totalExamMax += $examMax;
+            $totalTestMax += $caWeight;
+            $totalExamMax += $examWeight;
         }
     }
 
+    // ============ RETURN DATA ============
     $grandTotal = $totalTestScore + $totalExamScore;
     $grandMax = $totalTestMax + $totalExamMax;
     $averagePercentage = $grandMax > 0 ? ($grandTotal / $grandMax) * 100 : 0;
-    
-     $previousTerms = $this->getPreviousTerms($term);
-        $previousTermScores = [];
-
-        foreach ($previousTerms as $prevTerm) {
-            $prevReport = ReportCard::where('student_id', $student->id)
-                ->where('class_id', $student->class_id)
-                ->where('term', $prevTerm)
-                ->where('academic_year', $academicYear)
-                ->first();
-
-            if ($prevReport && $prevReport->subject_scores) {
-                foreach ($prevReport->subject_scores as $prevScore) {
-                    if (($prevScore['subject_id'] ?? null) === $subject->id) {
-                        $previousTermScores[$prevTerm] = $prevScore['percentage'] ?? null;
-                        break;
-                    }
-                }
-            }
-        }
-
-        // Compute session average across terms
-        $allTermPercentages = array_filter([
-            $previousTermScores['First Term'] ?? null,
-            $previousTermScores['Second Term'] ?? null,
-            $previousTermScores['Third Term'] ?? null,
-            $subjectPercentage,
-        ]);
-
-        $sessionAvg = !empty($allTermPercentages)
-            ? round(array_sum($allTermPercentages) / count($allTermPercentages), 2)
-            : null;
-
-        // Add to subject score array:
-        $subjectScores[count($subjectScores) - 1]['term_scores'] = [
-            'first' => $previousTermScores['First Term'] ?? null,
-            'second' => $previousTermScores['Second Term'] ?? null,
-            'third' => $previousTermScores['Third Term'] ?? null,
-        ];
-        
-        $subjectScores[count($subjectScores) - 1]['session_avg'] = $sessionAvg;
-
 
     return [
         'subject_scores' => $subjectScores,

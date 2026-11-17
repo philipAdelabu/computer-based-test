@@ -10,7 +10,7 @@
         <a class="nav-link {{ request()->routeIs('student.exams*') ? 'active' : '' }}" 
            href="{{ route('student.exams') }}">
             <i class="bi bi-file-text-fill"></i> Tests & Exams
-            @if(isset($availableExamsCount) && $availableExamsCount > 0)
+            @if(isset($availableExamsCount) && $availableExamsCount > 0 )
                 <span class="badge bg-danger rounded-pill ms-1">{{ $availableExamsCount }}</span>
             @endif
         </a>

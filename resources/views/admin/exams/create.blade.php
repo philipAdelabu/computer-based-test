@@ -320,7 +320,7 @@
                         <button type="submit" class="btn btn-primary btn-lg px-5" id="submitBtn">
                             <i class="bi bi-save"></i> Create
                         </button>
-                        <a href="{{ route('teacher.exams') }}" class="btn btn-secondary btn-lg px-5">Cancel</a>
+                        <a href="{{ route('admin.exams') }}" class="btn btn-secondary btn-lg px-5">Cancel</a>
                     </div>
                
             </div>
@@ -563,7 +563,7 @@ $('#assessmentType').trigger('change');
     let selectedMode = 'objective';
     $('#examMode').on('change', function() { 
         selectedMode = $('#examMode').val(); 
-        if((holdQuestion.availableQuestions).length > 0)
+        if((holdQuestion.availableQuestions) && (holdQuestion.availableQuestions).length > 0)
           filterAndRenderQuestions(holdQuestion.availableQuestions);
     });
 
